@@ -2757,31 +2757,31 @@ function SideNav({openCalc,openPathway,goHome,favs,toggleFav,dark,calcId,setPage
   const subColor=dark?'text-slate-400':'text-slate-500';
 
   return(
-    <div className="py-3 px-2 space-y-0.5 text-[13px]">
-      <button onClick={goHome} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium ${catBg}`}><Home size={15}/> Home</button>
+    <div className="py-2 px-1.5 text-[12px]">
+      <button onClick={goHome} className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium mb-1 ${catBg}`}><Home size={13}/> Home</button>
 
       {/* Favourites */}
-      {favs.length>0&&(<div className="pt-3 pb-1">
-        <div className={`px-3 text-[10px] font-bold uppercase tracking-wider ${dark?'text-amber-500':'text-amber-600'} mb-1`}>★ Favourites</div>
+      {favs.length>0&&(<div className="pt-2 pb-0.5">
+        <div className={`px-2 text-[9px] font-bold uppercase tracking-widest ${dark?'text-amber-500':'text-amber-600'} mb-0.5`}>Favourites</div>
         {favs.map(id=>{const c=C[id];return c?<NavItem key={id} c={c} active={calcId===id} onClick={()=>openCalc(id)} dark={dark}/>:null})}
       </div>)}
 
       {/* Pathways */}
-      <div className="pt-3 pb-1">
-        <div className={`px-3 text-[10px] font-bold uppercase tracking-wider ${dark?'text-blue-400':'text-blue-600'} mb-1`}><Route size={10} className="inline mr-1"/>Clinical Pathways</div>
+      <div className={`pt-2 border-t ${dark?'border-slate-800':'border-slate-100'}`}>
+        <div className={`px-2 text-[9px] font-bold uppercase tracking-widest ${dark?'text-blue-400':'text-blue-600'} mb-0.5`}>Pathways</div>
         {PATHWAYS.map(p=>(
-          <button key={p.id} onClick={()=>openPathway(p.id)} className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs ${dark?'text-slate-300 hover:bg-slate-800':'text-slate-600 hover:bg-slate-100'}`}>
-            <Route size={12} className="opacity-50"/>{p.title}
+          <button key={p.id} onClick={()=>openPathway(p.id)} className={`w-full flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] ${dark?'text-slate-400 hover:bg-slate-800':'text-slate-500 hover:bg-slate-100'}`}>
+            <Route size={10} className="opacity-40 flex-shrink-0"/><span className="truncate">{p.title}</span>
           </button>
         ))}
       </div>
 
       {/* Diagnostic Modules */}
-      <div className="pt-2 pb-1">
-        <div className={`px-3 text-[10px] font-bold uppercase tracking-wider ${dark?'text-purple-400':'text-purple-600'} mb-1`}><GitBranch size={10} className="inline mr-1"/>Diagnostic Modules</div>
+      <div className={`pt-2 border-t ${dark?'border-slate-800':'border-slate-100'}`}>
+        <div className={`px-2 text-[9px] font-bold uppercase tracking-widest ${dark?'text-purple-400':'text-purple-600'} mb-0.5`}>Diagnostics</div>
         {DIAGNOSTICS.map(d=>(
-          <button key={d.id} onClick={()=>setPage('diag:'+d.id)} className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs ${dark?'text-slate-300 hover:bg-slate-800':'text-slate-600 hover:bg-slate-100'}`}>
-            <GitBranch size={12} className="opacity-50"/>{d.title}
+          <button key={d.id} onClick={()=>setPage('diag:'+d.id)} className={`w-full flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] ${dark?'text-slate-400 hover:bg-slate-800':'text-slate-500 hover:bg-slate-100'}`}>
+            <GitBranch size={10} className="opacity-40 flex-shrink-0"/><span className="truncate">{d.title}</span>
           </button>
         ))}
       </div>
@@ -2790,34 +2790,30 @@ function SideNav({openCalc,openPathway,goHome,favs,toggleFav,dark,calcId,setPage
       {CATS.map(cat=>{
         const subs=SUBS[cat.id]||[];
         const isOpen=expanded[cat.id]!==false;
-        return(<div key={cat.id} className={`pt-3 ${cat.id!=='malignant'?`border-t ${dark?'border-slate-800':'border-slate-200'} mt-1`:''}`}>
+        return(<div key={cat.id} className={`pt-2 border-t ${dark?'border-slate-800':'border-slate-100'}`}>
           {/* CATEGORY HEADER */}
-          <button onClick={()=>toggleCat(cat.id)} className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-widest ${dark?'text-slate-400 hover:text-slate-200':'text-slate-500 hover:text-slate-700'} transition-colors`}>
-            <span className="text-xs"><CIcon id={cat.id} size={13}/></span>
+          <button onClick={()=>toggleCat(cat.id)} className={`w-full flex items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest ${dark?'text-slate-500 hover:text-slate-300':'text-slate-400 hover:text-slate-600'} transition-colors`}>
             <span style={{color:cat.color}}>{cat.label}</span>
-            <ChevronDown size={11} className={`ml-auto transition-transform duration-200 ${isOpen?'':'rotate-[-90deg]'}`}/>
+            <ChevronDown size={10} className={`ml-auto transition-transform duration-200 ${isOpen?'':'rotate-[-90deg]'}`}/>
           </button>
 
           {/* SUBCATEGORIES */}
           {isOpen&&subs.map(sub=>{
             const subOpen=subExp[sub.id]!==false;
             const hasActive=sub.calcs.includes(calcId);
-            const calcCount=sub.calcs.filter(id=>C[id]).length;
-            return(<div key={sub.id} className="ml-1">
+            return(<div key={sub.id}>
               {/* SUBCATEGORY HEADER */}
               <button onClick={()=>toggleSub(sub.id)}
-                className={`w-full flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-semibold transition-colors ${
-                  hasActive?(dark?'text-blue-400':'text-blue-700'):
+                className={`w-full flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium transition-colors ${
+                  hasActive?(dark?'text-blue-400':'text-blue-600'):
                   (dark?'text-slate-400 hover:text-slate-200':'text-slate-500 hover:text-slate-700')
                 }`}>
-                <span className="text-xs opacity-70"><CIcon id={sub.id} size={13}/></span>
-                <span className="flex-1 text-left">{sub.label}</span>
-                <span className={`text-[9px] font-normal px-1.5 py-0.5 rounded-full ${dark?'bg-slate-800 text-slate-500':'bg-slate-100 text-slate-400'}`}>{calcCount}</span>
-                <ChevronDown size={10} className={`transition-transform duration-200 ${subOpen?'':'rotate-[-90deg]'}`}/>
+                <span className="flex-1 text-left truncate">{sub.label}</span>
+                <ChevronDown size={9} className={`flex-shrink-0 transition-transform duration-200 ${subOpen?'':'rotate-[-90deg]'}`}/>
               </button>
 
               {/* CALCULATOR ITEMS */}
-              {subOpen&&(<div className="ml-3 border-l-2 pl-1" style={{borderColor:hasActive?(dark?'#3b82f6':'#3b82f6'):(dark?'#1e293b':'#e2e8f0')}}>
+              {subOpen&&(<div className="ml-2 border-l pl-1" style={{borderColor:hasActive?(dark?'#3b82f6':'#93c5fd'):(dark?'#1e293b':'#e2e8f0')}}>
                 {sub.calcs.map(id=>{
                   const c=C[id];
                   if(!c)return null;
@@ -2830,16 +2826,15 @@ function SideNav({openCalc,openPathway,goHome,favs,toggleFav,dark,calcId,setPage
       })}
 
       {/* About */}
-      <div className={`pt-4 border-t ${dark?'border-slate-800':'border-slate-200'} mt-3`}>
-        <button onClick={()=>setPage('about')} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${dark?'text-slate-400 hover:bg-slate-800':'text-slate-500 hover:bg-slate-100'}`}><User size={14}/> About &amp; Credentials</button>
+      <div className={`pt-2 mt-1 border-t ${dark?'border-slate-800':'border-slate-100'}`}>
+        <button onClick={()=>setPage('about')} className={`w-full flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] ${dark?'text-slate-500 hover:bg-slate-800':'text-slate-400 hover:bg-slate-100'}`}><User size={12}/> About</button>
       </div>
     </div>
   );
 }
 function NavItem({c,active,onClick,dark}){
-  return(<button onClick={onClick} className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs text-left transition-colors ${active?(dark?'bg-blue-900/40 text-blue-400':'bg-blue-50 text-blue-700'):(dark?'text-slate-300 hover:bg-slate-800':'text-slate-600 hover:bg-slate-100')}`}>
-    <CIcon id={c.cat} size={14} className={active?'text-blue-500':'opacity-50'}/>
-    <div className="min-w-0"><div className="font-semibold truncate">{c.name}</div><div className={`text-[10px] truncate ${dark?'text-slate-500':'text-slate-400'}`}>{c.disease}</div></div>
+  return(<button onClick={onClick} className={`w-full flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] text-left transition-colors ${active?(dark?'bg-blue-900/40 text-blue-400':'bg-blue-50 text-blue-700'):(dark?'text-slate-400 hover:bg-slate-800':'text-slate-500 hover:bg-slate-100')}`}>
+    <div className="min-w-0 flex-1"><span className="font-medium truncate">{c.name}</span><span className={`ml-1 text-[10px] ${dark?'text-slate-600':'text-slate-400'}`}>{c.disease}</span></div>
   </button>);
 }
 
@@ -3048,24 +3043,24 @@ function CalcView({calcId,openCalc,favs,toggleFav,dark}){
 
       {/* CALCULATOR TAB */}
       {tab==='calc'&&(<>
-        <div className={`rounded-2xl border ${bc} p-5 space-y-3`}>
+        <div className={`rounded-2xl border ${bc} p-4 space-y-2.5`}>
           {c.inputs.map(inp=>(
             <div key={inp.id}>
-              <label className={`block text-xs font-semibold mb-1.5 ${dark?'text-slate-300':'text-slate-700'}`}>{inp.label}</label>
+              <label className={`block text-[11px] font-semibold mb-1 ${dark?'text-slate-300':'text-slate-600'}`}>{inp.label}</label>
               {inp.type==='check'&&(
-                <button onClick={()=>update(inp.id,!vals[inp.id])} className={`w-full text-left px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${vals[inp.id]?(dark?'bg-blue-900/40 border-blue-700 text-blue-300':'bg-blue-50 border-blue-300 text-blue-800'):(dark?'bg-slate-800 border-slate-700 text-slate-300':'bg-slate-50 border-slate-200 text-slate-600')}`}>
-                  <span className="mr-2">{vals[inp.id]?'☑':'☐'}</span>{vals[inp.id]?'Yes':'No'}
+                <button onClick={()=>update(inp.id,!vals[inp.id])} className={`w-full text-left px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${vals[inp.id]?(dark?'bg-blue-900/40 border-blue-700 text-blue-300':'bg-blue-50 border-blue-300 text-blue-700'):(dark?'bg-slate-800 border-slate-700 text-slate-300':'bg-slate-50 border-slate-200 text-slate-600')}`}>
+                  <span className="mr-1.5">{vals[inp.id]?'☑':'☐'}</span>{vals[inp.id]?'Yes':'No'}
                 </button>
               )}
               {inp.type==='select'&&(
-                <select value={vals[inp.id]??''} onChange={e=>update(inp.id,Number(e.target.value))} className={`w-full px-4 py-2.5 rounded-xl border text-sm ${dark?'bg-slate-800 border-slate-700 text-slate-200':'bg-slate-50 border-slate-200 text-slate-700'} outline-none`}>
+                <select value={vals[inp.id]??''} onChange={e=>update(inp.id,Number(e.target.value))} className={`w-full px-3 py-1.5 rounded-lg border text-xs ${dark?'bg-slate-800 border-slate-700 text-slate-200':'bg-slate-50 border-slate-200 text-slate-700'} outline-none`}>
                   <option value="" disabled>Select…</option>
                   {inp.opts.map(([l,v])=><option key={l} value={v}>{l}</option>)}
                 </select>
               )}
               {inp.type==='number'&&(
                 <input type="number" value={vals[inp.id]??''} onChange={e=>update(inp.id,e.target.value===''?undefined:Number(e.target.value))} min={inp.min} max={inp.max} step={inp.step} placeholder={`${inp.min||''}–${inp.max||''}`}
-                  className={`w-full px-4 py-2.5 rounded-xl border text-sm ${dark?'bg-slate-800 border-slate-700 text-slate-200':'bg-slate-50 border-slate-200'} outline-none focus:border-blue-500`}/>
+                  className={`w-full px-3 py-1.5 rounded-lg border text-xs ${dark?'bg-slate-800 border-slate-700 text-slate-200':'bg-slate-50 border-slate-200'} outline-none focus:border-blue-500`}/>
               )}
             </div>
           ))}
