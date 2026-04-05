@@ -2653,16 +2653,24 @@ export default function App(){
   return(
     <div className={`min-h-screen font-sans transition-colors duration-300 ${dark?'bg-slate-950 text-slate-100':'bg-slate-50 text-slate-900'}`}>
       {/* HEADER */}
-      <header className={`fixed top-0 inset-x-0 z-50 ${dark?'bg-slate-900/95 border-slate-800':'bg-white/95 border-slate-200'} border-b backdrop-blur-md`}>
-        <div className="max-w-5xl mx-auto flex items-center h-14 px-4 gap-3">
-          <button onClick={()=>setMenu(!menu)} className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><Menu size={20}/></button>
-          <button onClick={goHome} className="flex items-center gap-2 mr-auto">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-xs ${dark?'bg-blue-600':'bg-slate-900'}`}>HC</div>
-            <div><span className="font-extrabold text-sm tracking-tight">HaemCalc</span><span className="text-blue-600 font-extrabold text-sm ml-0.5">Pro</span><span className={`text-[10px] ml-1.5 ${dark?'text-slate-500':'text-slate-400'}`}>v3.0</span></div>
+      <header className={`fixed top-0 inset-x-0 z-50 ${dark?'bg-slate-900/98 border-slate-800':'bg-white/98 border-slate-200'} border-b backdrop-blur-md shadow-sm`}>
+        <div className="max-w-[1400px] mx-auto flex items-center h-14 px-4 gap-3">
+          <button onClick={()=>setMenu(!menu)} className={`lg:hidden p-2 -ml-1 rounded-lg ${dark?'hover:bg-slate-800':'hover:bg-slate-100'}`}><Menu size={20}/></button>
+          <button onClick={goHome} className="flex items-center gap-2.5 mr-auto">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-xs tracking-tight shadow-sm ${dark?'bg-blue-600':'bg-slate-900'}`}>HC</div>
+            <div className="leading-none">
+              <span className="font-extrabold text-sm tracking-tight">HaemCalc</span>
+              <span className="text-blue-600 font-extrabold text-sm">Pro</span>
+              <span className={`text-[10px] ml-1.5 font-medium ${dark?'text-slate-500':'text-slate-400'}`}>v4.0</span>
+            </div>
           </button>
-          <button onClick={()=>setSearch(true)} className={`p-2 rounded-lg ${dark?'hover:bg-slate-800':'hover:bg-slate-100'}`}><Search size={18}/></button>
-          <button onClick={()=>setDark(!dark)} className={`p-2 rounded-lg ${dark?'hover:bg-slate-800':'hover:bg-slate-100'}`}>{dark?<Sun size={18}/>:<Moon size={18}/>}</button>
-          <span className={`hidden sm:flex text-[10px] font-bold px-2 py-0.5 rounded-full ${dark?'bg-amber-900/40 text-amber-400 border border-amber-800':'bg-amber-50 text-amber-700 border border-amber-200'}`}>🎓 Educational Only</span>
+          <button onClick={()=>setSearch(true)} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] ${dark?'bg-slate-800 text-slate-400 hover:bg-slate-700':'bg-slate-100 text-slate-500 hover:bg-slate-200'} transition-colors`}>
+            <Search size={14}/><span className="hidden sm:inline">Search…</span><kbd className={`hidden sm:inline text-[10px] px-1.5 py-0.5 rounded ${dark?'bg-slate-700 text-slate-500':'bg-slate-200 text-slate-400'}`}>⌘K</kbd>
+          </button>
+          <button onClick={()=>setDark(!dark)} className={`p-2 rounded-lg ${dark?'hover:bg-slate-800 text-slate-400':'hover:bg-slate-100 text-slate-500'} transition-colors`}>{dark?<Sun size={17}/>:<Moon size={17}/>}</button>
+          <span className={`hidden md:flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full ${dark?'bg-amber-900/30 text-amber-400 border border-amber-800/50':'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+            <AlertTriangle size={10}/> Educational Use Only
+          </span>
         </div>
       </header>
 
@@ -2675,7 +2683,7 @@ export default function App(){
       {/* DESKTOP LAYOUT */}
       <div className="flex pt-14 max-w-[1400px] mx-auto">
         {/* Desktop Sidebar */}
-        <aside className={`hidden lg:block w-64 fixed top-14 bottom-0 overflow-y-auto border-r ${dark?'border-slate-800 bg-slate-900/50':'border-slate-200 bg-white/50'} backdrop-blur-sm`}>
+        <aside className={`hidden lg:flex lg:flex-col w-64 fixed top-14 bottom-0 overflow-y-auto border-r ${dark?'border-slate-800 bg-slate-900':'border-slate-200 bg-white'}`}>
           <SideNav {...{openCalc,openPathway,goHome,favs,toggleFav,dark,calcId,setPage}}/>
         </aside>
         {/* Main Content */}
@@ -2734,11 +2742,15 @@ export default function App(){
 
 // ─── SIDEBAR NAV ─────────────────────────────────────────────────────────────
 function SideNav({openCalc,openPathway,goHome,favs,toggleFav,dark,calcId,setPage}){
-  const[expanded,setExpanded]=useState({malignant:true,benign:true,general:true});
+  // All collapsed by default — user expands what they need
+  const[expanded,setExpanded]=useState({malignant:false,benign:false,general:false});
   const[subExp,setSubExp]=useState({});
+  const[pathOpen,setPathOpen]=useState(false);
+  const[diagOpen,setDiagOpen]=useState(false);
   const toggleCat=(id)=>setExpanded(e=>({...e,[id]:!e[id]}));
-  const toggleSub=(id)=>setSubExp(e=>({...e,[id]:e[id]===false?true:e[id]===undefined?false:!e[id]}));
-  // Auto-expand the subcategory containing the active calc
+  const toggleSub=(id)=>setSubExp(e=>({...e,[id]:!e[id]}));
+
+  // Auto-expand the category + subcategory containing the active calc
   useEffect(()=>{
     if(!calcId)return;
     for(const cat of CATS){
@@ -2753,89 +2765,116 @@ function SideNav({openCalc,openPathway,goHome,favs,toggleFav,dark,calcId,setPage
     }
   },[calcId]);
 
-  const catBg=dark?'hover:bg-slate-800':'hover:bg-slate-100';
-  const subColor=dark?'text-slate-400':'text-slate-500';
+  const divider=`border-t ${dark?'border-slate-800':'border-slate-100'}`;
+  const sectionLabel=`px-3 text-[10px] font-semibold uppercase tracking-widest mb-1`;
+  const rowBase=`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] transition-colors text-left`;
+  const rowIdle=dark?'text-slate-400 hover:bg-slate-800 hover:text-slate-200':'text-slate-600 hover:bg-slate-100 hover:text-slate-900';
+  const rowActive=dark?'bg-blue-900/30 text-blue-300':'bg-blue-50 text-blue-700 font-semibold';
 
   return(
-    <div className="py-2 px-1.5 text-[12px]">
-      <button onClick={goHome} className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs font-medium mb-1 ${catBg}`}><Home size={13}/> Home</button>
+    <div className="py-3 px-2 space-y-0.5 text-[12px]">
 
-      {/* Favourites */}
-      {favs.length>0&&(<div className="pt-2 pb-0.5">
-        <div className={`px-2 text-[9px] font-bold uppercase tracking-widest ${dark?'text-amber-500':'text-amber-600'} mb-0.5`}>Favourites</div>
-        {favs.map(id=>{const c=C[id];return c?<NavItem key={id} c={c} active={calcId===id} onClick={()=>openCalc(id)} dark={dark}/>:null})}
-      </div>)}
+      {/* Home */}
+      <button onClick={goHome} className={`${rowBase} font-medium mb-2 ${dark?'text-slate-300 hover:bg-slate-800':'text-slate-700 hover:bg-slate-100'}`}>
+        <Home size={14} className="flex-shrink-0"/><span>Home</span>
+      </button>
 
-      {/* Pathways */}
-      <div className={`pt-2 border-t ${dark?'border-slate-800':'border-slate-100'}`}>
-        <div className={`px-2 text-[9px] font-bold uppercase tracking-widest ${dark?'text-blue-400':'text-blue-600'} mb-0.5`}>Pathways</div>
-        {PATHWAYS.map(p=>(
-          <button key={p.id} onClick={()=>openPathway(p.id)} className={`w-full flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] ${dark?'text-slate-400 hover:bg-slate-800':'text-slate-500 hover:bg-slate-100'}`}>
-            <Route size={10} className="opacity-40 flex-shrink-0"/><span className="truncate">{p.title}</span>
+      {/* Favourites — only shown when there are some */}
+      {favs.length>0&&(
+        <div className={`pt-3 pb-1 ${divider}`}>
+          <div className={`${sectionLabel} ${dark?'text-amber-500':'text-amber-600'}`}>Favourites</div>
+          {favs.map(id=>{const c=C[id];return c?<NavItem key={id} c={c} active={calcId===id} onClick={()=>openCalc(id)} dark={dark}/>:null})}
+        </div>
+      )}
+
+      {/* Clinical Pathways — collapsible */}
+      <div className={`pt-3 ${divider}`}>
+        <button onClick={()=>setPathOpen(o=>!o)} className={`w-full flex items-center justify-between px-3 py-1 mb-1 ${sectionLabel} ${dark?'text-blue-400 hover:text-blue-300':'text-blue-600 hover:text-blue-800'} transition-colors`}>
+          <span>Clinical Pathways</span>
+          <ChevronDown size={11} className={`transition-transform duration-200 ${pathOpen?'':'rotate-[-90deg]'}`}/>
+        </button>
+        {pathOpen&&PATHWAYS.map(p=>(
+          <button key={p.id} onClick={()=>openPathway(p.id)} className={`${rowBase} ${rowIdle}`}>
+            <Route size={12} className="flex-shrink-0 opacity-50"/><span className="truncate">{p.title}</span>
           </button>
         ))}
       </div>
 
-      {/* Diagnostic Modules */}
-      <div className={`pt-2 border-t ${dark?'border-slate-800':'border-slate-100'}`}>
-        <div className={`px-2 text-[9px] font-bold uppercase tracking-widest ${dark?'text-purple-400':'text-purple-600'} mb-0.5`}>Diagnostics</div>
-        {DIAGNOSTICS.map(d=>(
-          <button key={d.id} onClick={()=>setPage('diag:'+d.id)} className={`w-full flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] ${dark?'text-slate-400 hover:bg-slate-800':'text-slate-500 hover:bg-slate-100'}`}>
-            <GitBranch size={10} className="opacity-40 flex-shrink-0"/><span className="truncate">{d.title}</span>
+      {/* Diagnostic Modules — collapsible */}
+      <div className={`pt-3 ${divider}`}>
+        <button onClick={()=>setDiagOpen(o=>!o)} className={`w-full flex items-center justify-between px-3 py-1 mb-1 ${sectionLabel} ${dark?'text-purple-400 hover:text-purple-300':'text-purple-600 hover:text-purple-800'} transition-colors`}>
+          <span>Diagnostic Modules</span>
+          <ChevronDown size={11} className={`transition-transform duration-200 ${diagOpen?'':'rotate-[-90deg]'}`}/>
+        </button>
+        {diagOpen&&DIAGNOSTICS.map(d=>(
+          <button key={d.id} onClick={()=>setPage('diag:'+d.id)} className={`${rowBase} ${rowIdle}`}>
+            <GitBranch size={12} className="flex-shrink-0 opacity-50"/><span className="truncate">{d.title}</span>
           </button>
         ))}
       </div>
 
-      {/* Hierarchical Categories → Subcategories → Calculators */}
+      {/* Calculator Categories — all collapsed by default */}
       {CATS.map(cat=>{
         const subs=SUBS[cat.id]||[];
-        const isOpen=expanded[cat.id]!==false;
-        return(<div key={cat.id} className={`pt-2 border-t ${dark?'border-slate-800':'border-slate-100'}`}>
-          {/* CATEGORY HEADER */}
-          <button onClick={()=>toggleCat(cat.id)} className={`w-full flex items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest ${dark?'text-slate-500 hover:text-slate-300':'text-slate-400 hover:text-slate-600'} transition-colors`}>
-            <span style={{color:cat.color}}>{cat.label}</span>
-            <ChevronDown size={10} className={`ml-auto transition-transform duration-200 ${isOpen?'':'rotate-[-90deg]'}`}/>
-          </button>
+        const isOpen=!!expanded[cat.id];
+        // Check if any calc in this category is active
+        const catActive=subs.some(s=>s.calcs.includes(calcId));
+        return(
+          <div key={cat.id} className={`pt-3 ${divider}`}>
+            {/* Category header */}
+            <button onClick={()=>toggleCat(cat.id)}
+              className={`w-full flex items-center justify-between px-3 py-1 mb-1 rounded-lg transition-colors ${dark?'hover:bg-slate-800':'hover:bg-slate-100'}`}>
+              <span className={`text-[10px] font-semibold uppercase tracking-widest ${catActive?'':'opacity-80'}`} style={{color:cat.color}}>{cat.label}</span>
+              <ChevronDown size={11} className={`transition-transform duration-200 flex-shrink-0 ${isOpen?'':'rotate-[-90deg]'}`} style={{color:cat.color,opacity:0.6}}/>
+            </button>
 
-          {/* SUBCATEGORIES */}
-          {isOpen&&subs.map(sub=>{
-            const subOpen=subExp[sub.id]!==false;
-            const hasActive=sub.calcs.includes(calcId);
-            return(<div key={sub.id}>
-              {/* SUBCATEGORY HEADER */}
-              <button onClick={()=>toggleSub(sub.id)}
-                className={`w-full flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium transition-colors ${
-                  hasActive?(dark?'text-blue-400':'text-blue-600'):
-                  (dark?'text-slate-400 hover:text-slate-200':'text-slate-500 hover:text-slate-700')
-                }`}>
-                <span className="flex-1 text-left truncate">{sub.label}</span>
-                <ChevronDown size={9} className={`flex-shrink-0 transition-transform duration-200 ${subOpen?'':'rotate-[-90deg]'}`}/>
-              </button>
+            {/* Subcategories */}
+            {isOpen&&subs.map(sub=>{
+              const subOpen=!!subExp[sub.id];
+              const hasActive=sub.calcs.includes(calcId);
+              return(
+                <div key={sub.id} className="mb-0.5">
+                  <button onClick={()=>toggleSub(sub.id)}
+                    className={`${rowBase} font-medium ${hasActive?(dark?'text-blue-300':'text-blue-700'):(dark?'text-slate-300 hover:bg-slate-800':'text-slate-600 hover:bg-slate-100')}`}>
+                    <ChevronRight size={11} className={`flex-shrink-0 transition-transform duration-150 ${subOpen?'rotate-90':''} opacity-50`}/>
+                    <span className="truncate flex-1">{sub.label}</span>
+                  </button>
 
-              {/* CALCULATOR ITEMS */}
-              {subOpen&&(<div className="ml-2 border-l pl-1" style={{borderColor:hasActive?(dark?'#3b82f6':'#93c5fd'):(dark?'#1e293b':'#e2e8f0')}}>
-                {sub.calcs.map(id=>{
-                  const c=C[id];
-                  if(!c)return null;
-                  return <NavItem key={id} c={c} active={calcId===id} onClick={()=>openCalc(id)} dark={dark}/>;
-                })}
-              </div>)}
-            </div>);
-          })}
-        </div>);
+                  {/* Calculator list */}
+                  {subOpen&&(
+                    <div className={`ml-3 pl-2.5 border-l space-y-0.5 mb-1`} style={{borderColor:hasActive?(dark?'#3b82f6':'#bfdbfe'):(dark?'#1e293b':'#e2e8f0')}}>
+                      {sub.calcs.map(id=>{
+                        const c=C[id];
+                        if(!c)return null;
+                        return <NavItem key={id} c={c} active={calcId===id} onClick={()=>openCalc(id)} dark={dark}/>;
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
       })}
 
       {/* About */}
-      <div className={`pt-2 mt-1 border-t ${dark?'border-slate-800':'border-slate-100'}`}>
-        <button onClick={()=>setPage('about')} className={`w-full flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] ${dark?'text-slate-500 hover:bg-slate-800':'text-slate-400 hover:bg-slate-100'}`}><User size={12}/> About</button>
+      <div className={`pt-3 ${divider}`}>
+        <button onClick={()=>setPage('about')} className={`${rowBase} ${dark?'text-slate-500 hover:bg-slate-800 hover:text-slate-300':'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>
+          <User size={13} className="flex-shrink-0"/><span>About</span>
+        </button>
       </div>
     </div>
   );
 }
 function NavItem({c,active,onClick,dark}){
-  return(<button onClick={onClick} className={`w-full flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] text-left transition-colors ${active?(dark?'bg-blue-900/40 text-blue-400':'bg-blue-50 text-blue-700'):(dark?'text-slate-400 hover:bg-slate-800':'text-slate-500 hover:bg-slate-100')}`}>
-    <div className="min-w-0 flex-1"><span className="font-medium truncate">{c.name}</span><span className={`ml-1 text-[10px] ${dark?'text-slate-600':'text-slate-400'}`}>{c.disease}</span></div>
-  </button>);
+  return(
+    <button onClick={onClick} className={`w-full flex items-center gap-1.5 px-2 py-1 rounded-md text-[11.5px] text-left transition-colors ${active?(dark?'bg-blue-900/30 text-blue-300 font-semibold':'bg-blue-50 text-blue-700 font-semibold'):(dark?'text-slate-400 hover:bg-slate-800 hover:text-slate-200':'text-slate-500 hover:bg-slate-100 hover:text-slate-800')}`}>
+      <div className="min-w-0 flex-1 leading-snug">
+        <span className="block font-medium truncate">{c.name}</span>
+        <span className={`text-[10px] truncate ${dark?'text-slate-600':'text-slate-400'}`}>{c.disease}</span>
+      </div>
+    </button>
+  );
 }
 
 // ─── SEARCH OVERLAY ──────────────────────────────────────────────────────────
