@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Search, Moon, Sun, Star, Clock, ChevronRight, ChevronDown, ChevronLeft, AlertTriangle, BookOpen, Info, Activity, Clipboard, Check, Home, Grid3X3, Route, User, X, Menu, Heart, Zap, FlaskConical, Droplets, Calculator, ArrowRight, Shield, Brain, FileText, ExternalLink, RotateCcw, Copy, Printer, Stethoscope, TrendingUp, CircleDot, Microscope, Syringe, Pill, TestTube, Flame, Target, Scale, Gauge, Thermometer, Eye, Bone, Beaker, TreePine, BadgeCheck, ShieldAlert, ChevronUp, Layers, CircleAlert, TriangleAlert, Phone, ListChecks, GitBranch, Trash2, ShieldCheck, Lock, Globe, Accessibility } from "lucide-react";
 
 /* ============================================================================
-   HAEMCALC PRO v4.3 — GOLD-STANDARD CLINICAL DECISION PLATFORM
+   HAEMCALC PRO v4.4 — GOLD-STANDARD CLINICAL DECISION PLATFORM
    Consultant-grade · Evidence-based · Guideline-aligned
    112 calculators · 11 clinical pathways · 7 diagnostic modules
    ============================================================================ */
@@ -101,7 +101,7 @@ flipi: {
   calc:(v)=>{
     const s=Object.values(v).filter(Boolean).length;
     let risk,label,os,interp,next;
-    if(s<=1){risk='low';label='Low Risk';os='71%';interp='Favourable prognosis. 10-year OS ~71% (pre-Rituximab); modern outcomes are better. Low-risk disease is often managed with watch-and-wait.';next='Watch and wait if asymptomatic (apply GELF/BNLI criteria formally). When treatment indicated: R-Bendamustine preferred over R-CHOP. Add Rituximab maintenance post-induction (PRIMA trial).';}
+    if(s<=1){risk='low';label='Low Risk';os='71%';interp='Favourable prognosis. 10-year OS ~71% (pre-Rituximab era); modern outcomes are substantially better. Watch-and-wait is the standard approach for asymptomatic low-risk FL.';next='Watch and wait if asymptomatic — apply GELF/BNLI criteria formally before any treatment decision. When treatment is indicated: R-Bendamustine preferred over R-CHOP. Rituximab maintenance post-induction (PRIMA trial data).';}
     else if(s===2){risk='int';label='Intermediate Risk';os='51%';interp='Intermediate prognosis. 10-year OS ~51% (pre-Rituximab). Treatment decisions are guided by symptom burden and GELF criteria.';next='Treat when symptomatic or GELF criteria met. R-Bendamustine or R-CHOP followed by Rituximab maintenance. Enrol in clinical trial if available. Apply PRIMA-PI for simpler re-stratification.';}
     else{risk='high';label='High Risk';os='36%';interp='Higher-risk disease. 10-year OS ~36% (pre-Rituximab). Treatment is indicated when symptomatic or GELF criteria are met.';next='Treat when symptomatic. R-Bendamustine preferred. Rituximab maintenance provides greatest benefit in high-FLIPI patients (PRIMA trial). Enrol in clinical trial.';}
 
@@ -320,7 +320,7 @@ sokal: {
     let risk,label,interp,next;
     if(sr<0.8){risk='low';label='Low Risk';interp='Low risk. Best expected outcomes on TKI therapy (pre-imatinib era derivation).';next='Imatinib 400mg daily or 2nd-gen TKI (dasatinib, nilotinib, or bosutinib). Monitor BCR::ABL1 at 3, 6, and 12 months per ELN 2020 milestones. Use ELTS score for TKI-era prognosis.';}
     else if(sr<=1.2){risk='int';label='Intermediate Risk';interp='Intermediate Sokal risk. 2nd-gen TKI provides better molecular response rates than imatinib.';next='2nd-gen TKI preferred (dasatinib or nilotinib). Monitor BCR::ABL1 at ELN milestones: ≤10% at 3mo, ≤1% at 6mo, ≤0.1% at 12mo. Use ELTS score for TKI-era risk stratification.';}
-    else{risk='high';label='High Risk';interp='High Sokal risk. TKI resistance and earlier progression are more likely in this group.';next:'2nd-gen TKI mandatory (dasatinib or nilotinib over imatinib). Very close molecular monitoring. Consider ABL1 mutation analysis if suboptimal response. ELTS score for TKI-era prognosis. Clinical trial enrolment if available.';}
+    else{risk='high';label='High Risk';interp='High Sokal risk. TKI resistance and earlier progression are more likely in this group.';next='2nd-gen TKI mandatory (dasatinib or nilotinib over imatinib). ABL1 kinase domain mutation analysis if suboptimal ELN response. ELTS score for TKI-era risk stratification. Clinical trial enrolment is appropriate.';}
     return{score:sr,max:null,risk,label,stats:[['Sokal Score',sr.toFixed(2)]],interp,next};
   }
 },
@@ -369,7 +369,7 @@ fourts: {
     let risk,label,interp,next;
     if(s<=3){risk='low';label='Low Probability (~5%)';interp='HIT unlikely. Negative predictive value ~99%. Alternative causes of thrombocytopenia are substantially more likely.';next='HIT effectively excluded. Investigate alternative causes (sepsis, drugs, DIC, other). Heparin continuation is safe if clinically indicated. Anti-PF4 antibody testing is not required.';}
     else if(s<=5){risk='int';label='Intermediate Probability (~14%)';interp='HIT cannot be excluded. Treat as HIT until proven otherwise.';next='STOP ALL HEPARIN IMMEDIATELY (including line flushes). Switch to therapeutic-dose non-heparin anticoagulant (argatroban, fondaparinux, or DOAC). Send anti-PF4 antibody ELISA ± functional assay (SRA). Do NOT start warfarin until platelets >150.';}
-    else{risk='high';label='High Probability (~64%)';interp='HIT highly likely (~64%). Thrombotic risk is substantial, including in the absence of confirmed thrombosis.';next:'STOP ALL HEPARIN IMMEDIATELY (including all flushes and LMWH). Start therapeutic-dose non-heparin anticoagulant NOW. Send anti-PF4 antibody urgently. Image for occult thrombosis. Do NOT transfuse platelets — paradoxically worsens thrombotic risk. Do NOT start warfarin until platelet count >150.';}
+    else{risk='high';label='High Probability (~64%)';interp='HIT highly likely (~64%). Thrombotic risk is substantial, including in the absence of confirmed thrombosis.';next='STOP ALL HEPARIN IMMEDIATELY (including all flushes and LMWH). Start therapeutic-dose non-heparin anticoagulant NOW. Send anti-PF4 antibody urgently. Image for occult thrombosis. Do NOT transfuse platelets — paradoxically worsens thrombotic risk. Do NOT start warfarin until platelet count >150.';}
     return{score:s,max:8,risk,label,stats:[],interp,next};
   }
 },
@@ -444,8 +444,8 @@ chads: {
     const s=(v.chf?1:0)+(v.htn?1:0)+(v.age75?2:0)+(v.dm?1:0)+(v.stroke?2:0)+(v.vasc?1:0)+(v.age65?1:0)+(v.female?1:0);
     let risk,label,annual,interp,next;
     if(s===0){risk='low';label='Low Risk';annual='~0.2%';interp='Very low stroke risk (~0.2%/year). Annual risk is comparable to general population. Anticoagulation is not recommended.';next='No OAC indicated (male score 0). Reassess annually and at any change in clinical status or new risk factor development.';}
-    else if(s===1){risk='int';label='Low-Moderate Risk';annual='~0.6–1.3%';interp='Low-moderate stroke risk (~0.6–1.3%/year). Anticoagulation decision is individualised.';next:'For male patients: OAC is an individual decision (annual risk 0.6–1.3%). For female patients with score 1 from sex alone: OAC is NOT indicated. If OAC started: DOAC preferred over warfarin. Assess bleeding risk (HAS-BLED).';}
-    else{risk='high';label='Moderate-High Risk';annual=s<=3?'~2.2–3.2%':'>4%';interp:'Anticoagulation is clearly indicated (annual stroke risk '+(s<=3?'~2.2–3.2%':'>4%')+').';next='Start OAC. DOAC preferred (apixaban, rivaroxaban, dabigatran, or edoxaban) unless contraindicated. Assess bleeding risk with HAS-BLED — a high HAS-BLED score identifies modifiable risk factors to address, NOT a reason to withhold OAC.';}
+    else if(s===1){risk='int';label='Low-Moderate Risk';annual='~0.6–1.3%';interp='Low-moderate stroke risk (~0.6–1.3%/year). Anticoagulation decision is individualised.';next='Male patients (score 1): OAC is an individual decision — annual risk 0.6–1.3%. Female patients with score 1 from sex alone: OAC is NOT indicated. If OAC initiated: DOAC preferred over warfarin. Calculate HAS-BLED to identify modifiable bleeding risk factors.';}
+    else{risk='high';label='Moderate-High Risk';annual=s<=3?'~2.2–3.2%':'>4%';interp='Anticoagulation is clearly indicated. Annual stroke risk '+(s<=3?'~2.2–3.2%':'>4%')+'. The absolute benefit of OAC substantially outweighs bleeding risk at this score.';next='Start OAC. DOAC preferred (apixaban, rivaroxaban, dabigatran, or edoxaban) unless contraindicated. HAS-BLED ≥3 identifies modifiable risk factors to correct — it does NOT contraindicate OAC in patients with high stroke risk.';}
     return{score:s,max:9,risk,label,stats:[['Annual stroke risk',annual]],interp,next};
   }
 },
@@ -551,9 +551,9 @@ egfr: {
     if(e>=90){risk='low';label='Normal or High (G1)';stage='G1';interp='Normal renal function.';next='No dose adjustment needed for most drugs. Monitor annually if risk factors (diabetes, hypertension).';}
     else if(e>=60){risk='low';label='Mildly Decreased (G2)';stage='G2';interp='Mildly reduced eGFR.';next='Monitor annually. BP control. Reduce nephrotoxic drug exposure. Check urine ACR.';}
     else if(e>=45){risk='int';label='Mild-Moderate (G3a)';stage='G3a';interp='Mild-moderate CKD.';next='Refer to nephrology if progressive. Dose-adjust renally cleared drugs. Check PTH, calcium, phosphate, vitamin D. ACEi/ARB if proteinuria.';}
-    else if(e>=30){risk='int';label:'Moderate-Severe (G3b)';stage='G3b';interp='Moderate-severe CKD.';next='Nephrology referral. Drug dose adjustments essential (DOACs, metformin, chemotherapy). Avoid NSAIDs, IV contrast caution. Bone mineral disease screening.';}
-    else if(e>=15){risk='high';label:'Severe (G4)';stage='G4';interp='Severe CKD approaching dialysis threshold.';next='Nephrology co-management. Pre-dialysis planning. Many drugs contraindicated or require major dose reduction. Avoid gadolinium (NSF risk). Discuss transplant listing.';}
-    else{risk='vhigh';label:'Kidney Failure (G5)';stage='G5';interp='Kidney failure.';next='Dialysis or transplant planning. Major drug restrictions. Specialist prescribing only for most medications.';}
+    else if(e>=30){risk='int';label='Moderate-Severe (G3b)';stage='G3b';interp='Moderate-severe CKD. Dose adjustment is required for the majority of renally cleared drugs.';next='Nephrology referral. Dose-adjust DOACs, metformin (avoid if eGFR <30), LMWHs, and chemotherapy agents. Avoid NSAIDs. IV contrast caution. Screen for CKD-mineral bone disease (PTH, calcium, phosphate, vitamin D).';}
+    else if(e>=15){risk='high';label='Severe (G4)';stage='G4';interp='Severe CKD approaching dialysis threshold. Major drug restrictions apply.';next='Nephrology co-management required. Pre-dialysis/pre-transplant planning. Avoid gadolinium (NSF risk), NSAIDs, nephrotoxins. Most DOACs and metformin are contraindicated. Recalculate drug doses before each prescription.';}
+    else{risk='vhigh';label='Kidney Failure (G5)';stage='G5';interp='Kidney failure (eGFR <15). Dialysis or transplant is required.';next='Specialist nephrology prescribing for all medications. Major restrictions on DOACs, diuretics, ACEi/ARBs. Dialysis or transplant planning. Reassess all drug doses — most standard formulae do not apply at this eGFR.';}
     return{score:e,max:null,risk,label,stats:[['eGFR',e+' mL/min/1.73m²'],['CKD Stage',stage],['Creatinine',v.creat+' µmol/L']],interp,next};
   }
 },
@@ -760,7 +760,7 @@ mipi: {
     const s=Object.values(v).reduce((a,b)=>a+b,0);
     let risk,label,os,interp,next;
     if(s<=3){risk='low';label='Low Risk';os='Not reached (~60% 5yr)';interp='Best prognosis group.';next='If young/fit: intensive induction (R-DHAP/R-CHOP alternating) + ASCT + rituximab maintenance. If elderly/unfit: R-Benda or VR-CAP. Consider MIPI-b if Ki-67 available.';}
-    else if(s<=5){risk='int';label='Intermediate Risk';os='~51 months';interp='Intermediate prognosis.';next='Treatment as per fitness. ASCT if eligible. Rituximab maintenance. Check TP53 (if mutated: poor response to chemoimmunotherapy — consider BTKi-based approach).';}
+    else if(s<=5){risk='int';label='Intermediate Risk';os='~51 months';interp='Intermediate prognosis. Median OS ~51 months. A proportion of patients will relapse early and require alternative strategies.';next='Treatment based on fitness. ASCT if eligible. Rituximab maintenance post-induction. TP53 testing is mandatory — if mutated: chemoimmunotherapy response is poor, BTKi-based regimen (ibrutinib ± rituximab) is required instead.';}
     else{risk='high';label='High Risk';os='~29 months';interp='Poor prognosis.';next='Clinical trial preferred. Consider ibrutinib-based combinations. TP53 testing mandatory. Discuss allogeneic SCT if young. R-BAC or dose-adjusted approaches for elderly.';}
     return{score:s,max:11,risk,label,stats:[['Median OS',os]],interp,next};
   }
@@ -885,9 +885,9 @@ khorana: {
   calc:(v)=>{
     const s=(v.cancer||0)+(v.plt3?1:0)+(v.hgb2?1:0)+(v.wbc2?1:0)+(v.bmi?1:0);
     let risk,label,vte6m,interp,next;
-    if(s===0){risk='low';label='Low Risk';vte6m='~0.3–1.5%';interp='Low VTE risk.';next='Routine thromboprophylaxis NOT recommended. Standard advice: mobilisation, hydration. Reassess if risk factors change.';}
-    else if(s<=2){risk='int';label='Intermediate Risk';vte6m='~1.8–3.6%';interp='Moderate VTE risk.';next='ASCO/ISTH guidelines recommend considering thromboprophylaxis for Khorana ≥2. Options: rivaroxaban 10mg daily or apixaban 2.5mg BD for duration of chemotherapy (CASSINI/AVERT trials). Discuss bleeding risk.';}
-    else{risk='high';label='High Risk';vte6m='~4.1–7%';interp='High VTE risk.';next='Thromboprophylaxis RECOMMENDED (Khorana ≥3). Rivaroxaban 10mg OD or apixaban 2.5mg BD. Duration: through chemotherapy or minimum 6 months. Assess bleeding risk (GI/GU cancers higher bleed risk with DOACs).';}
+    if(s===0){risk='low';label='Low Risk';vte6m='~0.3–1.5%';interp='Low VTE risk (~0.3–1.5% at 6 months). Pharmacological thromboprophylaxis is not recommended.';next='Routine chemotherapy-associated thromboprophylaxis is NOT indicated. Encourage mobilisation and hydration. Reassess at each cycle if new risk factors develop.';}
+    else if(s<=2){risk='int';label='Intermediate Risk';vte6m='~1.8–3.6%';interp='Intermediate VTE risk (~1.8–3.6% at 6 months). ASCO 2023 and ISTH guidelines recommend pharmacological prophylaxis at Khorana ≥2.';next='Thromboprophylaxis is recommended. Rivaroxaban 10mg OD or apixaban 2.5mg BD for the duration of chemotherapy (CASSINI/AVERT trial evidence). Assess bleeding risk before initiating — GI/GU cancers have higher bleeding risk with DOACs.';}
+    else{risk='high';label='High Risk';vte6m='~4.1–7%';interp='High VTE risk (~4.1–7% at 6 months). Thromboprophylaxis is clearly indicated and reduces VTE risk by approximately 50%.';next='Thromboprophylaxis is indicated. Rivaroxaban 10mg OD or apixaban 2.5mg BD for duration of chemotherapy, minimum 6 months. GI/GU malignancies: weigh higher DOAC bleeding risk carefully. LMWH is an alternative if DOAC contraindicated.';}
     return{score:s,max:6,risk,label,stats:[['6-month VTE risk',vte6m],['Khorana Score',s]],interp,next};
   }
 },
@@ -1644,7 +1644,7 @@ elnCml: {
     }else{
       if(b<=0.1){risk='low';label='Sustained MMR';interp='Optimal ongoing response.';next='Continue monitoring every 3-6 months. Discuss TFR if MR4 sustained ≥2 years on 2G-TKI or ≥3 years on imatinib.';}
       else if(b===999){risk='high';label='Loss of Response';interp='Loss of previously achieved milestone.';next='URGENT: mutation analysis. Switch TKI. Consider transplant referral if T315I or compound mutations. Compliance check.';}
-      else{risk='int';label:'Suboptimal/Loss of MMR';interp='BCR::ABL1 rising above 0.1%.';next='Repeat in 1-3 months. If confirmed loss: mutation analysis, TKI switch consideration.';}
+      else{risk='int';label='Suboptimal/Loss of MMR';interp='BCR::ABL1 rising above 0.1% — loss of major molecular response. Prompt action is required.';next='Repeat BCR::ABL1 (IS) within 4–6 weeks to confirm. If confirmed loss of MMR: ABL1 kinase domain mutation analysis. Assess compliance. TKI switch based on mutation profile. MDT discussion.';}
     }
     return{score:b<=0.1?'MMR':b<=1?'<1%':b<=10?'1-10%':b===999?'Loss':'>10%',max:null,risk,label,stats:[['Time',t+' months'],['BCR::ABL1',b===999?'Loss of response':b+'% IS']],interp,next};}
 },
@@ -1786,9 +1786,9 @@ itpbat: {
   calc:(v)=>{const maxGrade=Math.max(v.skin||0,v.muc||0,v.organ||0);let risk,label,interp,next;
     if(maxGrade<=1){risk='low';label='Grade 0–1 (Minimal)';interp='Minimal or no bleeding.';next='Treatment may not be required. Consider if plt <20-30 and/or patient preferences/lifestyle. Aspirin avoidance.';}
     else if(maxGrade===2){risk='int';label='Grade 2 (Moderate)';interp='Moderate bleeding requiring attention.';next='Consider treatment if plt <30 or symptomatic. First-line: corticosteroids (prednisolone 1mg/kg or dexamethasone 40mg ×4 days). IVIg if rapid response needed.';}
-    else if(maxGrade===3){risk='high';label:'Grade 3 (Severe)';interp:'Severe bleeding.';next:'ADMIT. IVIg 1g/kg (rapid onset) + corticosteroids. Consider platelet transfusion if life-threatening bleeding. Tranexamic acid adjunct. If refractory: TPO-RA (romiplostim/eltrombopag) or rituximab.';}
-    else{risk='vhigh';label:'Grade 4 (Life-Threatening)';interp:'Life-threatening haemorrhage (ICH, massive GI).';
-      next:'EMERGENCY: IVIg 1g/kg stat, IV methylprednisolone 1g, platelet transfusion, tranexamic acid, urgent senior review. If ICH: neurosurgical assessment, consider romiplostim. Splenectomy may be required for refractory cases.';}
+    else if(maxGrade===3){risk='high';label='Grade 3 (Severe)';interp='Severe bleeding requiring urgent treatment. Admission and haematology review are required.';next='ADMIT. IVIg 1g/kg IV (fastest onset) + prednisolone 1mg/kg (or dexamethasone 40mg ×4 days). Platelet transfusion if actively life-threatening. Tranexamic acid as adjunct. If refractory to first-line: TPO-RA (romiplostim or eltrombopag) or rituximab.';}
+    else{risk='vhigh';label='Grade 4 (Life-Threatening)';interp='Life-threatening haemorrhage (ICH or massive GI bleeding). This is a haematological emergency.';
+      next='EMERGENCY. IVIg 1g/kg IV stat + IV methylprednisolone 1g + platelet transfusion (temporising) + tranexamic acid. Urgent senior haematology review. If ICH: immediate neurosurgical assessment. If refractory: romiplostim, rituximab, or emergency splenectomy discussion.';}
     return{score:maxGrade,max:4,risk,label,stats:[['Max Grade',maxGrade],['Skin','G'+(v.skin||0)],['Mucous','G'+(v.muc||0)]],interp,next};}
 },
 aasev: {
@@ -1907,9 +1907,9 @@ cfs: {
     ['8: Very Severely Frail — completely dependent, approaching end of life',8],['9: Terminally Ill — approaching end of life, life expectancy <6 months',9]]}],
   calc:(v)=>{const s=v.cfs||1;let risk,label,interp,next;
     if(s<=3){risk='low';label='Fit (CFS 1-3)';interp='Not frail. Fit for standard-intensity treatment.';next='Standard oncology treatment appropriate. Full-dose chemotherapy. Transplant eligible if otherwise appropriate. No age-based dose reduction needed.';}
-    else if(s===4){risk='low';label:'Vulnerable (CFS 4)';interp:'Pre-frail. May tolerate standard treatment with close monitoring.';next:'Consider comprehensive geriatric assessment. Standard treatment usually tolerable. Close monitoring for toxicity. Exercise prehabilitation may help.';}
-    else if(s<=6){risk='int';label:'Frail (CFS 5-6)';interp:'Frail. Standard-intensity treatment likely not tolerated.';next:'Dose-reduced or less intensive regimens. Comprehensive geriatric assessment recommended. Targeted/oral therapies preferred. Transplant generally not appropriate. Focus on maintaining function and quality of life.';}
-    else{risk='high';label:'Severely Frail (CFS 7-9)';interp:'Severe frailty or terminal.';next:'Best supportive care for most cancers. Palliative care referral. Very limited role for anti-cancer therapy. Focus on symptom control, comfort, and goals of care discussions.';}
+    else if(s===4){risk='low';label='Vulnerable (CFS 4)';interp='Pre-frail. Standard treatment is tolerable with close monitoring. Comprehensive geriatric assessment (CGA) will identify reversible contributors.';next='Comprehensive geriatric assessment before treatment initiation. Standard treatment is appropriate with enhanced toxicity monitoring. Exercise prehabilitation where time permits.';}
+    else if(s<=6){risk='int';label='Frail (CFS 5-6)';interp='Frail. Standard-intensity chemotherapy carries unacceptable toxicity risk. Treatment de-escalation is required.';next='Comprehensive geriatric assessment required. Use dose-reduced, attenuated, or oral/targeted regimens. Allogeneic SCT is not appropriate at this frailty level. Goals of care and functional maintenance must be central to the treatment plan.';}
+    else{risk='high';label='Severely Frail (CFS 7-9)';interp='Severe frailty or approaching end of life. Anti-cancer therapy is unlikely to be tolerated or beneficial.';next='Best supportive care is the appropriate focus. Palliative care referral. Any anti-cancer therapy requires exceptional justification and patient-centred goals of care discussion. Symptom control and quality of life are the priorities.';}
     return{score:'CFS '+s,max:9,risk,label,stats:[['CFS Score',s+'/9']],interp,next};}
 },
 g8: {
@@ -2037,10 +2037,10 @@ anc: {
     if(a>=1.5){risk='low';label='Normal (≥1.5)';grade='None';interp='Normal neutrophil count.';next='No neutropenia. Standard management.';}
     else if(a>=1.0){risk='low';label='Mild Neutropenia (1.0-1.5)';grade='Grade 1';interp='Mild neutropenia.';next='Usually no intervention needed. May delay next chemotherapy cycle if recent treatment. Recheck in 1-2 days if on chemo.';}
     else if(a>=0.5){risk='int';label='Moderate Neutropenia (0.5-1.0)';grade='Grade 2-3';interp='Moderate neutropenia — infection risk increasing.';next='If on chemotherapy: consider dose delay/reduction. Avoid crowded places. Low threshold for antibiotics if febrile. G-CSF may be indicated for secondary prophylaxis.';}
-    else if(a>=0.1){risk='high';label:'Severe Neutropenia (<0.5)';grade='Grade 4';interp:'Severe neutropenia — high infection risk.';
-      next:'Neutropenic precautions. If febrile (≥38°C): EMERGENCY — neutropenic sepsis protocol, IV antibiotics within 1 HOUR, MASCC score. G-CSF if chemotherapy-induced. Avoid IM injections, rectal examinations.';}
-    else{risk='vhigh';label:'Profound Neutropenia (<0.1)';grade='Grade 4 (profound)';interp:'Profound neutropenia — extreme infection risk.';
-      next:'MAXIMUM precautions. Anti-fungal prophylaxis (posaconazole). If febrile: emergency IV antibiotics + consider empirical antifungals at 72-96h if not responding. Protective isolation. G-CSF.';}
+    else if(a>=0.1){risk='high';label='Severe Neutropenia (<0.5)';grade='Grade 4';interp='Severe neutropenia. High risk of bacterial and fungal infection. Fever requires immediate assessment.';
+      next='Neutropenic precautions in place. If febrile (≥38°C single or ≥37.5°C twice): EMERGENCY — neutropenic sepsis protocol immediately. IV broad-spectrum antibiotics within 1 hour (piperacillin-tazobactam or meropenem). MASCC score. G-CSF if chemotherapy-induced. No IM injections or rectal examinations.';}
+    else{risk='vhigh';label='Profound Neutropenia (<0.1)';grade='Grade 4 (profound)';interp='Profound neutropenia. Extreme infection risk — bacterial, fungal, and viral. Any fever is a medical emergency.';
+      next='Protective isolation. Antifungal prophylaxis (posaconazole or fluconazole per protocol). If febrile: immediate IV broad-spectrum antibiotics. Add empirical antifungal (caspofungin or liposomal amphotericin B) if no defervescence at 72–96 hours. G-CSF. Senior haematology review.';}
     return{score:a.toFixed(2),max:null,risk,label,stats:[['ANC',a.toFixed(2)+' ×10⁹/L'],['Grade',grade]],interp,next};}
 },
 rpi: {
@@ -2058,10 +2058,10 @@ rpi: {
     let matTime=1.0;if(v.hct<35)matTime=1.5;if(v.hct<25)matTime=2.0;if(v.hct<15)matTime=2.5;
     const rpi=corrRetic/matTime;const r=Math.round(rpi*10)/10;
     let risk,label,interp,next;
-    if(r>=2){risk='low';label:'RPI ≥2 — Appropriate Marrow Response';interp:'Bone marrow is responding appropriately to anaemia — suggests peripheral destruction (haemolysis) or blood loss.';
-      next:'Investigate haemolysis: LDH, haptoglobin, bilirubin (indirect), blood film (fragments, spherocytes), DAT (direct antiglobulin test). If DAT positive: autoimmune haemolytic anaemia. If fragments: MAHA (TTP/HUS/DIC). If no haemolysis: investigate blood loss.';}
-    else{risk='int';label:'RPI <2 — Inadequate Marrow Response';interp:'Bone marrow is NOT responding appropriately — suggests underproduction (deficiency, marrow failure, or suppression).';
-      next:'Investigate underproduction: iron studies (ferritin, Tsat), B12, folate, TSH, renal function (EPO). If all normal: consider bone marrow biopsy for MDS, aplastic anaemia, infiltration.';}
+    if(r>=2){risk='low';label='RPI ≥2 — Appropriate Marrow Response';interp='Bone marrow is responding appropriately. The cause of anaemia is peripheral destruction (haemolysis) or blood loss, not marrow failure.';
+      next='Investigate haemolysis: LDH, haptoglobin, indirect bilirubin, blood film (fragments, spherocytes), DAT. DAT positive → autoimmune haemolytic anaemia. Fragments → MAHA (TTP/HUS/DIC — send ADAMTS13, treat urgently). No haemolysis → investigate blood loss source.';}
+    else{risk='int';label='RPI <2 — Inadequate Marrow Response';interp='Bone marrow is NOT responding appropriately. This indicates underproduction — nutritional deficiency, marrow failure, or suppression.';
+      next='Investigate underproduction: iron studies (ferritin, Tsat), B12, folate, TSH, renal function, serum EPO level. If all correctable causes excluded: bone marrow aspirate and trephine for MDS, aplastic anaemia, or infiltration.';}
     return{score:r,max:null,risk,label,stats:[['RPI',r.toFixed(1)],['Corrected Retic',corrRetic.toFixed(1)+'%'],['Maturation factor',matTime+'d']],interp,next};}
 },
 // ─── BATCH 5: FINAL — REACHING 100 CALCULATORS ──────────────────────────────
@@ -2674,7 +2674,7 @@ dipssplus:{
     let risk,label,os,interp,next;
     if(total===0){risk='low';label='Low Risk';os='Not reached';interp='Favourable prognosis.';next='Observation if asymptomatic. Ruxolitinib for symptomatic splenomegaly or constitutional symptoms. Transplant NOT indicated in low risk.';}
     else if(total===1){risk='int';label='Intermediate-1';os='~14.2 yrs';interp='Moderate prognosis.';next='Ruxolitinib for symptomatic burden or splenomegaly. Transplant generally not indicated. Annual reassessment. Obtain full molecular profiling (JAK2/CALR/MPL/HMR mutations) for MIPSS70+ risk refinement.';}
-    else if(total<=3){risk='high';label='Intermediate-2';os='~4 yrs';interp='Poor prognosis. Transplant should be considered.';next='Ruxolitinib as standard initial therapy. REFER FOR TRANSPLANT ASSESSMENT — this is the pivotal decision. Obtain HCT-CI, donor search. Fedratinib or pacritinib if ruxolitinib-intolerant. Molecular profiling essential.';}
+    else if(total<=3){risk='high';label='Intermediate-2';os='~4 yrs';interp='Poor prognosis. Median OS ~4 years. Allogeneic SCT is the only potentially curative option — transplant referral is indicated.';next='Ruxolitinib as standard initial therapy. REFER FOR ALLOGENEIC SCT ASSESSMENT — this is the key decision at this risk level. Obtain HCT-CI, initiate donor search. Fedratinib or pacritinib if ruxolitinib-intolerant. Full molecular profiling (JAK2/CALR/MPL/HMR) essential.';}
     else{risk='vhigh';label='High Risk';os='~1.5 yrs';interp='Very poor prognosis. Transplant is the only potentially curative option.';next='URGENT transplant referral (median OS 1.5 yrs without cure). Bridge with ruxolitinib/pacritinib/fedratinib. Consider luspatercept for anaemia if transfusion-dependent. Discuss goals of care. Clinical trial enrolment.';}
     const dipssLabel=['Low','Int-1','Int-2','High'][dipssRisk];
     return{score:total,max:6,risk,label,
@@ -2733,10 +2733,10 @@ mysecpm:{
     const score=(v.age*0.15)+(v.hgb?2:0)+(v.blasts?2:0)+(v.calr?3:0)+(v.symptoms?2:0);
     const s=Math.round(score*10)/10;
     let risk,label,os,interp,next;
-    if(s<11){risk='low';label='Low Risk';os='Not reached';interp='Favourable prognosis in post-PV/ET MF.';next='Ruxolitinib for symptom control and splenomegaly. Observation if minimal symptoms. Transplant generally not indicated. Annual reassessment with repeat molecular profiling.';}
-    else if(s<14){risk='int';label='Intermediate-1';os='~9.3 yrs';interp='Moderate prognosis.';next='Ruxolitinib standard. Transplant discussion if high-risk mutations co-present (ASXL1, EZH2, IDH1/2, SRSF2). Obtain full molecular profiling. Clinical trial enrolment where available.';}
-    else if(s<16){risk='high';label='Intermediate-2';os='~4.4 yrs';interp='Poor prognosis. Transplant should be considered.';next='Ruxolitinib or fedratinib as initial therapy. REFER FOR TRANSPLANT ASSESSMENT. Obtain HCT-CI, donor search. Full molecular profiling for additional risk refinement. Discuss goals of care.';}
-    else{risk='vhigh';label='High Risk';os='~2.1 yrs';interp='Very poor prognosis.';next='URGENT transplant referral — only potentially curative treatment. Bridge therapy with ruxolitinib/pacritinib/fedratinib. Manage anaemia (luspatercept, danazol, EPO-based, transfusion support). Discuss goals of care. Clinical trial preferred.';}
+    if(s<11){risk='low';label='Low Risk';os='Not reached';interp='Favourable prognosis in post-PV/ET MF. Median OS not yet reached. Allogeneic SCT is not indicated at this risk level.';next='Ruxolitinib for symptom control and splenomegaly. Observation if minimal symptoms. Annual reassessment with molecular profiling for HMR mutation acquisition.';}
+    else if(s<14){risk='int';label='Intermediate-1';os='~9.3 yrs';interp='Intermediate prognosis. Median OS ~9.3 years. Co-existing high-molecular-risk mutations significantly worsen the outlook.';next='Ruxolitinib as standard therapy. Transplant referral is warranted if high-risk mutations are co-present (ASXL1, EZH2, IDH1/2, SRSF2). Full molecular profiling is essential for accurate risk stratification. Clinical trial enrolment is appropriate.';}
+    else if(s<16){risk='high';label='Intermediate-2';os='~4.4 yrs';interp='Poor prognosis. Median OS ~4.4 years. Allogeneic SCT is the only potentially curative option — transplant referral is indicated.';next='Ruxolitinib or fedratinib as initial therapy. REFER FOR ALLOGENEIC SCT ASSESSMENT. Obtain HCT-CI, initiate donor search. Full molecular profiling for risk refinement. Goals of care discussion.';}
+    else{risk='vhigh';label='High Risk';os='~2.1 yrs';interp='Very poor prognosis. Median OS ~2.1 years. This is the highest-risk MYSEC-PM group — transplant is the priority.';next='URGENT ALLOGENEIC SCT REFERRAL. Bridge with ruxolitinib, pacritinib, or fedratinib. Anaemia management: luspatercept, danazol, EPO-based therapy, or transfusion support. Goals of care discussion. Clinical trial is the preferred approach if transplant-ineligible.';}
     const calrNote=v.calr?'Non-type-1/like CALR or JAK2/MPL/triple-neg':'CALR type-1/like';
     return{score:s,max:null,risk,label,
       stats:[['MYSEC-PM Score',s.toFixed(1)],['Age contribution',(v.age*0.15).toFixed(1)],['Molecular status',calrNote],['Median OS',os]],
@@ -3182,7 +3182,7 @@ export default function App(){
             <div className="leading-none">
               <span className="font-extrabold text-sm tracking-tight">HaemCalc</span>
               <span className="text-blue-600 font-extrabold text-sm">Pro</span>
-              <span className={`text-[10px] ml-1.5 font-medium ${dark?'text-slate-500':'text-slate-400'}`}>v4.3</span>
+              <span className={`text-[10px] ml-1.5 font-medium ${dark?'text-slate-500':'text-slate-400'}`}>v4.4</span>
             </div>
           </button>
           <button onClick={()=>setSearch(true)} title="Search (press /)" className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] ${dark?'bg-slate-800 text-slate-400 hover:bg-slate-700':'bg-slate-100 text-slate-500 hover:bg-slate-200'} transition-colors`}>
@@ -3896,7 +3896,7 @@ function HomePage({openCalc,openPathway,favs,toggleFav,recent,dark,setPage,setSe
             <div className="leading-none">
               <span className="font-extrabold text-xl tracking-tight">HaemCalc</span>
               <span className="text-blue-600 font-extrabold text-xl"> Pro</span>
-              <span className={`text-[11px] ml-2 font-medium ${hc}`}>v4.3</span>
+              <span className={`text-[11px] ml-2 font-medium ${hc}`}>v4.4</span>
             </div>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-3 leading-snug">
@@ -4413,6 +4413,14 @@ function CalcView({calcId,openCalc,favs,toggleFav,dark,setPage,addToLog}){
                   </span>
                 }
               </div>
+              {/* Source paper link — shown when PMID available */}
+              {c.evidence.pmid&&<div className={`flex items-baseline gap-4 px-4 py-2.5 text-xs ${dark?'bg-slate-900':'bg-white'}`}>
+                <span className={`w-36 flex-shrink-0 font-semibold ${dark?'text-slate-500':'text-slate-400'}`}>Source Paper</span>
+                <a href={`https://pubmed.ncbi.nlm.nih.gov/${c.evidence.pmid}/`} target="_blank" rel="noopener noreferrer"
+                  className={`underline underline-offset-2 ${dark?'text-blue-400 hover:text-blue-300':'text-blue-600 hover:text-blue-800'}`}>
+                  PMID {c.evidence.pmid} ↗
+                </a>
+              </div>}
             </div>
           </div>
 
@@ -4731,7 +4739,8 @@ function AboutPage({dark}){
         </div>
         <div className="space-y-3">
           {[
-            {v:'v4.3',date:'April 2026', note:'Final polish — decision-grade clinical language across 23 calculators. Clinical Action panel moved above Interpretation in all results. Guideline Version added to governance panel. Generic escalation box removed — escalation guidance embedded within each calculator\'s specific clinical action. Explicit OS/mortality figures added throughout. Direct authoritative language replacing hedged phrasing. Calculators updated: HScore, IPI, FLIPI, ISS, IPSS, IPSS-R, DIPSS, Sokal, PLASMIC, 4Ts, CHA₂DS₂-VASc, HAS-BLED, NCCN-IPI, R-IPI, CNS-IPI, CLL-IPI, SOFA, NEWS2, qSOFA, IPS, GIPSS, IPSET, ELTS. Stat badges now dynamic.'},
+            {v:'v4.4',date:'April 2026', note:'Micro-refinement pass. Syntax bugs fixed across 9 calculators (colon-assignment errors causing undefined outputs in Sokal, 4Ts, CHA₂DS₂-VASc, eGFR, BCR-ABL1, ITP, CFS, Neutropenia, RPI). Language sharpened in FLIPI, MIPI, DIPSS-Plus, MYSEC-PM, Khorana. PubMed source paper link added to every governance panel. Version display corrected.'},
+            {v:'v4.3',date:'April 2026', note:'Decision-grade language across 23 calculators. Clinical Action panel above Interpretation. Guideline Version added to governance panel. Escalation guidance embedded per calculator. Explicit OS/mortality figures. Authoritative language replacing hedged phrasing. Dynamic stat badges.'},
             {v:'v4.2',date:'April 2026', note:'Multi-reviewer governance panel: Co-Reviewers row on all tools, SITE_GOVERNANCE statement, Join as Reviewer CTA. Session PDF Export: full patient encounter report from LogPage. Search improvements: author/PMID/purpose matching, category chips, Most Used section. Three new diagnostic modules: lymphadenopathy, splenomegaly, coag screen. Compliance page (DCB0129 lite, privacy, accessibility, version history). Three new calculators: DIPSS-Plus, MIPI, MYSEC-PM.'},
             {v:'v4.1',date:'April 2026', note:'Session Result Log (ward round tool, session-only, no PHI stored). Print/Save PDF per calculator. Progressive Web App: manifest, service worker, install banner. Three new pathways: TTP/TMA Management, Myeloma Response Assessment (IMWG), MGUS/SMM Surveillance. IPSS original (1997), IPSS-M molecular (2022), CHRS, CHIP/CCUS Diagnostic Tool added. Keyboard shortcuts (/, Esc, H, B, L, ?).'},
             {v:'v4.0',date:'Mar 2025', note:'Governance & Evidence panel added to all calculators. Evidence classification system (Validated / Guideline / Derived / Educational) implemented. Editorial Standards page formalised. Per-calculator governance records with population, review dates, and reviewer attribution. Gold-standard calculator template with clinical context strip, tabbed evidence/limitations view, and actionable next steps. Diagnostic modules, acute haematology mode, dark mode, search overlay, and favourites system.'},
@@ -4871,6 +4880,7 @@ function CompliancePage({dark}){
       <Section icon={FileText} iconColor="text-slate-500" title="Version History">
         <div className="space-y-3">
           {[
+            {v:'v4.4',date:'April 2026',note:'Syntax bugs fixed in 9 calculators. Language sharpened in FLIPI, MIPI, DIPSS-Plus, MYSEC-PM, Khorana. PubMed source paper link added to every governance panel.'},
             {v:'v4.3',date:'April 2026',note:'Decision-grade language across 23 calculators. Clinical Action above Interpretation. Guideline Version in governance. Explicit OS/mortality in all outputs. Direct authoritative language throughout.'},
             {v:'v4.2',date:'April 2026',note:'Multi-reviewer governance panel. Session PDF Export. Search improvements (PMID/guideline/source matching, Most Used). Three diagnostic modules added (lymphadenopathy, splenomegaly, coag screen). This Compliance page. Three new calculators (DIPSS-Plus, MIPI, MYSEC-PM).'},
             {v:'v4.1',date:'April 2026',note:'Session Result Log (ward round, session-only). Print/Save PDF per calculator. PWA install support. Three new clinical pathways (TTP/TMA, Myeloma Response, MGUS/SMM). IPSS, IPSS-M, CHRS, CHIP/CCUS calculators added. Keyboard shortcuts.'},
