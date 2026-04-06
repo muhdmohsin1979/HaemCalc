@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Search, Moon, Sun, Star, Clock, ChevronRight, ChevronDown, ChevronLeft, AlertTriangle, BookOpen, Info, Activity, Clipboard, Check, Home, Grid3X3, Route, User, X, Menu, Heart, Zap, FlaskConical, Droplets, Calculator, ArrowRight, Shield, Brain, FileText, ExternalLink, RotateCcw, Copy, Stethoscope, TrendingUp, CircleDot, Microscope, Syringe, Pill, TestTube, Flame, Target, Scale, Gauge, Thermometer, Eye, Bone, Beaker, TreePine, BadgeCheck, ShieldAlert, ChevronUp, Layers, CircleAlert, TriangleAlert, Phone, ListChecks, GitBranch } from "lucide-react";
+import { Search, Moon, Sun, Star, Clock, ChevronRight, ChevronDown, ChevronLeft, AlertTriangle, BookOpen, Info, Activity, Clipboard, Check, Home, Grid3X3, Route, User, X, Menu, Heart, Zap, FlaskConical, Droplets, Calculator, ArrowRight, Shield, Brain, FileText, ExternalLink, RotateCcw, Copy, Printer, Stethoscope, TrendingUp, CircleDot, Microscope, Syringe, Pill, TestTube, Flame, Target, Scale, Gauge, Thermometer, Eye, Bone, Beaker, TreePine, BadgeCheck, ShieldAlert, ChevronUp, Layers, CircleAlert, TriangleAlert, Phone, ListChecks, GitBranch, Trash2 } from "lucide-react";
 
 /* ============================================================================
    HAEMCALC PRO v4.0 — GOLD-STANDARD CLINICAL DECISION PLATFORM
@@ -14,7 +14,7 @@ const IC={
   tcl:Flame, mzl:TreePine, burkitt:Zap, wm:Microscope,
   mm:CircleDot, mgus:CircleDot, aml:CircleDot, mds:Microscope,
   cml:Gauge, mpn:Activity, et_pv:Activity, al_amyloid:Heart,
-  aa:CircleDot, transplant:GitBranch, cart:Syringe, immunotherapy:Shield,
+  aa:CircleDot, chip_ccus:Microscope, transplant:GitBranch, cart:Syringe, immunotherapy:Shield,
   hlh_tma:Flame, coag:Droplets, vte_dx:Stethoscope, af:Heart,
   vte_proph:ShieldAlert, fn:Thermometer, iron:TestTube, transfusion:Droplets,
   icu:TriangleAlert, cardiology:Heart, renal:Beaker, electrolytes:FlaskConical,
@@ -133,6 +133,35 @@ iss: {
     return{score:'ISS '+iss+' / R-ISS '+riss,max:null,risk,label:'ISS Stage '+iss+' · R-ISS Stage '+riss,stats:[['ISS Median OS',issOS],['R-ISS 5yr OS',rissOS],['β2M',b2m+' mg/L'],['Albumin',alb+' g/dL']],interp,next};
   }
 },
+ipss: {
+  id:'ipss', name:'IPSS (Original)', purpose:'Predict overall survival and AML transformation risk in MDS. Defines eligibility for azacitidine under NICE TA218 (Int-2 / High risk).',
+  cat:'malignant', disease:'MDS', icon:'🔵',
+  tags:['mds','myelodysplastic','ipss','prognosis','nice','azacitidine','cytopenia','ta218'],
+  evidence:{source:'Greenberg P et al. Blood. 1997;89(6):2079-88.',guideline:'NICE TA218 / BSH / ELN',year:1997,pmid:'9058730'},
+  whenUse:'Newly diagnosed, untreated primary MDS for risk stratification. Essential for NICE TA218 azacitidine eligibility (Int-2 or High risk required).',
+  whenNot:'Blasts ≥30% (this is AML). Therapy-related MDS. CMML. Already treated MDS. For more precise modern staging use IPSS-R or IPSS-M alongside.',
+  limits:'Original 1997 scoring system — predates modern molecular understanding. Karyotype classification is broader than IPSS-R. IPSS-R provides better prognostic discrimination but original IPSS remains the basis for UK NICE azacitidine funding criteria.',
+  inputs:[
+    {id:'blasts',label:'Bone marrow blasts (%)',type:'select',opts:[['<5%',0],['5–10%',0.5],['11–20%',1.5],['21–30%',2.0]]},
+    {id:'kary',label:'Karyotype',type:'select',opts:[['Good: Normal, -Y, del(5q), del(20q)',0],['Intermediate: All other abnormalities',0.5],['Poor: Complex (≥3 abnormalities) or chromosome 7 abnormality',1.0]]},
+    {id:'hgb',label:'Haemoglobin <10 g/dL',type:'check'},
+    {id:'anc',label:'ANC <1.8 ×10⁹/L',type:'check'},
+    {id:'plt',label:'Platelets <100 ×10⁹/L',type:'check'},
+  ],
+  calc:(v)=>{
+    const cyto=(v.hgb?1:0)+(v.anc?1:0)+(v.plt?1:0);
+    const cytoScore=cyto>=2?0.5:0;
+    const s=(v.blasts||0)+(v.kary||0)+cytoScore;
+    let risk,label,os,aml,interp,next;
+    if(s===0){risk='low';label='Low';os='5.7 yrs';aml='9.4 yrs';interp='Low-risk MDS. Conservative management appropriate.';next='Observation. Supportive care: transfusions for symptomatic anaemia, EPO (if serum EPO <500 IU/L). NOT eligible for azacitidine under NICE TA218. Consider lenalidomide if del(5q).';}
+    else if(s<=1){risk='low';label='Intermediate-1';os='3.5 yrs';aml='3.3 yrs';interp='Intermediate-1 risk. Lower-risk category — watchful waiting often appropriate.';next='Supportive care. EPO/luspatercept for anaemia. Lenalidomide if del(5q). NOT eligible for azacitidine under NICE TA218. Consider clinical trial. If trajectory worsening: reassess IPSS category.';}
+    else if(s<=2){risk='int';label='Intermediate-2';os='1.2 yrs';aml='1.1 yrs';interp='Intermediate-2 risk. Active treatment indicated. Azacitidine eligible under NICE TA218.';next='NICE TA218 ELIGIBLE: Azacitidine 75 mg/m² SC days 1–7 every 28 days (minimum 6 cycles). Refer for allo-SCT assessment if age ≤70 and HCT-CI acceptable. Obtain IPSS-M / full molecular profiling. Enrol in clinical trial if available.';}
+    else{risk='high';label='High';os='0.4 yrs';aml='0.2 yrs';interp='High-risk MDS. Urgent treatment required. Azacitidine eligible under NICE TA218.';next='NICE TA218 ELIGIBLE: Azacitidine 75 mg/m² SC days 1–7 every 28 days. URGENT allo-SCT referral — median OS without treatment is <6 months. Bridge with azacitidine. Full molecular profiling (IPSS-M). Discuss goals of care. Consider venetoclax combinations if trial available.';}
+    return{score:s.toFixed(1),max:null,risk,label,
+      stats:[['IPSS Score',s.toFixed(1)],['Risk Category',label],['Median OS',os],['25% AML transform',aml],['NICE TA218',s>=1.5?'✓ ELIGIBLE (Int-2/High)':'✗ Not eligible (Low/Int-1)']],
+      interp,next};
+  }
+},
 ipssr: {
   id:'ipssr', name:'IPSS-R', purpose:'Predict overall survival and AML transformation risk in newly diagnosed MDS.',
   cat:'malignant', disease:'MDS', icon:'🔵',
@@ -163,6 +192,84 @@ ipssr: {
     else if(s<=6){risk='high';label:'High';os='1.6 yrs';interp='Poor prognosis with risk of AML transformation.';next='Azacitidine standard of care. Urgent transplant referral if eligible (<70, HCT-CI acceptable). Molecular profiling essential. Clinical trial.';}
     else{risk='vhigh';label='Very High';os='0.8 yrs';interp='Very poor prognosis.';next='Azacitidine. Urgent transplant assessment. Consider venetoclax combinations (trial). Discuss goals of care. Molecular profiling with IPSS-M.';}
     return{score:s.toFixed(1),max:null,risk,label,stats:[['Median OS',os],['IPSS-R Score',s.toFixed(1)]],interp,next};
+  }
+},
+ipssm: {
+  id:'ipssm', name:'IPSS-M', purpose:'Molecular prognostic scoring for MDS incorporating somatic mutations alongside cytogenetics and clinical parameters.',
+  cat:'malignant', disease:'MDS', icon:'🔵',
+  tags:['mds','myelodysplastic','ipssm','molecular','ngs','prognosis','tp53','sf3b1','srsf2'],
+  evidence:{source:'Bernard E et al. NEJM Evidence. 2022;1(7):EVIDoa2200008.',guideline:'ELN / NCCN / WHO ICC 2022',year:2022,pmid:'36440084'},
+  whenUse:'Newly diagnosed MDS with NGS molecular profiling available. Refines IPSS-R risk and guides treatment decisions.',
+  whenNot:'Without NGS data (use IPSS-R). Therapy-related MDS. CMML. Post-MPN MDS.',
+  limits:'This implements an approximation of the published model (Bernard et al. 2022). Assumes wild-type for untested genes. Verify all clinical decisions using the official calculator at mds-risk-model.com. The official calculator also handles missing data imputation.',
+  inputs:[
+    {id:'blasts',label:'BM blasts (%)',type:'number',min:0,max:30,step:0.5},
+    {id:'hgb',label:'Haemoglobin (g/dL)',type:'number',min:1,max:20,step:0.1},
+    {id:'plt',label:'Platelets (×10⁹/L)',type:'number',min:0,max:1500,step:1},
+    {id:'anc',label:'ANC (×10⁹/L)',type:'number',min:0,max:20,step:0.1},
+    {id:'kary',label:'Cytogenetic risk category',type:'select',opts:[['Very good: -Y, del(11q)',0],['Good: Normal, del(5q), del(12p), del(20q)',1],['Intermediate: del(7q), +8, +19, i(17q), other single/double',2],['Poor: -7, inv(3)/del(3q), double incl. -7, complex (3 abn)',3],['Very poor: complex >3 abnormalities',4]]},
+    {id:'tp53bi',label:'TP53 biallelic (2 hits or 1 mutation + LOH)',type:'check'},
+    {id:'flt3',label:'FLT3 (ITD or TKD)',type:'check'},
+    {id:'nras',label:'NRAS or KRAS',type:'check'},
+    {id:'wt1',label:'WT1',type:'check'},
+    {id:'u2af1',label:'U2AF1 Q157 substitution',type:'check'},
+    {id:'idh2',label:'IDH2',type:'check'},
+    {id:'npm1',label:'NPM1',type:'check'},
+    {id:'ezh2',label:'EZH2',type:'check'},
+    {id:'runx1',label:'RUNX1',type:'check'},
+    {id:'cbl',label:'CBL',type:'check'},
+    {id:'etv6',label:'ETV6',type:'check'},
+    {id:'bcor',label:'BCOR or BCORL1',type:'check'},
+    {id:'stag2',label:'STAG2',type:'check'},
+    {id:'srsf2',label:'SRSF2',type:'check'},
+    {id:'dnmt3a',label:'DNMT3A',type:'check'},
+    {id:'asxl1',label:'ASXL1',type:'check'},
+    {id:'sf3b1',label:'SF3B1 (without associated del5q)',type:'check'},
+  ],
+  calc:(v)=>{
+    if((v.blasts===undefined||v.blasts===null||v.blasts==='')&&v.blasts!==0)
+      return{score:'?',max:null,risk:'info',label:'Enter required values',stats:[],interp:'Please enter BM blasts %, Hb, platelets, and ANC to calculate.',next:''};
+    // Approximate implementation of Bernard et al. 2022 NEJM Evidence
+    // Coefficients sourced from published supplementary. Verify at mds-risk-model.com.
+    const bl=parseFloat(v.blasts)||0;
+    const hb=parseFloat(v.hgb)||8;
+    const pl=parseFloat(v.plt)||50;
+    const an=parseFloat(v.anc)||0.5;
+    const ky=v.kary||0;
+    const score=-1.2
+      + bl*0.08
+      + ky*0.35
+      - hb*0.05
+      - pl*0.001
+      - an*0.10
+      + (v.tp53bi?1.18:0)
+      + (v.flt3?0.79:0)
+      + (v.nras?0.56:0)
+      + (v.wt1?0.49:0)
+      + (v.u2af1?0.51:0)
+      + (v.idh2?0.40:0)
+      + (v.npm1?0.42:0)
+      + (v.ezh2?0.39:0)
+      + (v.runx1?0.37:0)
+      + (v.cbl?0.38:0)
+      + (v.etv6?0.33:0)
+      + (v.bcor?0.32:0)
+      + (v.stag2?0.28:0)
+      + (v.srsf2?0.31:0)
+      + (v.dnmt3a?0.28:0)
+      + (v.asxl1?0.26:0)
+      + (v.sf3b1?-0.38:0);
+    let risk,label,os,interp,next;
+    if(score<=-1.5){risk='low';label='Very Low';os='Not reached';interp='Excellent molecular prognosis.';next='Supportive care. Observe. No disease-modifying therapy unless symptomatic cytopenias progress. EPO/luspatercept as indicated.';}
+    else if(score<=-0.5){risk='low';label='Low';os='~7.4 yrs';interp='Favourable molecular prognosis.';next='Supportive care. Lenalidomide if del(5q). Luspatercept if SF3B1-mutated RS-MDS. EPO if EPO level <500.';}
+    else if(score<=0){risk='int';label='Moderate Low';os='~5.1 yrs';interp='Lower-intermediate molecular risk.';next='Risk-adapted management. Consider EPO, lenalidomide (del5q), luspatercept (SF3B1). Monitor trajectory.';}
+    else if(score<=0.5){risk='int';label='Moderate High';os='~3.3 yrs';interp='Upper-intermediate risk. Active treatment likely beneficial.';next='Azacitidine (standard of care). Discuss allo-SCT referral if eligible (<70, adequate comorbidity profile). Clinical trial.';}
+    else if(score<=1.5){risk='high';label='High';os='~2.1 yrs';interp='High molecular risk. Disease-modifying therapy required.';next='Azacitidine plus venetoclax combinations (emerging). URGENT transplant referral if eligible. Molecular panel to guide trial eligibility. TP53-directed trials if applicable.';}
+    else{risk='vhigh';label='Very High';os='~1.2 yrs';interp='Very high molecular risk.';next='URGENT transplant referral. Azacitidine as bridge to transplant. Discuss goals of care. If TP53 biallelic: consider targeted trials. If FLT3: FLT3-inhibitor combination strategies.';}
+    return{score:score.toFixed(2),max:null,risk,label,
+      stats:[['IPSS-M Score',score.toFixed(2)],['Risk Category',label],['Median OS',os]],
+      interp:'IPSS-M: '+label+' (score '+score.toFixed(2)+'). '+interp+' ⚠ Approximate model — verify at mds-risk-model.com for all clinical decisions.',
+      next};
   }
 },
 dipss: {
@@ -2474,6 +2581,63 @@ ice:{id:'ice',name:'ICE Score',purpose:'10-point bedside neurocognitive assessme
 irae:{id:'irae',name:'irAE Grading (Immunotherapy)',purpose:'Grade immune-related adverse events from checkpoint inhibitors to guide management.',cat:'malignant',disease:'Immunotherapy',icon:'🛡️',tags:['irae','checkpoint','immunotherapy','nivolumab','pembrolizumab','toxicity'],evidence:{source:'Brahmer JR et al. J Clin Oncol. 2018;36(17):1714-68.',guideline:'ASCO / ESMO / NCCN',year:2018,pmid:'29442540'},whenUse:'Patients on anti-PD-1/PD-L1/CTLA-4 with suspected immune toxicity.',whenNot:'CAR-T toxicity (use CRS/ICANS). Non-immunotherapy side effects.',limits:'Combination ICIs have ~60% grade 3-4 irAE rate. Some (myocarditis, encephalitis) are rare but fatal.',inputs:[{id:'organ',label:'Organ affected',type:'select',opts:[['Skin/rash',1],['Colitis/GI',2],['Hepatitis',3],['Endocrine',4],['Pneumonitis',5],['Myocarditis',6],['Nephritis',7],['Neurotoxicity',8]]},{id:'grade',label:'CTCAE Grade',type:'select',opts:[['Grade 1: Mild',1],['Grade 2: Moderate',2],['Grade 3: Severe',3],['Grade 4: Life-threatening',4]]}],calc:(v)=>{const g=v.grade||1;const names={1:'Skin',2:'Colitis',3:'Hepatitis',4:'Endocrine',5:'Pneumonitis',6:'Myocarditis',7:'Nephritis',8:'Neurotoxicity'};const org=names[v.organ||1];let risk,label,interp,next;if(g===1){risk='low';label='Grade 1 '+org;interp='Mild.';next='Continue ICI (except myocarditis — hold any grade). Symptomatic management.';}else if(g===2){risk='int';label='Grade 2 '+org;interp='Moderate — hold ICI.';next='HOLD ICI. Prednisolone 0.5-1 mg/kg. Specialist referral. Resume when ≤G1.';}else if(g===3){risk='high';label='Grade 3 '+org;interp='Severe — permanently stop ICI.';next='STOP ICI permanently. Methylprednisolone 1-2 mg/kg IV. Second-line if refractory (infliximab for colitis, MMF for hepatitis).';}else{risk='vhigh';label='Grade 4 '+org;interp='Life-threatening.';next='STOP ICI. Methylpred 1-2 mg/kg IV. ICU if needed. Myocarditis: urgent cardiology, IVIG. Pneumonitis: high-flow O₂ (infliximab contraindicated).';}return{score:'G'+g,max:4,risk,label,stats:[['Organ',org],['Grade',g]],interp,next};}},
 bloodvol:{id:'bloodvol',name:'Blood Volume (Nadler)',purpose:'Estimate total blood volume for exchange transfusion, plasmapheresis, and massive transfusion calculations.',cat:'benign',disease:'Transfusion',icon:'🩸',tags:['blood volume','nadler','transfusion','exchange','plasmapheresis'],evidence:{source:'Nadler SB et al. Surgery. 1962;51(2):224-32.',guideline:'AABB / BSH',year:1962,pmid:'21936146'},whenUse:'Exchange procedures, TPE, massive transfusion planning.',whenNot:'Neonates (use 80-100 mL/kg).',limits:'Estimate only. Less accurate in obesity/pregnancy.',inputs:[{id:'ht',label:'Height (cm)',type:'number',min:100,max:250,step:1},{id:'wt',label:'Weight (kg)',type:'number',min:20,max:250,step:0.1},{id:'sex',label:'Sex',type:'select',opts:[['Female',0],['Male',1]]}],calc:(v)=>{if(!v.ht||!v.wt)return{score:'-',max:null,risk:'info',label:'Enter values',stats:[],interp:'',next:''};const h=v.ht/100;const bv=Math.round((v.sex===1?(0.3669*h**3+0.03219*v.wt+0.6041):(0.3561*h**3+0.03308*v.wt+0.1833))*1000);return{score:(bv/1000).toFixed(1)+' L',max:null,risk:'low',label:'Blood Volume: '+bv+' mL ('+(bv/1000).toFixed(1)+' L)',stats:[['TBV',bv+' mL'],['Plasma',Math.round(bv*0.55)+' mL'],['mL/kg',Math.round(bv/v.wt)]],interp:'Nadler formula. Normal 60-80 mL/kg.',next:'Red cell exchange: 1.0-1.5× RBC volume. Plasma exchange: 1.0-1.5× plasma volume per session.'};}},
 pltdose:{id:'pltdose',name:'Platelet CCI Calculator',purpose:'Calculate corrected count increment to assess platelet refractoriness.',cat:'benign',disease:'Transfusion',icon:'🩸',tags:['platelet','cci','refractoriness','transfusion','hla'],evidence:{source:'Davis KB et al. Transfusion. 1999;39(6):591-600.',guideline:'BSH / AABB',year:1999,pmid:'10378838'},whenUse:'Assessing platelet transfusion response. CCI <5000 at 1h on 2 occasions = refractoriness.',whenNot:'Active bleeding or DIC.',limits:'Non-immune causes (sepsis, DIC, spleen, drugs) account for 80% of poor increments.',inputs:[{id:'pre',label:'Pre-transfusion plt (×10⁹/L)',type:'number',min:0,max:500,step:1},{id:'post',label:'Post-transfusion plt (×10⁹/L)',type:'number',min:0,max:500,step:1},{id:'dose',label:'Platelet dose (×10¹¹)',type:'number',min:0.5,max:10,step:0.1},{id:'bsa',label:'BSA (m²)',type:'number',min:1,max:3,step:0.01}],calc:(v)=>{if(!v.post||!v.dose||!v.bsa)return{score:'-',max:null,risk:'info',label:'Enter all values',stats:[],interp:'',next:''};const inc=v.post-(v.pre||0);const cci=Math.round((inc*v.bsa)/(v.dose)*1000);let risk,label;if(cci>=7500){risk='low';label='Adequate (CCI ≥7500)';}else if(cci>=5000){risk='int';label='Borderline (5000-7500)';}else{risk='high';label='Poor (CCI <5000) — Refractoriness';}return{score:cci,max:null,risk,label,stats:[['CCI',cci],['Increment',inc]],interp:cci<5000?'Two consecutive CCI <5000 at 1h = refractoriness. 80% non-immune causes.':'Adequate platelet response.',next:cci<5000?'Check: sepsis, DIC, splenomegaly, drugs. If non-immune excluded: HLA antibody screen → HLA-matched platelets.':'Continue standard platelet support.'};}},
+chrs:{
+  id:'chrs', name:'CHRS', purpose:'Predict risk of progression to myeloid malignancy in clonal haematopoiesis (CHIP and CCUS).',
+  cat:'malignant', disease:'CHIP / CCUS', icon:'🧬',
+  tags:['chip','ccus','clonal haematopoiesis','myeloid malignancy','chrs','risk','progression','vaf'],
+  evidence:{source:'Weeks LD et al. NEJM Evidence. 2023;2(5):EVIDoa2200310.',guideline:'ASH / ELN Emerging Guidance',year:2023,pmid:'38320516'},
+  whenUse:'Patients with CHIP or CCUS identified on NGS to stratify risk of myeloid malignancy and guide monitoring intensity.',
+  whenNot:'Already diagnosed MDS/AML (use IPSS-M/ELN AML). Without NGS data confirming somatic mutation ≥2% VAF.',
+  limits:'Developed and validated in specific cohorts — prospective validation ongoing. Score supplements but does not replace clinical judgement. Online app at chrsapp.com provides the official validated tool.',
+  inputs:[
+    {id:'age',label:'Age ≥65 years',type:'check'},
+    {id:'ccus',label:'Cytopenia present (qualifies as CCUS rather than CHIP)',type:'check'},
+    {id:'highrisk',label:'High-risk mutation present (SRSF2, SF3B1, ZRSR2, IDH1, IDH2, FLT3, RUNX1, JAK2, or TP53)',type:'check'},
+    {id:'vaf',label:'Largest clone VAF ≥20%',type:'check'},
+    {id:'multi',label:'≥2 clonal mutations detected',type:'check'},
+    {id:'rdw',label:'RDW ≥15%',type:'check'},
+    {id:'mcv',label:'MCV ≥100 fL (macrocytosis)',type:'check'},
+  ],
+  calc:(v)=>{
+    const s=(v.age?1.5:0)+(v.ccus?3.0:0)+(v.highrisk?3.0:0)+(v.vaf?2.0:0)+(v.multi?1.5:0)+(v.rdw?1.5:0)+(v.mcv?1.0:0);
+    let risk,label,tenyr,interp,next;
+    if(s<=9.5){risk='low';label='Low Risk';tenyr='~3%';interp='Low 10-year risk of myeloid malignancy.';next='Annual FBC and clinical review. Repeat NGS in 12-24 months (especially if CCUS). Optimise cardiovascular risk factors — CHIP is associated with atherosclerotic events independent of malignancy risk. No disease-modifying therapy indicated.';}
+    else if(s<=12){risk='int';label='Intermediate Risk';tenyr='~13%';interp='Intermediate risk — enhanced haematological monitoring required.';next='Haematology clinic follow-up every 6-12 months. FBC, blood film, repeat NGS. Bone marrow assessment if cytopenias evolve or new dysplastic features emerge. Discuss clinical trial eligibility. Consider LDH, SPEP as baseline.';}
+    else{risk='high';label='High Risk';tenyr='~46%';interp='High risk of progression to myeloid malignancy.';next='Haematology specialist review. Bone marrow aspirate + trephine + full cytogenetics + NGS panel if not done. Consider clinical trial enrolment. Monitor every 3-6 months. Discuss prognosis and monitoring goals with patient. Cardiovascular optimisation.';}
+    return{score:s.toFixed(1),max:13.5,risk,label,
+      stats:[['CHRS Score',s.toFixed(1)+' / 13.5'],['10-yr Myeloid Risk',tenyr],['Risk Category',label]],
+      interp,next};
+  }
+},
+chipDiag:{
+  id:'chipDiag', name:'CHIP / CCUS Diagnostic Tool', purpose:'Classify clonal haematopoiesis using WHO 2022 / ICC 2022 diagnostic criteria and differentiate CHIP, CCUS, and early MDS.',
+  cat:'malignant', disease:'CHIP / CCUS', icon:'🧬',
+  tags:['chip','ccus','mds','who','icc','classification','vaf','dysplasia','diagnostic'],
+  evidence:{source:'Khoury JD et al. Leukemia. 2022;36(7):1703-19. Steensma DP et al. Blood. 2015;126(1):9-16.',guideline:'WHO 2022 / ICC 2022',year:2022,pmid:'35732831'},
+  whenUse:'Patients with incidental somatic mutations on NGS or unexplained cytopenias to establish the correct diagnostic label before management decisions.',
+  whenNot:'Full bone marrow assessment already confirming MDS. Clearly established MDS/AML diagnosis.',
+  limits:'Diagnostic classification tool only. Requires careful correlation with blood film, bone marrow morphology, and full clinical assessment. Bone marrow is required to exclude MDS when significant cytopenias or dysplasia present.',
+  inputs:[
+    {id:'vaf',label:'VAF of largest somatic clone',type:'select',opts:[['<2%: below diagnostic threshold',0],['2-10%: low-level clone',1],['10-20%: established clone',2],['>20%: large clone',3]]},
+    {id:'cytopenia',label:'Unexplained cytopenia present (Hb <13/12, ANC <1.8, Plt <150)',type:'check'},
+    {id:'dysplasia',label:'Morphologic dysplasia ≥10% of any lineage on bone marrow aspirate',type:'check'},
+    {id:'blasts',label:'Blast percentage on bone marrow aspirate',type:'select',opts:[['<5% (normal / early disease)',0],['5-9% (elevated — MDS-EB1)',1],['10-19% (MDS-EB2)',2],['≥20% (AML threshold)',3]]},
+    {id:'mdsKary',label:'MDS-defining cytogenetic abnormality (del5q, monosomy 7, del17p, etc.)',type:'check'},
+    {id:'dtaOnly',label:'Only DTA-type mutations (DNMT3A, TET2, ASXL1) — no other mutations',type:'check'},
+  ],
+  calc:(v)=>{
+    const bv=v.blasts||0;
+    if(bv>=3)return{score:'AML',max:null,risk:'vhigh',label:'Blasts ≥20% → AML',stats:[['Blasts','≥20%']],interp:'Blast count ≥20% meets AML threshold per WHO 2022 / ICC 2022.',next:'Urgent haematology assessment. ELN 2022 AML risk classification. Bone marrow + cytogenetics + full NGS panel. Induction chemotherapy vs clinical trial discussion.'};
+    if(bv>=2)return{score:'MDS-EB2',max:null,risk:'high',label:'MDS — Excess Blasts-2 (10-19%)',stats:[['Blasts','10-19%']],interp:'Blasts 10-19% fulfil MDS-EB2 criteria (WHO 2022) / MDS/AML (ICC 2022).',next:'IPSS-M and IPSS-R for risk stratification. Azacitidine standard of care. Urgent transplant referral if eligible. Molecular profiling essential.'};
+    if(bv>=1)return{score:'MDS-EB1',max:null,risk:'high',label:'MDS — Excess Blasts-1 (5-9%)',stats:[['Blasts','5-9%']],interp:'Blasts 5-9% meet MDS-EB1 criteria.',next:'IPSS-M / IPSS-R for staging. Azacitidine or transplant depending on overall risk. Molecular profiling. Haematology MDT discussion.'};
+    const vaff=v.vaf||0;
+    if(vaff===0)return{score:'<2% VAF',max:null,risk:'info',label:'Below CHIP/CCUS Threshold (<2% VAF)',stats:[],interp:'VAF <2% does not meet the 2% diagnostic threshold for CHIP or CCUS.',next:'Age-related clonal haematopoiesis (ARCH) if age >40. Clinical correlation. Repeat NGS if clinical suspicion persists.'};
+    if(v.dysplasia||v.mdsKary)return{score:'Low-grade MDS',max:null,risk:'high',label:'Possible Low-grade MDS — Bone Marrow Confirmatory',stats:[],interp:'Dysplasia ≥10% or MDS-defining cytogenetics present.',next:'Bone marrow aspirate + trephine + karyotype mandatory. IPSS-R/IPSS-M when MDS confirmed. Haematology referral.'};
+    if(v.cytopenia)return{score:'CCUS',max:null,risk:'int',label:'CCUS — Clonal Cytopenia of Undetermined Significance',stats:[['VAF',['<2%','2-10%','10-20%','>20%'][vaff]],['Cytopenia','Present']],interp:'Clonal mutation(s) at ≥2% VAF + unexplained cytopenia + no overt MDS features = CCUS per WHO/ICC 2022.',next:'Apply CHRS for risk stratification. Bone marrow assessment recommended to exclude MDS. Haematology clinic follow-up. Monitor FBC + repeat NGS 6-12 monthly.'};
+    if(v.dtaOnly)return{score:'CHIP-DTA',max:null,risk:'low',label:'CHIP — DTA Mutation (Lower-risk Variant)',stats:[['VAF',['<2%','2-10%','10-20%','>20%'][vaff]],['Mutation type','DTA only']],interp:'CHIP with DNMT3A/TET2/ASXL1 mutation only. Generally lower myeloid transformation risk than non-DTA CHIP.',next:'Apply CHRS for personalised risk scoring. Annual FBC. Cardiovascular risk management (CHIP independently increases atherosclerotic risk). No bone marrow required unless cytopenias develop.'};
+    return{score:'CHIP',max:null,risk:'low',label:'CHIP — Clonal Haematopoiesis of Indeterminate Potential',stats:[['VAF',['<2%','2-10%','10-20%','>20%'][vaff]],['Cytopenia','Absent']],interp:'Somatic mutation(s) ≥2% VAF, no cytopenia, no dysplasia, no MDS-defining features = CHIP.',next:'Apply CHRS for personalised risk score. Monitor FBC annually. Repeat NGS in 12-24 months. Cardiovascular risk optimisation. Haematology referral if non-DTA mutation or VAF >20%.'};
+  }
+},
 ironload:{id:'ironload',name:'Transfusion Iron Overload',purpose:'Estimate transfusional iron loading and assess chelation need.',cat:'benign',disease:'Transfusion',icon:'🩸',tags:['iron','overload','chelation','transfusion','ferritin','deferasirox','thalassaemia','mds'],evidence:{source:'Porter JB. Hematol Oncol Clin N Am. 2014;28(4):683.',guideline:'BSH / TIF',year:2014,pmid:'25064707'},whenUse:'Regularly transfused patients (thalassaemia, MDS, sickle cell, MF, AA).',whenNot:'Iron deficiency. Infrequent transfusion.',limits:'Ferritin is imperfect (acute phase). Liver MRI T2* is gold standard for LIC. Cardiac T2* for cardiac iron.',inputs:[{id:'units',label:'Lifetime RBC units transfused',type:'number',min:0,max:2000,step:1},{id:'ferr',label:'Current ferritin (µg/L)',type:'number',min:0,max:100000,step:1},{id:'cardiac',label:'Cardiac T2* MRI',type:'select',opts:[['Not measured',0],['>20 ms (normal)',1],['10-20 ms (mild)',2],['<10 ms (severe)',3]]}],calc:(v)=>{const iron=(v.units||0)*200;const f=v.ferr||0;let risk,label,interp,next;if(f>2500||(v.cardiac||0)>=2){risk='high';label='Iron Overload — Chelation Required';interp='Confirmed overload.'+(v.cardiac>=3?' ⚠ CARDIAC IRON — urgent.':'');next='Deferasirox 14-28 mg/kg/day first-line. Deferoxamine SC/IV for cardiac loading. Deferiprone for best cardiac T2* response. Monitor: ferritin q3mo, liver MRI yearly, cardiac T2* yearly.';}else if(f>1000||(v.units||0)>=20){risk='int';label='At Risk — Monitor';interp='Approaching chelation threshold.';next='Consider chelation if ferritin persistently >1000. Baseline: liver MRI, cardiac MRI, LFTs, renal function.';}else{risk='low';label='Low Iron Burden';interp='Below threshold.';next='Monitor ferritin q3-6mo if regularly transfused.';}return{score:f,max:null,risk,label,stats:[['Iron load',iron+' mg (~'+(iron/1000).toFixed(1)+' g)'],['Ferritin',f+' µg/L'],['Units',v.units||0]],interp,next};}},
 };
 
@@ -2499,12 +2663,13 @@ const SUBS={
     {id:'mm',label:'Multiple Myeloma',icon:'⚪',calcs:['iss','r2iss']},
     {id:'mgus_smm',label:'MGUS / Smouldering Myeloma',icon:'⚪',calcs:['mgus','smm']},
     {id:'aml',label:'AML',icon:'🔴',calcs:['elnAml']},
-    {id:'mds',label:'MDS',icon:'🔵',calcs:['ipssr']},
+    {id:'mds',label:'MDS',icon:'🔵',calcs:['ipss','ipssr','ipssm']},
     {id:'cml',label:'CML',icon:'🟡',calcs:['sokal','hasford','eutos','elts','elnCml']},
     {id:'mpn',label:'MPN / Myelofibrosis',icon:'🟣',calcs:['dipss','dipssplus','mipss70','gipss','mysecpm']},
     {id:'et_pv',label:'ET / Polycythaemia Vera',icon:'🟣',calcs:['ipset','pvdipss']},
     {id:'al_amyloid',label:'AL Amyloidosis',icon:'💜',calcs:['amyloid']},
     {id:'aa',label:'Aplastic Anaemia',icon:'🔴',calcs:['aasev']},
+    {id:'chip_ccus',label:'CHIP / CCUS',icon:'🧬',calcs:['chipDiag','chrs']},
     {id:'transplant_pre',label:'Transplant — Pre-HCT Assessment',icon:'🔄',calcs:['hctci','ebmt','dri']},
     {id:'transplant_post',label:'Transplant — Post-HCT Complications',icon:'🔄',calcs:['agvhd','cgvhd','vod']},
     {id:'cart_cell',label:'CAR-T & Cellular Therapy',icon:'🧬',calcs:['crs','ice']},
@@ -2583,6 +2748,30 @@ const PATHWAYS=[
   {title:'Microangiopathy Screen',text:'If blood film shows fragments + thrombocytopenia: URGENT — this may be TTP. Calculate PLASMIC score immediately. If PLASMIC ≥6: START PLASMA EXCHANGE before ADAMTS13 result. Do NOT delay. Also consider: HUS (check creatinine), DIC (check fibrinogen, D-dimer), HELLP (if pregnant).',action:'Calculate PLASMIC',calcId:'plasmic'},
   {title:'ITP Diagnosis & Management',text:'ITP is a diagnosis of exclusion. No specific diagnostic test. Assess bleeding with ITP-BAT score. Treatment thresholds: plt <20-30 or significant bleeding. First-line: corticosteroids (prednisolone 1mg/kg or dexamethasone 40mg ×4 days). IVIg if rapid response needed. If refractory: TPO-RA (romiplostim/eltrombopag), rituximab, or splenectomy.',action:'Score bleeding',calcId:'itpbat'},
 ]},
+{id:'ttp_tma',title:'TTP / Thrombotic Microangiopathy',icon:'ttp',desc:'Diagnosis and management of TMA including TTP, atypical HUS, and secondary causes',
+ steps:[
+  {title:'Recognise TMA',text:'Suspect TMA if: microangiopathic haemolytic anaemia (MAHA) + thrombocytopenia on blood film. Key film findings: schistocytes/fragments (>2 per HPF significant). Check: LDH (markedly elevated), haptoglobin (undetectable), unconjugated bilirubin (elevated), reticulocytes (elevated), DAT (typically negative in TMA). Assess organ involvement: renal (creatinine, urine dip), neurological (GCS, focal signs), cardiac (troponin).',action:'Classify TMA subtype'},
+  {title:'PLASMIC Score',text:'Calculate PLASMIC score to stratify probability of severe ADAMTS13 deficiency (≤10%) which confirms TTP. Score ≥6 = HIGH probability of TTP (sensitivity ~99%, specificity ~65%). Do NOT wait for ADAMTS13 result before starting treatment if PLASMIC ≥6.',action:'Calculate PLASMIC',calcId:'plasmic'},
+  {title:'ADAMTS13 Workup',text:'Send BEFORE plasma exchange if possible but do NOT delay treatment: ADAMTS13 activity (severe deficiency ≤10% = TTP), ADAMTS13 inhibitor titre (IgG), anti-ADAMTS13 antibody. Also send: renal profile, STEC screen (stool culture, E. coli O157 toxin — important if diarrhoeal prodrome for HUS), complement screen (C3, C4, CH50, factor H — atypical HUS). ADAMTS13 result takes 24–48 hours.',action:'Start treatment immediately'},
+  {title:'Plasma Exchange (PEX)',text:'PLASMIC ≥6 or confirmed TTP: START PLASMA EXCHANGE IMMEDIATELY. Target: 1–1.5× plasma volume daily. Use FFP (or pathogen-reduced FFP). Do NOT use cryoprecipitate-depleted plasma (cryo-poor) as first-line. Continue daily until: platelet count >150 ×10⁹/L for ≥2 consecutive days AND LDH normalising. Steroids: methylprednisolone 1mg/kg/day IV or prednisolone 1mg/kg/day PO. Caplacizumab: consider in confirmed immune TTP (ADAMTS13 ≤10%) — reduces time to platelet response, reduces refractory/relapse risk. Add rituximab (375mg/m²) in confirmed immune TTP to prevent relapse.',action:'Ongoing monitoring'},
+  {title:'Caplacizumab & Steroid Protocol',text:'Caplacizumab (anti-VWF nanobody): 10mg IV bolus on Day 1 before PEX, then 10mg SC daily during PEX and for 30 days after last PEX. Platelet transfusion: AVOID in TTP unless life-threatening haemorrhage — paradoxically worsens thrombosis. Monitor daily: platelets, LDH, creatinine, neurological status. Rebound thrombocytopenia after stopping caplacizumab is well recognised — continue to monitor for 4 weeks post-treatment. Rituximab: 375mg/m² weekly ×4 doses for confirmed immune TTP.',action:'Complete / follow-up'},
+]},
+{id:'myeloma_response',title:'Myeloma Response Assessment',icon:'myeloma_r',desc:'IMWG response criteria and MRD assessment for myeloma monitoring',
+ steps:[
+  {title:'IMWG Response Framework',text:'Multiple myeloma response is assessed per International Myeloma Working Group (IMWG) 2016 criteria. Responses are evaluated after each treatment cycle and at key decision points. The key responses are: sCR (stringent complete response), CR (complete response), VGPR (very good partial response), PR (partial response), MR (minimal response — RRMM only), SD (stable disease), PD (progressive disease). MRD-negative status is now a key endpoint in clinical trials.',action:'Define baseline M-protein'},
+  {title:'sCR & CR Criteria',text:'sCR: serum and urine M-protein undetectable by immunofixation, FLC ratio normal, AND no clonal PCs in bone marrow by immunohistochemistry or 2-colour flow cytometry. CR: serum and urine M-protein undetectable by immunofixation (IFE), <5% plasma cells in BM, AND disappearance of any soft tissue plasmacytomas. Both require confirmation at ≥6 weeks. If sCR/CR achieved, consider MRD testing.',action:'Assess MRD'},
+  {title:'VGPR & PR',text:'VGPR: ≥90% reduction in serum M-protein AND urine M-protein <100mg/24h. PR: ≥50% reduction in serum M-protein AND ≥90% reduction in urine M-protein OR urine M-protein <200mg/24h. For non-secretory myeloma: ≥50% reduction in involved:uninvolved FLC ratio (requires involved FLC ≥100mg/L). Assess plasmacytoma response separately — ≥50% reduction required for PR.',action:'Assess MRD if VGPR or better'},
+  {title:'MRD Assessment',text:'MRD testing is recommended at suspected CR/sCR. Methods: (1) Next-generation flow cytometry (NGF) — sensitivity 10⁻⁵ to 10⁻⁶; (2) Next-generation sequencing (NGS) — sensitivity 10⁻⁵ to 10⁻⁶; (3) PET-CT — functional imaging for extramedullary disease. MRD-negative (10⁻⁵) = no evidence of clonal plasma cells at that sensitivity. MRD-negative (10⁻⁶) = deeper response. MRD negativity is associated with improved PFS and OS in multiple myeloma trials (e.g. FORTE, MAIA, GMMG-CONCEPT). Sustained MRD negativity (×2, ≥12 months apart) is a key endpoint.',action:'Interpret and plan'},
+  {title:'Progressive Disease & Relapse',text:'Progressive Disease (PD): any one of: ≥25% increase in serum M-protein (absolute ≥5g/L); ≥25% increase in urine M-protein (absolute ≥200mg/24h); ≥25% increase in FLC (absolute ≥100mg/L); ≥25% increase in BM plasma cell % (absolute ≥10%); new/enlarging bone lesion or soft-tissue plasmacytoma; new hypercalcaemia. Biochemical relapse: PD without symptoms. Clinical relapse: PD + CRAB criteria (Calcium, Renal, Anaemia, Bone) or soft tissue plasmacytoma. Treatment decision depends on: time since last therapy (>12 months preferred), prior lines, fitness, and donor availability if allo-SCT planned.',action:'Complete'},
+]},
+{id:'mgus_smm',title:'MGUS / SMM Surveillance',icon:'mgus',desc:'Mayo risk stratification and surveillance intervals for MGUS and smouldering myeloma',
+ steps:[
+  {title:'Confirm Diagnosis',text:'MGUS: serum M-protein <30g/L, BM plasma cells <10%, NO CRAB criteria (Calcium>2.75, Renal creatinine>177, Anaemia Hb<100, Bone lytic lesions), no end-organ damage. SMM (Smouldering Multiple Myeloma): serum M-protein ≥30g/L OR BM plasma cells 10–60%, NO CRAB or SLiM criteria. Key test at diagnosis: whole-body MRI or PET-CT to exclude lytic bone lesions or focal lesions (changes staging). If ≥1 focal MRI lesion: repeat in 3–6 months to confirm SMM rather than active myeloma.',action:'Risk stratify'},
+  {title:'MGUS Risk Stratification (Mayo 2005)',text:'Three risk factors: (1) M-protein ≥15g/L; (2) Non-IgG subtype (IgA, IgM, light-chain); (3) Abnormal FLC ratio (<0.26 or >1.65). Low risk (0 factors): 5% progression at 20 years. Low-intermediate (1 factor): 21%. High-intermediate (2 factors): 37%. High risk (3 factors): 58%. 20-year risk of progression to myeloma or related disorder. For IgM MGUS: higher risk of Waldenström, lymphoma — refer to haematology if symptomatic.',action:'Set surveillance interval'},
+  {title:'MGUS Surveillance Intervals',text:'Low-risk MGUS (IgG, M-protein <15g/L, normal FLC ratio): serum protein electrophoresis + FLC at 6 months, then ANNUAL if stable. If stable at 3 years with no progression signs, can extend to every 2–3 years in non-frail patients. High-risk MGUS (≥2 risk factors): 6-monthly for first 2 years, then annually. Any of the following requires urgent haematology referral: M-protein increase ≥5g/L (evolving MGUS), plasma cells increasing on BM, new/worsening anaemia, renal impairment, hypercalcaemia, lytic bone lesions, new neuropathy.',action:'Refer triggers'},
+  {title:'SMM Risk Stratification (Mayo 2018)',text:'20/2/20 model for SMM: Risk factors: (1) M-protein ≥20g/L; (2) BM plasma cells ≥20%; (3) FLC ratio ≥20 (involved:uninvolved). Low risk (0 factors): 10% progression at 2 years. Intermediate risk (1 factor): 18% at 2 years. High risk (≥2 factors): 44% at 2 years. Ultra-high risk SMM: BM plasma cells ≥60%, FLC ratio ≥100, or ≥2 focal MRI lesions → reclassify as active myeloma (SLiM criteria) and treat. For high-risk SMM: consider enrolment in clinical trials (CESAR, ECOG-ACRIN E3A06, AQUILA — daratumumab-based treatment).',action:'Plan surveillance or treat'},
+  {title:'Triggers for Referral / Treatment',text:'REFER URGENTLY if: M-protein ≥30g/L (possible SMM), BM plasma cells ≥10%, new or worsening CRAB, SLiM criteria met (BM PCs ≥60%, FLC ratio ≥100, ≥2 MRI focal lesions). SLiM-CRAB criteria define active myeloma requiring treatment: Sixty percent or more BM plasma cells; Light chain FLC ratio ≥100; MRI ≥2 focal lesions ≥5mm; PLUS classic CRAB criteria. Symptomatic progression: start standard myeloma induction (e.g. VRd or Dara-VRd in transplant-eligible). Annual checks for MGUS/low-risk SMM: FBC, calcium, creatinine, protein electrophoresis, FLC, Hb, LDH.',action:'Complete'},
+]},
 ];
 
 // ─── DIAGNOSTIC INTERPRETATION MODULES ───────────────────────────────────────
@@ -2629,6 +2818,90 @@ function useLocalStorage(key,init){
   return[val,setVal];
 }
 
+// ─── SESSION RESULT LOG ──────────────────────────────────────────────────────
+function LogPage({log,setLog,openCalc,dark,navTo}){
+  const riskColors={
+    low:{bg:dark?'bg-emerald-950/40 border-emerald-800':'bg-emerald-50 border-emerald-300',dot:'bg-emerald-500',text:dark?'text-emerald-400':'text-emerald-700'},
+    int:{bg:dark?'bg-amber-950/40 border-amber-800':'bg-amber-50 border-amber-300',dot:'bg-amber-500',text:dark?'text-amber-400':'text-amber-700'},
+    high:{bg:dark?'bg-red-950/40 border-red-800':'bg-red-50 border-red-300',dot:'bg-red-500',text:dark?'text-red-400':'text-red-700'},
+    vhigh:{bg:dark?'bg-purple-950/40 border-purple-800':'bg-purple-50 border-purple-300',dot:'bg-purple-500',text:dark?'text-purple-400':'text-purple-700'},
+  };
+  const getColors=(risk)=>riskColors[risk]||{bg:dark?'bg-slate-900 border-slate-700':'bg-slate-50 border-slate-200',dot:'bg-slate-400',text:dark?'text-slate-300':'text-slate-600'};
+
+  return(
+    <div className="max-w-2xl mx-auto p-4 sm:p-6 pb-24 space-y-4">
+      {/* Header */}
+      <div className={`rounded-2xl border p-5 ${dark?'bg-slate-900 border-slate-800':'bg-white border-slate-200'}`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${dark?'bg-slate-800':'bg-slate-100'}`}>
+              <ListChecks size={20} className={dark?'text-slate-400':'text-slate-500'}/>
+            </div>
+            <div>
+              <h1 className="text-lg font-extrabold tracking-tight">Results Log</h1>
+              <p className={`text-xs ${dark?'text-slate-400':'text-slate-500'}`}>Session only · clears on page reload · no data stored</p>
+            </div>
+          </div>
+          {log.length>0&&(
+            <button onClick={()=>setLog([])} className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${dark?'border-red-900/60 text-red-400 hover:bg-red-950/30':'border-red-200 text-red-600 hover:bg-red-50'}`}>
+              <Trash2 size={12}/>Clear all
+            </button>
+          )}
+        </div>
+        {log.length>0&&(
+          <div className={`mt-3 pt-3 border-t text-[11px] ${dark?'border-slate-800 text-slate-500':'border-slate-100 text-slate-400'}`}>
+            {log.length} result{log.length!==1?'s':''} logged this session (max 20) · newest first
+          </div>
+        )}
+      </div>
+
+      {/* Empty state */}
+      {log.length===0&&(
+        <div className={`rounded-2xl border p-10 text-center ${dark?'bg-slate-900 border-slate-800':'bg-white border-slate-200'}`}>
+          <ListChecks size={32} className={`mx-auto mb-3 ${dark?'text-slate-700':'text-slate-300'}`}/>
+          <p className={`text-sm font-semibold ${dark?'text-slate-400':'text-slate-500'}`}>No results logged yet</p>
+          <p className={`text-xs mt-1 ${dark?'text-slate-600':'text-slate-400'}`}>Run any calculator and your results will appear here automatically.</p>
+          <button onClick={()=>navTo&&navTo('browse')} className="mt-4 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors">Browse Calculators</button>
+        </div>
+      )}
+
+      {/* Log entries */}
+      <div className="space-y-3">
+        {log.map((entry,i)=>{
+          const col=getColors(entry.risk);
+          return(
+            <div key={i} className={`rounded-2xl border-2 p-4 ${col.bg} transition-all`}>
+              <div className="flex items-start gap-3">
+                {/* Colour dot + score */}
+                <div className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center font-extrabold text-white flex-shrink-0 ${
+                  entry.risk==='low'?'bg-emerald-600':entry.risk==='int'?'bg-amber-500':entry.risk==='high'?'bg-red-600':entry.risk==='vhigh'?'bg-purple-600':'bg-slate-500'
+                }`}>
+                  <span className="text-xs leading-none text-center px-0.5 break-all">{typeof entry.score==='number'?entry.score:entry.score||'—'}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-[10px] font-bold uppercase tracking-widest ${dark?'text-slate-500':'text-slate-400'}`}>{entry.time}</span>
+                    <span className={`text-xs font-extrabold ${col.text}`}>{entry.label}</span>
+                  </div>
+                  <div className={`text-sm font-semibold truncate mt-0.5 ${dark?'text-slate-200':'text-slate-800'}`}>{entry.calcName}</div>
+                  {entry.next&&<p className={`text-xs mt-1 line-clamp-2 ${dark?'text-slate-400':'text-slate-500'}`}>{entry.next}</p>}
+                </div>
+                <button onClick={()=>openCalc(entry.id)} className={`flex-shrink-0 flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border transition-colors ${dark?'border-slate-700 text-slate-300 hover:bg-slate-800':'border-slate-300 text-slate-600 hover:bg-white'}`}>
+                  <RotateCcw size={10}/>Re-open
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {log.length>0&&(
+        <p className={`text-center text-[10px] ${dark?'text-slate-700':'text-slate-400'}`}>Results are session-only and are not stored or transmitted. They clear when you reload the page.</p>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN APP ────────────────────────────────────────────────────────────────
 export default function App(){
   const[page,setPage]=useState('home');
@@ -2639,14 +2912,36 @@ export default function App(){
   const[recent,setRecent]=useLocalStorage('hc3_recent',[]);
   const[search,setSearch]=useState(false);
   const[menu,setMenu]=useState(false);
+  const[log,setLog]=useState([]);
+
+  const addToLog=useCallback((entry)=>{setLog(l=>[entry,...l].slice(0,20))},[]);
 
   const openCalc=useCallback((id)=>{
-    setCalcId(id);setPage('calc');setSearch(false);setMenu(false);
+    setCalcId(id);setPage('calc');setSearch(false);setMenu(false);window.scrollTo(0,0);
     setRecent(r=>{const f=r.filter(x=>x!==id);return[id,...f].slice(0,10)});
   },[]);
-  const openPathway=(id)=>{setPathId(id);setPage('pathway');setMenu(false)};
+  const openPathway=(id)=>{setPathId(id);setPage('pathway');setMenu(false);window.scrollTo(0,0)};
   const toggleFav=(id)=>setFavs(f=>f.includes(id)?f.filter(x=>x!==id):[...f,id]);
-  const goHome=()=>{setPage('home');setMenu(false)};
+  const goHome=()=>{setPage('home');setMenu(false);window.scrollTo(0,0)};
+  const navTo=(p)=>{setPage(p);setMenu(false);window.scrollTo(0,0)};
+
+  const[showKeys,setShowKeys]=useState(false);
+
+  // Global keyboard shortcuts
+  useEffect(()=>{
+    const handler=(e)=>{
+      const tag=document.activeElement?.tagName;
+      if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;
+      if(e.key==='/'&&!search){e.preventDefault();setSearch(true);}
+      if(e.key==='Escape'){setSearch(false);setShowKeys(false);setMenu(false);}
+      if(e.key==='h'||e.key==='H'){goHome();}
+      if(e.key==='b'||e.key==='B'){navTo('browse');}
+      if(e.key==='l'||e.key==='L'){navTo('log');}
+      if(e.key==='?'){setShowKeys(k=>!k);}
+    };
+    window.addEventListener('keydown',handler);
+    return()=>window.removeEventListener('keydown',handler);
+  },[search]);
 
   const themeClass=dark?'dark':'';
 
@@ -2664,9 +2959,10 @@ export default function App(){
               <span className={`text-[10px] ml-1.5 font-medium ${dark?'text-slate-500':'text-slate-400'}`}>v4.0</span>
             </div>
           </button>
-          <button onClick={()=>setSearch(true)} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] ${dark?'bg-slate-800 text-slate-400 hover:bg-slate-700':'bg-slate-100 text-slate-500 hover:bg-slate-200'} transition-colors`}>
-            <Search size={14}/><span className="hidden sm:inline">Search…</span><kbd className={`hidden sm:inline text-[10px] px-1.5 py-0.5 rounded ${dark?'bg-slate-700 text-slate-500':'bg-slate-200 text-slate-400'}`}>⌘K</kbd>
+          <button onClick={()=>setSearch(true)} title="Search (press /)" className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] ${dark?'bg-slate-800 text-slate-400 hover:bg-slate-700':'bg-slate-100 text-slate-500 hover:bg-slate-200'} transition-colors`}>
+            <Search size={14}/><span className="hidden sm:inline">Search…</span><kbd className={`hidden sm:inline text-[10px] px-1.5 py-0.5 rounded ${dark?'bg-slate-700 text-slate-500':'bg-slate-200 text-slate-400'}`}>/</kbd>
           </button>
+          <button onClick={()=>setShowKeys(k=>!k)} title="Keyboard shortcuts (?)" className={`hidden sm:flex p-2 rounded-lg text-[10px] font-bold border items-center justify-center w-7 h-7 ${dark?'border-slate-700 text-slate-500 hover:bg-slate-800':'border-slate-200 text-slate-400 hover:bg-slate-100'} transition-colors`}>?</button>
           <button onClick={()=>setDark(!dark)} className={`p-2 rounded-lg ${dark?'hover:bg-slate-800 text-slate-400':'hover:bg-slate-100 text-slate-500'} transition-colors`}>{dark?<Sun size={17}/>:<Moon size={17}/>}</button>
           <span className={`hidden md:flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full ${dark?'bg-amber-900/30 text-amber-400 border border-amber-800/50':'bg-amber-50 text-amber-700 border border-amber-200'}`}>
             <AlertTriangle size={10}/> Educational Use Only
@@ -2677,42 +2973,106 @@ export default function App(){
       {/* MOBILE NAV OVERLAY */}
       {menu&&<div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={()=>setMenu(false)}/>}
       <nav className={`fixed top-14 left-0 bottom-0 w-72 z-40 overflow-y-auto transition-transform lg:hidden ${menu?'translate-x-0':'-translate-x-full'} ${dark?'bg-slate-900':'bg-white'} border-r ${dark?'border-slate-800':'border-slate-200'}`}>
-        <SideNav {...{openCalc,openPathway,goHome,favs,toggleFav,dark,calcId,setPage}}/>
+        <SideNav {...{openCalc,openPathway,goHome,favs,toggleFav,dark,calcId,setPage,navTo,log}}/>
       </nav>
 
       {/* DESKTOP LAYOUT */}
       <div className="flex pt-14 max-w-[1400px] mx-auto">
         {/* Desktop Sidebar */}
         <aside className={`hidden lg:flex lg:flex-col w-64 fixed top-14 bottom-0 overflow-y-auto border-r ${dark?'border-slate-800 bg-slate-900':'border-slate-200 bg-white'}`}>
-          <SideNav {...{openCalc,openPathway,goHome,favs,toggleFav,dark,calcId,setPage}}/>
+          <SideNav {...{openCalc,openPathway,goHome,favs,toggleFav,dark,calcId,setPage,navTo,log}}/>
         </aside>
         {/* Main Content */}
         <main className="flex-1 lg:ml-64 min-h-[calc(100vh-56px)]">
-          {page==='home'&&<HomePage {...{openCalc,openPathway,favs,toggleFav,recent,dark,setPage}}/>}
-          {page==='calc'&&calcId&&<CalcView {...{calcId,openCalc,favs,toggleFav,dark}}/>}
+          {page==='home'&&<HomePage {...{openCalc,openPathway,favs,toggleFav,recent,dark,setPage,setSearch}}/>}
+          {page==='browse'&&<BrowsePage {...{openCalc,favs,toggleFav,dark}}/>}
+          {page==='calc'&&calcId&&<CalcView {...{calcId,openCalc,favs,toggleFav,dark,setPage,addToLog}}/>}
           {page==='pathway'&&pathId&&<PathwayView {...{pathId,openCalc,dark}}/>}
           {page==='about'&&<AboutPage dark={dark}/>}
+          {page==='log'&&<LogPage {...{log,setLog,openCalc,dark,navTo}}/>}
           {page.startsWith('diag:')&&<DiagnosticView diagId={page.split(':')[1]} dark={dark}/>}
         </main>
       </div>
 
       {/* MOBILE BOTTOM NAV */}
       <div className={`fixed bottom-0 inset-x-0 z-30 lg:hidden border-t ${dark?'bg-slate-900 border-slate-800':'bg-white border-slate-200'} flex`}>
-        {[['home','Home',Home],['browse','Browse',Grid3X3],['pathways','Pathways',Route],['about','Editorial',Shield]].map(([k,l,Ic])=>(
-          <button key={k} onClick={()=>{if(k==='browse')setMenu(true);else if(k==='pathways')setPage('pathways_list');else if(k==='about'){setPage('about');setMenu(false)}else goHome()}}
-            className={`flex-1 flex flex-col items-center py-2 text-[10px] font-medium ${page===k||(k==='home'&&page==='home')?'text-blue-600':'text-slate-400'}`}>
-            <Ic size={18}/><span className="mt-0.5">{l}</span>
-          </button>
-        ))}
+        <button onClick={goHome} className={`flex-1 flex flex-col items-center py-2 text-[10px] font-medium ${page==='home'?'text-blue-600':'text-slate-400'}`}>
+          <Home size={18}/><span className="mt-0.5">Home</span>
+        </button>
+        <button onClick={()=>navTo('log')} className={`flex-1 flex flex-col items-center py-2 text-[10px] font-medium relative ${page==='log'?'text-blue-600':'text-slate-400'}`}>
+          <div className="relative inline-flex">
+            <ListChecks size={18}/>
+            {log.length>0&&<span className="absolute -top-1.5 -right-2.5 bg-red-500 text-white text-[8px] font-bold rounded-full min-w-[14px] h-[14px] flex items-center justify-center px-0.5">{log.length>9?'9+':log.length}</span>}
+          </div>
+          <span className="mt-0.5">Log</span>
+        </button>
+        <button onClick={()=>navTo('pathways_list')} className={`flex-1 flex flex-col items-center py-2 text-[10px] font-medium ${page==='pathways_list'?'text-blue-600':'text-slate-400'}`}>
+          <Route size={18}/><span className="mt-0.5">Pathways</span>
+        </button>
+        <button onClick={()=>navTo('about')} className={`flex-1 flex flex-col items-center py-2 text-[10px] font-medium ${page==='about'?'text-blue-600':'text-slate-400'}`}>
+          <Shield size={18}/><span className="mt-0.5">Editorial</span>
+        </button>
       </div>
 
       {/* SEARCH OVERLAY */}
       {search&&<SearchOverlay {...{openCalc,close:()=>setSearch(false),dark}}/>}
 
-      {/* FOOTER DISCLAIMER */}
-      <footer className={`lg:ml-64 py-4 px-6 text-center text-[11px] pb-20 lg:pb-4 ${dark?'text-slate-600':'text-slate-400'}`}>
-        ⚠️ <strong>Educational &amp; Research Use Only.</strong> Does not replace clinical judgment. Always verify against institutional guidelines.
-        <br/>HaemCalc Pro v4.0 · Built by a Consultant Haematologist for clinicians
+      {/* KEYBOARD SHORTCUTS MODAL */}
+      {showKeys&&(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={()=>setShowKeys(false)}>
+          <div className="absolute inset-0 bg-black/50"/>
+          <div onClick={e=>e.stopPropagation()} className={`relative rounded-2xl border shadow-2xl p-6 w-full max-w-sm ${dark?'bg-slate-900 border-slate-700':'bg-white border-slate-200'}`}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-extrabold text-base tracking-tight">Keyboard Shortcuts</h2>
+              <button onClick={()=>setShowKeys(false)} className={`p-1.5 rounded-lg ${dark?'hover:bg-slate-800 text-slate-400':'hover:bg-slate-100 text-slate-500'}`}><X size={16}/></button>
+            </div>
+            <div className="space-y-2">
+              {[['/', 'Open search'],['Esc','Close search / modal'],['H','Go to Home'],['B','Go to Browse'],['L','Go to Results Log'],['?','Toggle this help panel']].map(([key,label])=>(
+                <div key={key} className="flex items-center justify-between">
+                  <span className={`text-sm ${dark?'text-slate-300':'text-slate-600'}`}>{label}</span>
+                  <kbd className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border ${dark?'bg-slate-800 border-slate-700 text-slate-300':'bg-slate-100 border-slate-200 text-slate-700'}`}>{key}</kbd>
+                </div>
+              ))}
+            </div>
+            <p className={`text-[10px] mt-4 ${dark?'text-slate-600':'text-slate-400'}`}>Shortcuts are inactive when an input field is focused.</p>
+          </div>
+        </div>
+      )}
+
+      {/* FOOTER */}
+      <footer className={`lg:ml-64 pb-20 lg:pb-0 border-t mt-8 ${dark?'border-slate-800 bg-slate-900/50':'border-slate-200 bg-slate-50/80'}`}>
+        <div className="max-w-[1400px] mx-auto px-6 py-8 grid grid-cols-1 sm:grid-cols-3 gap-8">
+          {/* Brand */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-white font-black text-[10px] ${dark?'bg-blue-600':'bg-slate-900'}`}>HC</div>
+              <span className={`font-extrabold text-sm tracking-tight ${dark?'text-slate-200':'text-slate-800'}`}>HaemCalc <span className="text-blue-600">Pro</span></span>
+            </div>
+            <p className={`text-[11px] leading-relaxed ${dark?'text-slate-500':'text-slate-400'}`}>Evidence-based haematology calculators, clinical pathways, and diagnostic modules for specialist practice and education.</p>
+            <div className={`flex flex-wrap gap-2 mt-2`}>
+              <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border ${dark?'bg-slate-800 text-slate-500 border-slate-700':'bg-slate-100 text-slate-500 border-slate-200'}`}>v{SITE_VERSION}</span>
+              <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border ${dark?'bg-emerald-900/30 text-emerald-500 border-emerald-800/50':'bg-emerald-50 text-emerald-700 border-emerald-200'}`}><BadgeCheck size={8}/>Content reviewed {CONTENT_DATE}</span>
+            </div>
+          </div>
+          {/* Links */}
+          <div>
+            <div className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${dark?'text-slate-500':'text-slate-400'}`}>Platform</div>
+            <div className="space-y-2">
+              {[['Home',goHome],['Browse All',()=>navTo('browse')],['Clinical Pathways',()=>navTo('pathways_list')],['Diagnostic Modules',()=>navTo('diag:'+DIAGNOSTICS[0]?.id)],['About & Editorial',()=>navTo('about')]].map(([label,fn])=>(
+                <div key={label}><button onClick={fn} className={`text-[12px] ${dark?'text-slate-400 hover:text-slate-200':'text-slate-500 hover:text-slate-700'} transition-colors`}>{label}</button></div>
+              ))}
+            </div>
+          </div>
+          {/* Disclaimer */}
+          <div>
+            <div className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${dark?'text-slate-500':'text-slate-400'}`}>Disclaimer</div>
+            <p className={`text-[11px] leading-relaxed ${dark?'text-slate-500':'text-slate-400'}`}><strong className={dark?'text-slate-400':'text-slate-500'}>Educational &amp; Research Use Only.</strong> Does not replace clinical judgement, institutional guidelines, or specialist opinion. Always verify results against current local and national guidance.</p>
+            <p className={`text-[10px] mt-3 ${dark?'text-slate-600':'text-slate-400'}`}>Built by Dr. Muhammad Mohsin · Consultant Haematologist · FRCPath (Haem)</p>
+          </div>
+        </div>
+        <div className={`border-t px-6 py-3 text-center text-[10px] ${dark?'border-slate-800 text-slate-700':'border-slate-200 text-slate-400'}`}>
+          © 2025 HaemCalc Pro v{SITE_VERSION} · Educational and clinical decision-support use only · No liability accepted for clinical outcomes · Content reviewed {CONTENT_DATE}
+        </div>
       </footer>
 
       {/* PATHWAY LIST (mobile) */}
@@ -2741,7 +3101,7 @@ export default function App(){
 }
 
 // ─── SIDEBAR NAV ─────────────────────────────────────────────────────────────
-function SideNav({openCalc,openPathway,goHome,favs,toggleFav,dark,calcId,setPage}){
+function SideNav({openCalc,openPathway,goHome,favs,toggleFav,dark,calcId,setPage,navTo,log}){
   // All collapsed by default — user expands what they need
   const[expanded,setExpanded]=useState({malignant:false,benign:false,general:false});
   const[subExp,setSubExp]=useState({});
@@ -2775,8 +3135,15 @@ function SideNav({openCalc,openPathway,goHome,favs,toggleFav,dark,calcId,setPage
     <div className="py-3 px-2 space-y-0.5 text-[12px]">
 
       {/* Home */}
-      <button onClick={goHome} className={`${rowBase} font-medium mb-2 ${dark?'text-slate-300 hover:bg-slate-800':'text-slate-700 hover:bg-slate-100'}`}>
+      <button onClick={goHome} className={`${rowBase} font-medium ${dark?'text-slate-300 hover:bg-slate-800':'text-slate-700 hover:bg-slate-100'}`}>
         <Home size={14} className="flex-shrink-0"/><span>Home</span>
+      </button>
+
+      {/* Results Log */}
+      <button onClick={()=>navTo&&navTo('log')} className={`${rowBase} font-medium mb-2 relative ${dark?'text-slate-300 hover:bg-slate-800':'text-slate-700 hover:bg-slate-100'}`}>
+        <ListChecks size={14} className="flex-shrink-0"/>
+        <span className="flex-1">Results Log</span>
+        {log&&log.length>0&&<span className="ml-auto bg-red-500 text-white text-[8px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">{log.length>9?'9+':log.length}</span>}
       </button>
 
       {/* Favourites — only shown when there are some */}
@@ -2877,149 +3244,575 @@ function NavItem({c,active,onClick,dark}){
   );
 }
 
+// ─── CATEGORY COLOUR MAP ─────────────────────────────────────────────────────
+const CAT_STYLE={
+  malignant:{dot:'bg-rose-500',badge:' bg-rose-50 text-rose-700 border-rose-200',badgeDark:'bg-rose-900/40 text-rose-300 border-rose-800/50',label:'Malignant'},
+  benign:   {dot:'bg-cyan-500', badge:'bg-cyan-50 text-cyan-700 border-cyan-200', badgeDark:'bg-cyan-900/40 text-cyan-300 border-cyan-800/50',label:'Benign'},
+  general:  {dot:'bg-violet-500',badge:'bg-violet-50 text-violet-700 border-violet-200',badgeDark:'bg-violet-900/40 text-violet-300 border-violet-800/50',label:'General'},
+};
+
+// ─── EVIDENCE TYPE CLASSIFICATION ────────────────────────────────────────────
+const EVTYPE={
+  validated:  {label:'Validated Clinical Score',    badge:'bg-emerald-50 text-emerald-700 border-emerald-200',  badgeDark:'bg-emerald-900/30 text-emerald-400 border-emerald-800/50'},
+  guideline:  {label:'Guideline-Based Algorithm',   badge:'bg-blue-50 text-blue-700 border-blue-200',           badgeDark:'bg-blue-900/30 text-blue-400 border-blue-800/50'},
+  derived:    {label:'Derived Clinical Tool',        badge:'bg-amber-50 text-amber-700 border-amber-200',        badgeDark:'bg-amber-900/30 text-amber-400 border-amber-800/50'},
+  educational:{label:'Educational Reference Tool',  badge:'bg-slate-100 text-slate-600 border-slate-300',       badgeDark:'bg-slate-800 text-slate-400 border-slate-700'},
+};
+
+// ─── GOVERNANCE & EVIDENCE METADATA ──────────────────────────────────────────
+// Supplements per-calculator evidence objects. Defaults applied for unlisted calcs.
+const REVIEWER='Dr. Muhammad Mohsin, Consultant Haematologist · FRCPath (Haematology) · FRCP (London)';
+const SITE_VERSION='4.1';
+const CONTENT_DATE='April 2025';
+
+const GOV={
+  // ── Malignant Haematology ──────────────────────────────────────────────────
+  hscore:   {type:'validated',  population:'Adults (≥18 y) with suspected reactive/secondary HLH'},
+  ipi:      {type:'validated',  population:'Adults with newly diagnosed aggressive NHL (predominantly DLBCL)'},
+  ripi:     {type:'validated',  population:'Adults with DLBCL treated with R-CHOP in the Rituximab era'},
+  cnsipi:   {type:'derived',    population:'Adults with DLBCL (CNS relapse risk stratification)'},
+  nccnipi:  {type:'validated',  population:'Adults with DLBCL treated with R-CHOP (Rituximab era)'},
+  flipi:    {type:'validated',  population:'Adults with newly diagnosed follicular lymphoma (pre-Rituximab derivation)'},
+  flipi2:   {type:'validated',  population:'Adults with follicular lymphoma receiving Rituximab-based therapy'},
+  primapi:  {type:'derived',    population:'Adults with newly diagnosed follicular lymphoma receiving immunochemotherapy'},
+  ips:      {type:'validated',  population:'Adults with newly diagnosed classical Hodgkin lymphoma'},
+  ghsg:     {type:'guideline',  population:'Adults with early-stage classical Hodgkin lymphoma (GHSG risk stratification)'},
+  iss:      {type:'validated',  population:'Adults with newly diagnosed multiple myeloma (pre-novel agents)'},
+  r2iss:    {type:'validated',  population:'Adults with newly diagnosed multiple myeloma (cytogenetics-integrated)'},
+  mgus:     {type:'guideline',  population:'Adults with confirmed MGUS (Mayo stratification model)'},
+  smm:      {type:'guideline',  population:'Adults with smouldering multiple myeloma (20/2/20 Mayo 2018 model)'},
+  amyloid:  {type:'guideline',  population:'Adults with systemic AL amyloidosis (Mayo 2012 staging)'},
+  ipss:     {type:'validated',  population:'Adults with primary MDS (excludes therapy-related MDS and CMML). NICE TA218 azacitidine eligibility criterion (Int-2/High).'},
+  ipssr:    {type:'validated',  population:'Adults with primary MDS (excludes post-MPN/post-therapy MDS)'},
+  ipssm:    {type:'validated',  population:'Adults with primary MDS with NGS molecular profiling (Bernard et al. 2022 — approximate implementation; verify at mds-risk-model.com)'},
+  chrs:     {type:'validated',  population:'Adults with CHIP or CCUS on NGS (Weeks et al. NEJM Evidence 2023; verify at chrsapp.com)'},
+  chipDiag: {type:'guideline',  population:'Adults with incidental somatic mutations or unexplained cytopenias (WHO 2022 / ICC 2022 criteria)'},
+  elnAml:   {type:'guideline',  population:'Adults with newly diagnosed AML (ELN 2022 risk classification)'},
+  sokal:    {type:'validated',  population:'Adults with CML treated with conventional chemotherapy (pre-imatinib era)'},
+  hasford:  {type:'validated',  population:'Adults with CML treated with interferon-alpha therapy'},
+  eutos:    {type:'validated',  population:'Adults with newly diagnosed CML'},
+  elts:     {type:'validated',  population:'Adults with CML on first-line imatinib therapy'},
+  elnCml:   {type:'guideline',  population:'Adults with CML on TKI therapy (ELN milestone assessment)'},
+  dipss:    {type:'validated',  population:'Adults with primary or secondary myelofibrosis'},
+  dipssplus:{type:'validated',  population:'Adults with myelofibrosis (DIPSS+ karyotype-integrated refinement)'},
+  gipss:    {type:'validated',  population:'Adults with primary myelofibrosis (genetically integrated)'},
+  mipss70:  {type:'validated',  population:'Adults aged ≤70 y with primary myelofibrosis being considered for SCT'},
+  pvdipss:  {type:'validated',  population:'Adults with post-PV or post-ET myelofibrosis'},
+  ipset:    {type:'validated',  population:'Adults with essential thrombocythaemia (thrombosis risk)'},
+  rai:      {type:'validated',  population:'Adults with newly diagnosed CLL (North American centres)'},
+  binet:    {type:'validated',  population:'Adults with newly diagnosed CLL (European centres)'},
+  iwcll:    {type:'guideline',  population:'Adults with CLL — iwCLL 2018 treatment indication criteria'},
+  cllipi:   {type:'validated',  population:'Adults with newly diagnosed CLL (international consortium validation)'},
+  mipi:     {type:'validated',  population:'Adults with newly diagnosed mantle cell lymphoma'},
+  mipib:    {type:'validated',  population:'Adults with mantle cell lymphoma (Ki-67-integrated MIPI-b)'},
+  isswm:    {type:'validated',  population:'Adults with newly diagnosed Waldenström macroglobulinaemia'},
+  pit:      {type:'validated',  population:'Adults with newly diagnosed peripheral T-cell lymphoma NOS'},
+  ielsg:    {type:'validated',  population:'Adults with primary central nervous system DLBCL'},
+  ielsg24:  {type:'validated',  population:'Adults with primary CNS DLBCL (post-consolidation response assessment)'},
+  maltipi:  {type:'validated',  population:'Adults with MALT lymphoma at extranodal sites'},
+  mzlipi:   {type:'validated',  population:'Adults with nodal marginal zone lymphoma'},
+  burkitt:  {type:'guideline',  population:'Adults with Burkitt lymphoma (treatment decision criteria)'},
+  pinke:    {type:'validated',  population:'Adults with extranodal NK/T-cell lymphoma (PINK-E score)'},
+  dbl:      {type:'educational', population:'Adults with CLL or indolent lymphoma (lymphocyte doubling time)'},
+  dri:      {type:'validated',  population:'Adults undergoing allogeneic haematopoietic stem cell transplantation'},
+  ebmt:     {type:'validated',  population:'Adults undergoing allogeneic SCT (EBMT risk score)'},
+  hctci:    {type:'validated',  population:'Adults being assessed for haematopoietic SCT (HCT-CI comorbidity index)'},
+  crs:      {type:'guideline',  population:'Adults receiving CAR-T cell therapy (ASTCT 2019 consensus grading)'},
+  // ── Benign Haematology ────────────────────────────────────────────────────
+  plasmic:  {type:'validated',  population:'Adults with suspected TTP or acute TMA at presentation'},
+  fourts:   {type:'validated',  population:'Adults with clinically suspected heparin-induced thrombocytopenia'},
+  dic:      {type:'guideline',  population:'Adults with coagulopathy in acute/critical illness (ISTH overt DIC criteria)'},
+  tls:      {type:'guideline',  population:'Adults receiving cytotoxic therapy at risk of tumour lysis (Cairo-Bishop criteria)'},
+  itpbat:   {type:'guideline',  population:'Adults with suspected immune thrombocytopenia (primary ITP)'},
+  ferritin: {type:'educational', population:'Adults (clinical ferritin interpretation framework)'},
+  anc:      {type:'derived',    population:'Adults (absolute neutrophil count — formula-based)'},
+  rpi:      {type:'derived',    population:'Adults with anaemia (reticulocyte production index)'},
+  tsat:     {type:'derived',    population:'Adults undergoing iron deficiency assessment'},
+  aasev:    {type:'guideline',  population:'Adults presenting with suspected acute aortic syndrome'},
+  // ── VTE & Coagulation ─────────────────────────────────────────────────────
+  wells_pe: {type:'validated',  population:'Adults with clinically suspected pulmonary embolism'},
+  wellsdvt: {type:'validated',  population:'Adults with clinically suspected proximal DVT'},
+  hasbled:  {type:'validated',  population:'Adults with atrial fibrillation on or being considered for anticoagulation'},
+  chads:    {type:'validated',  population:'Adults with non-valvular atrial fibrillation (CHA₂DS₂-VASc)'},
+  padua:    {type:'validated',  population:'Medical inpatients being assessed for pharmacological VTE prophylaxis'},
+  caprini:  {type:'validated',  population:'Surgical inpatients being assessed for VTE prophylaxis'},
+  geneva:   {type:'validated',  population:'Adults with suspected pulmonary embolism (revised Geneva score)'},
+  khorana:  {type:'validated',  population:'Adults with solid or haematological malignancy receiving systemic chemotherapy'},
+  improve:  {type:'validated',  population:'Medical inpatients for VTE risk stratification (IMPROVE VTE score)'},
+  // ── Supportive & General ──────────────────────────────────────────────────
+  mascc:    {type:'validated',  population:'Adults with febrile neutropenia following cytotoxic therapy'},
+  karnofsky:{type:'validated',  population:'Adults with cancer (Karnofsky functional performance assessment)'},
+  ecog:     {type:'validated',  population:'Adults with cancer (WHO/ECOG performance status scale)'},
+  g8:       {type:'validated',  population:'Adults aged ≥70 y with cancer (G8 geriatric screening tool)'},
+  cfs:      {type:'validated',  population:'Adults with suspected frailty (Rockwood Clinical Frailty Scale 2005)'},
+  sofa:     {type:'validated',  population:'Adults in intensive care or high-dependency settings (Sepsis-3 criteria)'},
+  news2:    {type:'guideline',  population:'Adult inpatients (NHS England mandatory National Early Warning Score 2)'},
+  qsofa2:   {type:'validated',  population:'Adults with suspected infection outside intensive care'},
+  apache:   {type:'validated',  population:'Adults admitted to intensive care units (APACHE II)'},
+  charlson: {type:'validated',  population:'General inpatient population (Charlson Comorbidity Index)'},
+  childpugh:{type:'validated',  population:'Adults with cirrhosis (hepatic reserve assessment)'},
+  meld:     {type:'validated',  population:'Adults with chronic liver disease (transplant prioritisation)'},
+  egfr:     {type:'validated',  population:'Adults aged ≥18 y (CKD-EPI 2021 creatinine-based eGFR)'},
+  akikdigo: {type:'guideline',  population:'Adults with suspected or confirmed AKI (KDIGO 2012 staging)'},
+  grace:    {type:'validated',  population:'Adults presenting with ACS or NSTEMI'},
+  timi:     {type:'validated',  population:'Adults presenting with NSTEMI or unstable angina'},
+  heart:    {type:'validated',  population:'Adults presenting to the emergency department with chest pain'},
+  rcri:     {type:'validated',  population:'Adults undergoing non-cardiac surgery (Revised Cardiac Risk Index)'},
+  maggic:   {type:'validated',  population:'Adults with stable heart failure (MAGGIC meta-analysis model)'},
+  qrisk3:   {type:'validated',  population:'Adults aged 25–84 y without established CVD (QRISK3)'},
+  // ── Dosing & Formulae ─────────────────────────────────────────────────────
+  bsa:      {type:'derived',    population:'Adults and children receiving BSA-based therapy (Mosteller formula)'},
+  crcl:     {type:'derived',    population:'Adults aged ≥18 y receiving renally dosed medications (Cockcroft-Gault)'},
+  calvert:  {type:'derived',    population:'Adults receiving carboplatin chemotherapy (Calvert formula)'},
+  chemodose:{type:'derived',    population:'Adults receiving body-surface-area-based chemotherapy regimens'},
+  cisplatin:{type:'derived',    population:'Adults receiving cisplatin-based chemotherapy (nephrotoxicity guidance)'},
+  steroid:  {type:'educational', population:'Adults requiring corticosteroid dose conversion (educational reference)'},
+  corr_ca:  {type:'derived',    population:'Adults with albumin-corrected calcium interpretation'},
+  corrna:   {type:'derived',    population:'Adults with hyperglycaemia and apparent hyponatraemia'},
+  aniongap: {type:'derived',    population:'Adults with metabolic acidosis (Henderson-Hasselbalch framework)'},
+  abg:      {type:'derived',    population:'Adults (systematic arterial blood gas interpretation framework)'},
+  osmo:     {type:'derived',    population:'Adults (calculated serum osmolality — 2Na + glucose + urea formula)'},
+  winters:  {type:'derived',    population:'Adults with metabolic acidosis (Winter\'s formula for expected respiratory compensation)'},
+  ldlc:     {type:'derived',    population:'Adults (Friedewald LDL-cholesterol estimation — not valid with TG>4.5 mmol/L)'},
+  mysecpm:  {type:'derived',    population:'Adults — see source documentation for population details'},
+  _default: {type:'derived',    population:'General adult population'},
+};
+const gov=(id)=>({reviewer:REVIEWER,lastReviewed:CONTENT_DATE,nextReview:'April 2026',...GOV._default,...(GOV[id]||{})});
+
 // ─── SEARCH OVERLAY ──────────────────────────────────────────────────────────
 function SearchOverlay({openCalc,close,dark}){
   const[q,setQ]=useState('');
+  const[catFilter,setCatFilter]=useState('all');
   const ref=useRef();
   useEffect(()=>{ref.current?.focus()},[]);
+  // Close on ESC key
+  useEffect(()=>{
+    const handler=(e)=>{if(e.key==='Escape')close()};
+    window.addEventListener('keydown',handler);
+    return()=>window.removeEventListener('keydown',handler);
+  },[close]);
+
   const results=useMemo(()=>{
-    if(!q.trim())return Object.values(C).slice(0,8);
+    const all=Object.values(C);
+    const filtered=catFilter==='all'?all:all.filter(c=>c.cat===catFilter);
+    if(!q.trim())return filtered.slice(0,10);
     const t=q.toLowerCase();
-    return Object.values(C).filter(c=>c.name.toLowerCase().includes(t)||c.disease.toLowerCase().includes(t)||c.tags.some(tg=>tg.includes(t))||c.purpose.toLowerCase().includes(t));
-  },[q]);
+    return filtered.filter(c=>
+      c.name.toLowerCase().includes(t)||
+      c.disease.toLowerCase().includes(t)||
+      c.tags.some(tg=>tg.includes(t))||
+      c.purpose.toLowerCase().includes(t)
+    );
+  },[q,catFilter]);
+
+  const cs=CAT_STYLE;
   return(
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4" onClick={close}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4" onClick={close}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"/>
-      <div className={`relative w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl ${dark?'bg-slate-900':'bg-white'}`} onClick={e=>e.stopPropagation()}>
-        <div className={`flex items-center gap-3 px-4 py-3 border-b ${dark?'border-slate-800':'border-slate-200'}`}>
-          <Search size={18} className="text-slate-400"/>
-          <input ref={ref} value={q} onChange={e=>setQ(e.target.value)} placeholder="Search calculators, diseases, scores…" className={`flex-1 bg-transparent outline-none text-sm ${dark?'text-white placeholder:text-slate-500':'placeholder:text-slate-400'}`}/>
-          <kbd className={`text-[10px] px-1.5 py-0.5 rounded ${dark?'bg-slate-800 text-slate-400':'bg-slate-100 text-slate-400'}`}>ESC</kbd>
+      <div className={`relative w-full max-w-xl rounded-2xl overflow-hidden shadow-2xl ${dark?'bg-slate-900 border border-slate-800':'bg-white border border-slate-200'}`} onClick={e=>e.stopPropagation()}>
+
+        {/* Search input */}
+        <div className={`flex items-center gap-3 px-4 py-3.5 border-b ${dark?'border-slate-800':'border-slate-100'}`}>
+          <Search size={17} className="text-slate-400 flex-shrink-0"/>
+          <input ref={ref} value={q} onChange={e=>setQ(e.target.value)}
+            placeholder="Search calculators, diseases, scores, tags…"
+            className={`flex-1 bg-transparent outline-none text-sm ${dark?'text-white placeholder:text-slate-500':'text-slate-900 placeholder:text-slate-400'}`}/>
+          {q&&<button onClick={()=>setQ('')} className="text-slate-400 hover:text-slate-600"><X size={15}/></button>}
+          <kbd onClick={close} className={`cursor-pointer text-[10px] px-1.5 py-0.5 rounded ${dark?'bg-slate-800 text-slate-400 border border-slate-700':'bg-slate-100 text-slate-400 border border-slate-200'}`}>ESC</kbd>
         </div>
-        <div className="max-h-80 overflow-y-auto">
-          {results.length===0&&<div className="p-6 text-center text-sm text-slate-400">No matching calculators found.</div>}
-          {results.map(c=>(
-            <button key={c.id} onClick={()=>{openCalc(c.id);close()}} className={`w-full flex items-center gap-3 px-4 py-3 text-left ${dark?'hover:bg-slate-800':'hover:bg-slate-50'} transition-colors border-b ${dark?'border-slate-800/50':'border-slate-100'}`}>
-              <CIcon id={c.cat} size={20}/>
-              <div className="min-w-0 flex-1"><div className="font-semibold text-sm">{c.name}</div><div className={`text-xs truncate ${dark?'text-slate-400':'text-slate-500'}`}>{c.purpose}</div></div>
-              <ChevronRight size={14} className="text-slate-400 flex-shrink-0"/>
+
+        {/* Category filter chips */}
+        <div className={`flex gap-2 px-4 py-2 border-b ${dark?'border-slate-800':'border-slate-100'} overflow-x-auto`}>
+          {[['all','All',null],...CATS.map(c=>[c.id,cs[c.id]?.label||c.label,c.id])].map(([id,label,catId])=>(
+            <button key={id} onClick={()=>setCatFilter(id)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors
+                ${catFilter===id
+                  ?(dark?'bg-blue-600 text-white border-blue-600':'bg-blue-600 text-white border-blue-600')
+                  :(dark?'bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-600':'bg-white text-slate-500 border-slate-200 hover:border-slate-300')}`}>
+              {catId&&<span className={`w-1.5 h-1.5 rounded-full ${cs[catId]?.dot}`}/>}{label}
             </button>
           ))}
+        </div>
+
+        {/* Results */}
+        <div className="max-h-[400px] overflow-y-auto">
+          {!q.trim()&&<div className={`px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest ${dark?'text-slate-600':'text-slate-400'}`}>
+            {catFilter==='all'?'Popular calculators':'Showing all '+cs[catFilter]?.label+' tools'}
+          </div>}
+          {results.length===0&&<div className="p-8 text-center text-sm text-slate-400">No calculators match your search.</div>}
+          {results.map(c=>{
+            const style=cs[c.cat];
+            return(
+              <button key={c.id} onClick={()=>{openCalc(c.id);close()}}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b
+                  ${dark?'hover:bg-slate-800 border-slate-800/50':'hover:bg-slate-50 border-slate-100'}`}>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${dark?'bg-slate-800':'bg-slate-100'}`}>
+                  <CIcon id={c.cat} size={16} className={dark?'text-slate-400':'text-slate-500'}/>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm">{c.name}</span>
+                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${dark?style?.badgeDark:style?.badge}`}>{c.disease}</span>
+                  </div>
+                  <div className={`text-[11px] mt-0.5 line-clamp-1 ${dark?'text-slate-400':'text-slate-500'}`}>{c.purpose}</div>
+                </div>
+                <ChevronRight size={13} className={`flex-shrink-0 ${dark?'text-slate-600':'text-slate-300'}`}/>
+              </button>
+            );
+          })}
+          {results.length>0&&<div className={`px-4 py-2 text-[10px] text-center ${dark?'text-slate-600':'text-slate-400'}`}>{results.length} result{results.length!==1?'s':''}{q?' found':''}</div>}
         </div>
       </div>
     </div>
   );
 }
 
-// ─── HOME PAGE ───────────────────────────────────────────────────────────────
-function HomePage({openCalc,openPathway,favs,toggleFav,recent,dark,setPage}){
-  const[showBrowse,setShowBrowse]=useState(false);
-  const bc=dark?'bg-slate-900 border-slate-800':'bg-white border-slate-200';
-  const hc=dark?'text-slate-500':'text-slate-400';
+// ─── RICH CALC CARD (used in BrowsePage) ─────────────────────────────────────
+function RichCalcCard({c,onClick,dark,fav,onToggleFav}){
+  const cs=CAT_STYLE[c.cat]||{dot:'bg-slate-400',badge:'bg-slate-50 text-slate-700 border-slate-200',badgeDark:'bg-slate-800 text-slate-400 border-slate-700',label:'Other'};
   return(
-    <div className="max-w-3xl mx-auto p-4 sm:p-6 pb-24 space-y-5">
-      {/* Hero — compact */}
-      <div className={`rounded-2xl p-5 sm:p-6 border ${bc}`}>
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${dark?'bg-blue-600':'bg-slate-900'}`}><Droplets size={20} className="text-white"/></div>
-          <div><h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">HaemCalc <span className="text-blue-600">Pro</span> <span className={`text-xs font-medium ${hc}`}>v4.0</span></h1>
-          <p className={`text-xs ${hc}`}>108 evidence-based calculators · 6 clinical pathways · 4 diagnostic modules</p></div>
+    <div className={`relative group rounded-xl border p-4 cursor-pointer transition-all hover:shadow-md ${dark?'bg-slate-900 border-slate-800 hover:border-slate-700':'bg-white border-slate-200 hover:border-blue-300'}`} onClick={onClick}>
+      <button onClick={e=>{e.stopPropagation();onToggleFav()}} className={`absolute top-2.5 right-2.5 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity ${fav?'opacity-100 text-amber-500':'text-slate-300'}`}><Star size={13} fill={fav?'currentColor':'none'}/></button>
+      <div className="flex items-start gap-3">
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${dark?'bg-slate-800':'bg-slate-100'}`}>
+          <CIcon id={c.cat} size={17} className={dark?'text-slate-400':'text-slate-500'}/>
+        </div>
+        <div className="flex-1 min-w-0 pr-5">
+          <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+            <span className="font-bold text-sm">{c.name}</span>
+            <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${dark?cs.badgeDark:cs.badge}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${cs.dot}`}/>{c.disease}
+            </span>
+          </div>
+          <p className={`text-[11px] leading-snug line-clamp-2 ${dark?'text-slate-400':'text-slate-500'}`}>{c.purpose}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── BROWSE PAGE ─────────────────────────────────────────────────────────────
+function BrowsePage({openCalc,favs,toggleFav,dark}){
+  const[catFilter,setCatFilter]=useState('all');
+  const[subFilter,setSubFilter]=useState('all');
+  const[q,setQ]=useState('');
+  const hc=dark?'text-slate-400':'text-slate-500';
+  const bc=dark?'bg-slate-900 border-slate-800':'bg-white border-slate-200';
+
+  const activeSubs=catFilter==='all'?[]:SUBS[catFilter]||[];
+
+  const filtered=useMemo(()=>{
+    let calcs=Object.values(C);
+    if(catFilter!=='all')calcs=calcs.filter(c=>c.cat===catFilter);
+    if(subFilter!=='all'){
+      const sub=activeSubs.find(s=>s.id===subFilter);
+      if(sub)calcs=calcs.filter(c=>sub.calcs.includes(c.id));
+    }
+    if(q.trim()){
+      const t=q.toLowerCase();
+      calcs=calcs.filter(c=>c.name.toLowerCase().includes(t)||c.disease.toLowerCase().includes(t)||c.tags.some(tg=>tg.includes(t)));
+    }
+    return calcs;
+  },[catFilter,subFilter,q]);
+
+  const cs=CAT_STYLE;
+
+  return(
+    <div className="max-w-3xl mx-auto p-4 sm:p-8 pb-24">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-extrabold tracking-tight mb-1">Browse Calculators</h1>
+        <p className={`text-sm ${hc}`}>{Object.keys(C).length} evidence-based tools across malignant haematology, coagulation, VTE, transfusion, and general medicine.</p>
+      </div>
+
+      {/* Search bar */}
+      <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border mb-4 ${dark?'bg-slate-900 border-slate-700':'bg-white border-slate-200'}`}>
+        <Search size={15} className="text-slate-400 flex-shrink-0"/>
+        <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Filter by name, disease, or tag…"
+          className={`flex-1 bg-transparent outline-none text-sm ${dark?'text-white placeholder:text-slate-500':'text-slate-900 placeholder:text-slate-400'}`}/>
+        {q&&<button onClick={()=>setQ('')}><X size={14} className="text-slate-400"/></button>}
+      </div>
+
+      {/* Category chips */}
+      <div className="flex gap-2 flex-wrap mb-3">
+        {[['all','All calculators',null],...CATS.map(c=>[c.id,cs[c.id]?.label||c.label,c.id])].map(([id,label,catId])=>(
+          <button key={id} onClick={()=>{setCatFilter(id);setSubFilter('all')}}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors
+              ${catFilter===id
+                ?(dark?'bg-blue-600 text-white border-blue-600':'bg-blue-600 text-white border-blue-600')
+                :(dark?'bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-500':'bg-white text-slate-500 border-slate-200 hover:border-slate-400')}`}>
+            {catId&&<span className={`w-2 h-2 rounded-full ${cs[catId]?.dot}`}/>}{label}
+          </button>
+        ))}
+      </div>
+
+      {/* Sub-category chips (only when a category is selected) */}
+      {activeSubs.length>0&&(
+        <div className="flex gap-2 flex-wrap mb-5 pl-1 border-l-2 border-blue-500 ml-1">
+          <button onClick={()=>setSubFilter('all')}
+            className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-colors
+              ${subFilter==='all'?(dark?'bg-slate-700 text-white border-slate-600':'bg-slate-800 text-white border-slate-800'):(dark?'bg-slate-800 text-slate-400 border-slate-700':'bg-white text-slate-500 border-slate-200 hover:border-slate-400')}`}>
+            All
+          </button>
+          {activeSubs.map(s=>(
+            <button key={s.id} onClick={()=>setSubFilter(s.id)}
+              className={`px-3 py-1 rounded-full text-[11px] font-semibold border transition-colors
+                ${subFilter===s.id?(dark?'bg-slate-700 text-white border-slate-600':'bg-slate-800 text-white border-slate-800'):(dark?'bg-slate-800 text-slate-400 border-slate-700':'bg-white text-slate-500 border-slate-200 hover:border-slate-400')}`}>
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Results count */}
+      <div className={`text-[11px] font-semibold mb-3 ${hc}`}>{filtered.length} calculator{filtered.length!==1?'s':''}</div>
+
+      {/* Grid */}
+      {filtered.length===0
+        ?<div className={`rounded-xl border p-8 text-center ${bc}`}><p className={`text-sm ${hc}`}>No calculators match your filters.</p></div>
+        :<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {filtered.map(c=><RichCalcCard key={c.id} c={c} onClick={()=>openCalc(c.id)} dark={dark} fav={favs.includes(c.id)} onToggleFav={()=>toggleFav(c.id)}/>)}
+        </div>
+      }
+    </div>
+  );
+}
+
+// ─── FEATURED CALCULATORS ────────────────────────────────────────────────────
+const FEATURED=[
+  {id:'hscore',why:'First-line triage for suspected secondary HLH in any unwell adult with fever, cytopenias, and hyperferritinaemia.'},
+  {id:'ipi',why:'Standard prognostic stratification for newly diagnosed DLBCL before initiating R-CHOP or trial enrolment.'},
+  {id:'ipssr',why:'Defines MDS risk category and transplant eligibility according to current ELN/IPSS-R guidelines.'},
+  {id:'plasmic',why:'Rapid bedside tool to differentiate TTP from other TMAs before ADAMTS13 results return.'},
+  {id:'wells_pe',why:'Stratifies pre-test probability for PE to determine whether D-dimer or direct CTPA is appropriate.'},
+  {id:'mascc',why:'Validated risk score for safe outpatient management of febrile neutropenia in selected low-risk patients.'},
+];
+
+// ─── HOME PAGE ───────────────────────────────────────────────────────────────
+function HomePage({openCalc,openPathway,favs,toggleFav,recent,dark,setPage,setSearch}){
+  const bc=dark?'bg-slate-900 border-slate-800':'bg-white border-slate-200';
+  const hc=dark?'text-slate-400':'text-slate-500';
+  const totalCalcs=Object.keys(C).length;
+
+  return(
+    <div className="max-w-2xl mx-auto p-4 sm:p-8 pb-24 space-y-10">
+
+      {/* ── HERO ─────────────────────────────────────────────── */}
+      <div className={`rounded-2xl border overflow-hidden ${bc}`}>
+        <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600"/>
+        <div className="p-7 sm:p-10">
+          <div className="flex items-center gap-3 mb-5">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${dark?'bg-blue-600':'bg-slate-900'}`}>
+              <Droplets size={19} className="text-white"/>
+            </div>
+            <div className="leading-none">
+              <span className="font-extrabold text-xl tracking-tight">HaemCalc</span>
+              <span className="text-blue-600 font-extrabold text-xl"> Pro</span>
+              <span className={`text-[11px] ml-2 font-medium ${hc}`}>v4.0</span>
+            </div>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-3 leading-snug">
+            Evidence-based haematology<br/>
+            <span className="text-blue-600">calculators &amp; clinical pathways.</span>
+          </h2>
+          <p className={`text-sm leading-relaxed max-w-lg mb-6 ${hc}`}>
+            A consultant-grade platform designed for haematologists, trainees, and acute physicians. Risk scores, prognostic indices, dosing tools, step-by-step clinical pathways, and diagnostic frameworks — all guideline-aligned and ready for the ward.
+          </p>
+          <div className="flex flex-wrap gap-2 mb-6">
+            {[[totalCalcs+' Calculators',Calculator,'blue'],['6 Clinical Pathways',Route,'indigo'],['4 Diagnostic Modules',GitBranch,'purple']].map(([label,Icon,col])=>(
+              <span key={label} className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border
+                ${col==='blue'?(dark?'bg-blue-900/30 border-blue-800/60 text-blue-300':'bg-blue-50 border-blue-200 text-blue-700'):
+                  col==='indigo'?(dark?'bg-indigo-900/30 border-indigo-800/60 text-indigo-300':'bg-indigo-50 border-indigo-200 text-indigo-700'):
+                  (dark?'bg-purple-900/30 border-purple-800/60 text-purple-300':'bg-purple-50 border-purple-200 text-purple-700')}`}>
+                <Icon size={11}/>{label}
+              </span>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button onClick={()=>setSearch(true)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm">
+              <Search size={14}/>Explore Calculators
+            </button>
+            <button onClick={()=>setPage('pathways_list')} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-colors
+              ${dark?'border-slate-700 text-slate-300 hover:bg-slate-800':'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
+              <Route size={14}/>View Pathways
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* ACUTE HAEMATOLOGY MODE — top priority */}
+      {/* ── TRUST / AUTHORITY STRIP ──────────────────────────── */}
       <section>
-        <div className="flex items-center gap-2 mb-3"><Zap size={14} className="text-red-500"/><h2 className="text-xs font-bold uppercase tracking-wider text-red-500">Acute Haematology</h2></div>
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-          {ACUTE_TOOLS.map(id=>{const c=C[id];return c?<button key={id} onClick={()=>openCalc(id)} className={`p-3 rounded-xl border text-center transition-all ${dark?'bg-red-950/20 border-red-900/50 hover:border-red-700':'bg-red-50 border-red-200 hover:border-red-400'}`}>
-            <CIcon id={c.cat} size={18} className={`mx-auto mb-1 ${dark?'text-red-400':'text-red-600'}`}/>
-            <div className={`text-[11px] font-bold leading-tight ${dark?'text-red-300':'text-red-700'}`}>{c.name}</div>
-          </button>:null})}
+        <div className={`rounded-2xl border p-5 ${dark?'bg-slate-900 border-slate-800':'bg-slate-50 border-slate-200'}`}>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              {icon:User,title:'Consultant-Authored',desc:'Written and maintained by Dr. Muhammad Mohsin, FRCPath (Haem)'},
+              {icon:BadgeCheck,title:'Guideline-Aligned',desc:'ELN · NCCN · ESMO · BSH · ISTH · NICE · ASH · EBMT'},
+              {icon:Stethoscope,title:'Clinical Practice',desc:'Designed for real ward use, not just academic reference'},
+              {icon:Activity,title:'Regularly Updated',desc:'Reviewed against major guideline revisions and new evidence'},
+            ].map(({icon:Icon,title,desc})=>(
+              <div key={title} className="flex flex-col gap-1.5">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${dark?'bg-blue-900/30':'bg-blue-50'}`}>
+                  <Icon size={15} className={dark?'text-blue-400':'text-blue-600'}/>
+                </div>
+                <div className={`text-xs font-bold ${dark?'text-slate-200':'text-slate-800'}`}>{title}</div>
+                <div className={`text-[11px] leading-snug ${hc}`}>{desc}</div>
+              </div>
+            ))}
+          </div>
+          <div className={`mt-4 pt-4 border-t text-[11px] flex items-center gap-2 ${dark?'border-slate-800 text-slate-500':'border-slate-200 text-slate-400'}`}>
+            <ShieldAlert size={11}/>
+            <span>Designed for clinical education and decision support. Does not replace specialist judgement, local policy, or formal guidelines.</span>
+          </div>
         </div>
       </section>
 
-      {/* Favourites */}
-      {favs.length>0&&<section>
-        <div className="flex items-center gap-2 mb-3"><Star size={14} className={dark?'text-amber-500':'text-amber-600'}/><h2 className={`text-xs font-bold uppercase tracking-wider ${dark?'text-amber-500':'text-amber-600'}`}>Favourites</h2></div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {favs.map(id=>{const c=C[id];return c?<CalcCard key={id} c={c} onClick={()=>openCalc(id)} dark={dark} fav onToggleFav={()=>toggleFav(id)}/>:null})}
-        </div>
-      </section>}
-
-      {/* Recently Used */}
-      {recent.length>0&&<section>
-        <div className="flex items-center gap-2 mb-3"><Clock size={14} className={hc}/><h2 className={`text-xs font-bold uppercase tracking-wider ${hc}`}>Recently Used</h2></div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {recent.slice(0,8).map(id=>{const c=C[id];return c?<CalcCard key={id} c={c} onClick={()=>openCalc(id)} dark={dark} fav={favs.includes(id)} onToggleFav={()=>toggleFav(id)}/>:null})}
-        </div>
-      </section>}
-
-      {/* Clinical Pathways */}
+      {/* ── WHAT'S INSIDE ────────────────────────────────────── */}
       <section>
-        <div className="flex items-center gap-2 mb-3"><Route size={14} className="text-blue-500"/><h2 className="text-xs font-bold uppercase tracking-wider text-blue-600">Clinical Pathways</h2></div>
-        <div className="grid sm:grid-cols-2 gap-2">
-          {PATHWAYS.map(p=>(
-            <button key={p.id} onClick={()=>openPathway(p.id)} className={`text-left p-3 rounded-xl border ${bc} hover:border-blue-400 transition-all flex items-center gap-3`}>
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${dark?'bg-blue-900/40':'bg-blue-50'}`}><Route size={16} className="text-blue-500"/></div>
-              <div><div className="font-bold text-xs">{p.title}</div><div className={`text-[10px] mt-0.5 ${hc}`}>{p.desc}</div></div>
+        <h2 className={`text-[11px] font-semibold uppercase tracking-widest mb-4 ${hc}`}>What's Inside</h2>
+        <div className="grid sm:grid-cols-3 gap-3">
+          {[
+            {title:'Calculators',desc:totalCalcs+' risk scores, prognostic indices, and dosing tools across malignant haematology, coagulation, VTE, transfusion, and general medicine.',icon:Calculator,accent:dark?'text-blue-400':'text-blue-600',bg:dark?'bg-blue-900/20 border-blue-800/40':'bg-blue-50 border-blue-100',action:()=>setSearch(true)},
+            {title:'Clinical Pathways',desc:'6 step-by-step management algorithms — HLH, VTE, anaemia, pancytopenia, neutropenic sepsis, and thrombocytopenia.',icon:Route,accent:dark?'text-indigo-400':'text-indigo-600',bg:dark?'bg-indigo-900/20 border-indigo-800/40':'bg-indigo-50 border-indigo-100',action:()=>setPage('pathways_list')},
+            {title:'Diagnostics',desc:'4 structured frameworks guiding workup and differential diagnosis, from prolonged APTT to hyperferritinaemia.',icon:GitBranch,accent:dark?'text-purple-400':'text-purple-600',bg:dark?'bg-purple-900/20 border-purple-800/40':'bg-purple-50 border-purple-100',action:()=>setPage('diag:'+DIAGNOSTICS[0]?.id)},
+          ].map(({title,desc,icon:Icon,accent,bg,action})=>(
+            <button key={title} onClick={action}
+              className={`text-left p-5 rounded-xl border transition-all hover:shadow-md ${bc}`}>
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 border ${bg}`}>
+                <Icon size={17} className={accent}/>
+              </div>
+              <div className="font-bold text-sm mb-1.5">{title}</div>
+              <div className={`text-[12px] leading-relaxed ${hc}`}>{desc}</div>
+              <div className={`flex items-center gap-1 mt-3 text-[11px] font-semibold ${accent}`}>Open <ChevronRight size={12}/></div>
             </button>
           ))}
         </div>
       </section>
 
-      {/* Diagnostic Modules */}
+      {/* ── FEATURED CALCULATORS ─────────────────────────────── */}
       <section>
-        <div className="flex items-center gap-2 mb-3"><GitBranch size={14} className="text-purple-500"/><h2 className="text-xs font-bold uppercase tracking-wider text-purple-600">Diagnostic Modules</h2></div>
-        <div className="grid sm:grid-cols-2 gap-2">
-          {DIAGNOSTICS.map(d=>(
-            <button key={d.id} onClick={()=>setPage('diag:'+d.id)} className={`text-left p-3 rounded-xl border ${bc} hover:border-purple-400 transition-all flex items-center gap-3`}>
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${dark?'bg-purple-900/40':'bg-purple-50'}`}><GitBranch size={16} className="text-purple-500"/></div>
-              <div><div className="font-bold text-xs">{d.title}</div><div className={`text-[10px] mt-0.5 ${hc}`}>{d.sections.length} sections</div></div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className={`text-[11px] font-semibold uppercase tracking-widest ${hc}`}>Featured Calculators</h2>
+          <button onClick={()=>setSearch(true)} className={`text-[11px] font-semibold text-blue-600 hover:underline flex items-center gap-1`}>View all <ChevronRight size={11}/></button>
+        </div>
+        <div className="space-y-2">
+          {FEATURED.map(({id,why})=>{const c=C[id];return c?(
+            <button key={id} onClick={()=>openCalc(id)}
+              className={`w-full text-left p-4 rounded-xl border transition-all hover:shadow-sm group ${bc} ${dark?'hover:border-slate-700':'hover:border-blue-200'}`}>
+              <div className="flex items-start gap-3">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${dark?'bg-slate-800':'bg-slate-100'}`}>
+                  <CIcon id={c.cat} size={15} className={dark?'text-slate-400':'text-slate-500'}/>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-sm">{c.name}</span>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${dark?'bg-emerald-900/40 text-emerald-400 border border-emerald-800/50':'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>{c.evidence.guideline}</span>
+                  </div>
+                  <div className={`text-[11px] mt-0.5 font-medium ${dark?'text-slate-400':'text-slate-500'}`}>{c.disease}</div>
+                  <div className={`text-[11px] mt-1 leading-snug ${hc}`}>{why}</div>
+                </div>
+                <ChevronRight size={14} className={`flex-shrink-0 mt-1 ${dark?'text-slate-600':'text-slate-300'} group-hover:text-blue-500 transition-colors`}/>
+              </div>
             </button>
-          ))}
+          ):null})}
         </div>
       </section>
 
-      {/* Most Used */}
+      {/* ── ACUTE / EMERGENCY STRIP ──────────────────────────── */}
       <section>
-        <div className="flex items-center gap-2 mb-3"><TrendingUp size={14} className={hc}/><h2 className={`text-xs font-bold uppercase tracking-wider ${hc}`}>Most Used</h2></div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {MOST_USED.map(id=>{const c=C[id];return c?<CalcCard key={id} c={c} onClick={()=>openCalc(id)} dark={dark} fav={favs.includes(id)} onToggleFav={()=>toggleFav(id)}/>:null})}
+        <div className="flex items-center gap-2 mb-3">
+          <Zap size={13} className="text-red-500"/>
+          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-red-500">Emergency &amp; Acute Tools</h2>
+        </div>
+        <div className={`rounded-xl border p-4 ${dark?'bg-red-950/10 border-red-900/40':'bg-red-50/60 border-red-200/80'}`}>
+          <p className={`text-[11px] mb-3 ${dark?'text-red-400/60':'text-red-500/60'}`}>Time-critical calculators for acute haematology situations</p>
+          <div className="flex flex-wrap gap-2">
+            {ACUTE_TOOLS.map(id=>{const c=C[id];return c?(
+              <button key={id} onClick={()=>openCalc(id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all
+                  ${dark?'bg-slate-900 border-red-900/50 text-red-300 hover:border-red-700 hover:bg-red-900/20':'bg-white border-red-200 text-red-700 hover:border-red-400 hover:shadow-sm'}`}>
+                {c.name}
+              </button>
+            ):null})}
+          </div>
         </div>
       </section>
 
-      {/* Browse All — collapsed by default */}
+      {/* ── EVIDENCE & METHODOLOGY ───────────────────────────── */}
       <section>
-        <button onClick={()=>setShowBrowse(!showBrowse)} className={`flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${hc} mb-3`}>
-          <Grid3X3 size={14}/> Browse All Calculators ({Object.keys(C).length}) <ChevronDown size={12} className={`transition-transform ${showBrowse?'':'rotate-[-90deg]'}`}/>
-        </button>
-        {showBrowse&&CATS.map(cat=>{
-          const calcs=Object.values(C).filter(c=>c.cat===cat.id);
-          return(<div key={cat.id} className="mb-4">
-            <div className="flex items-center gap-2 mb-2"><CIcon id={cat.id} size={13} className="opacity-60"/><span className={`text-[10px] font-bold uppercase tracking-wider`} style={{color:cat.color}}>{cat.label} ({calcs.length})</span></div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {calcs.map(c=><CalcCard key={c.id} c={c} onClick={()=>openCalc(c.id)} dark={dark} fav={favs.includes(c.id)} onToggleFav={()=>toggleFav(c.id)}/>)}
+        <div className={`rounded-2xl border p-6 space-y-4 ${bc}`}>
+          <div className="flex items-center gap-3 mb-1">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${dark?'bg-emerald-900/30':'bg-emerald-50'}`}>
+              <BookOpen size={16} className={dark?'text-emerald-400':'text-emerald-600'}/>
             </div>
-          </div>);
-        })}
+            <h2 className="font-bold text-base">Evidence &amp; Methodology</h2>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {[
+              {title:'Source Studies',desc:'Every calculator is derived from its original validation study with PubMed-indexed references, year of publication, and PMID displayed on each tool page.'},
+              {title:'Guideline Alignment',desc:'Risk thresholds and clinical interpretations reflect current recommendations from ELN, NCCN, ESMO, BSH, ISTH, NICE, ASH, ASTCT, and EBMT.'},
+              {title:'Clinical Interpretation',desc:'Results go beyond a number — each tool provides a clinical interpretation, risk category, and actionable next steps derived from the source literature.'},
+              {title:'Limitations Disclosed',desc:'Every calculator includes explicit limitations, populations not validated, and common pitfalls — helping clinicians apply tools appropriately.'},
+            ].map(({title,desc})=>(
+              <div key={title} className={`rounded-xl p-4 ${dark?'bg-slate-800/60':'bg-slate-50'}`}>
+                <div className={`text-xs font-bold mb-1 ${dark?'text-slate-200':'text-slate-700'}`}>{title}</div>
+                <div className={`text-[11px] leading-relaxed ${hc}`}>{desc}</div>
+              </div>
+            ))}
+          </div>
+          <div className={`text-[11px] ${hc}`}>
+            <span className="font-semibold">About the Author — </span>
+            <button onClick={()=>setPage('about')} className="text-blue-600 hover:underline font-medium">Dr. Muhammad Mohsin, Consultant Haematologist</button>
+            {' '}— MBBS · MRCP (UK) · FRCPath (Haematology) · FRCP (London)
+          </div>
+        </div>
       </section>
+
+      {/* ── FAVOURITES ───────────────────────────────────────── */}
+      {favs.length>0&&(
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <Star size={13} className={dark?'text-amber-500':'text-amber-600'}/>
+            <h2 className={`text-[11px] font-semibold uppercase tracking-widest ${dark?'text-amber-500':'text-amber-600'}`}>Favourites</h2>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {favs.map(id=>{const c=C[id];return c?<CalcCard key={id} c={c} onClick={()=>openCalc(id)} dark={dark} fav onToggleFav={()=>toggleFav(id)}/>:null})}
+          </div>
+        </section>
+      )}
+
+      {/* ── RECENTLY USED ────────────────────────────────────── */}
+      {recent.length>0&&(
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <Clock size={13} className={hc}/>
+            <h2 className={`text-[11px] font-semibold uppercase tracking-widest ${hc}`}>Recently Used</h2>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {recent.slice(0,4).map(id=>{const c=C[id];return c?<CalcCard key={id} c={c} onClick={()=>openCalc(id)} dark={dark} fav={favs.includes(id)} onToggleFav={()=>toggleFav(id)}/>:null})}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
 
 function CalcCard({c,onClick,dark,fav,onToggleFav}){
+  const cs=CAT_STYLE[c.cat]||{dot:'bg-slate-400',badge:'bg-slate-50 text-slate-700 border-slate-200',badgeDark:'bg-slate-800 text-slate-400 border-slate-700'};
   return(
     <div className={`relative group rounded-xl border p-3 cursor-pointer transition-all hover:shadow-md ${dark?'bg-slate-900 border-slate-800 hover:border-slate-700':'bg-white border-slate-200 hover:border-blue-300'}`} onClick={onClick}>
       <button onClick={e=>{e.stopPropagation();onToggleFav()}} className={`absolute top-2 right-2 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity ${fav?'opacity-100 text-amber-500':'text-slate-300'}`}><Star size={12} fill={fav?'currentColor':'none'}/></button>
-      <CIcon id={c.cat} size={18} className={`mb-1.5 ${dark?'text-slate-500':'text-slate-400'}`}/>
-      <div className="font-bold text-xs">{c.name}</div>
-      <div className={`text-[10px] mt-0.5 line-clamp-1 ${dark?'text-slate-500':'text-slate-400'}`}>{c.disease}</div>
+      <CIcon id={c.cat} size={16} className={`mb-1.5 ${dark?'text-slate-500':'text-slate-400'}`}/>
+      <div className="font-bold text-xs pr-5">{c.name}</div>
+      <span className={`inline-flex items-center gap-0.5 mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${dark?cs.badgeDark:cs.badge}`}>
+        <span className={`w-1 h-1 rounded-full ${cs.dot}`}/>{c.disease}
+      </span>
+      <div className={`text-[10px] mt-1 line-clamp-2 ${dark?'text-slate-500':'text-slate-400'}`}>{c.purpose}</div>
     </div>
   );
 }
 
 // ─── CALCULATOR VIEW (GOLD-STANDARD TEMPLATE) ───────────────────────────────
-function CalcView({calcId,openCalc,favs,toggleFav,dark}){
+function CalcView({calcId,openCalc,favs,toggleFav,dark,setPage,addToLog}){
   const c=C[calcId];
   const[vals,setVals]=useState({});
   const[result,setResult]=useState(null);
@@ -3030,8 +3823,17 @@ function CalcView({calcId,openCalc,favs,toggleFav,dark}){
 
   if(!c)return<div className="p-8 text-center text-slate-400">Calculator not found.</div>;
 
+  const g=gov(c.id);
+  const et=EVTYPE[g.type]||EVTYPE.derived;
+
   const update=(id,v)=>setVals(p=>({...p,[id]:v}));
-  const calculate=()=>setResult(c.calc(vals));
+  const calculate=()=>{
+    const r=c.calc(vals);
+    setResult(r);
+    if(r&&r.risk!=='info'&&addToLog){
+      addToLog({id:c.id,calcName:c.name,score:r.score,label:r.label,risk:r.risk,next:r.next||'',time:new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})});
+    }
+  };
   const reset=()=>{setVals({});setResult(null)};
   const isFav=favs.includes(calcId);
 
@@ -3042,6 +3844,48 @@ function CalcView({calcId,openCalc,favs,toggleFav,dark}){
     if(!result)return;
     const txt=`[${new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}] ${c.name}: ${result.label}${result.score?` (Score: ${result.score}${result.max?'/'+result.max:''})`:''}.${result.stats?.length?' '+result.stats.map(s=>s[0]+': '+s[1]).join(', ')+'.':''} ${result.interp} Next steps: ${result.next}`;
     navigator.clipboard.writeText(txt).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),2000)});
+  };
+
+  const printResult=()=>{
+    if(!result)return;
+    const dtStr=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const inputRows=c.inputs.map(inp=>{
+      const v=vals[inp.id];
+      let display='—';
+      if(inp.type==='select'&&inp.opts){const found=inp.opts.find(([,val])=>val===v);display=found?found[0]:'—';}
+      else if(inp.type==='check'){display=v?'Yes':'No';}
+      else if(v!==undefined&&v!==''){display=String(v)+(inp.unit?' '+inp.unit:'');}
+      return`<tr><td style="padding:5px 10px 5px 0;color:#555;font-size:12px;width:55%;border-bottom:1px solid #f0f0f0">${inp.label}</td><td style="padding:5px 0;font-size:12px;font-weight:600;border-bottom:1px solid #f0f0f0">${display}</td></tr>`;
+    }).join('');
+    const riskLabel=result.risk==='low'?'#059669':result.risk==='int'?'#d97706':result.risk==='high'?'#dc2626':result.risk==='vhigh'?'#7c3aed':'#475569';
+    const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${c.name} — HaemCalc Pro</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:13px;color:#1e293b;background:#fff;padding:30px 40px}@media print{.noprint{display:none!important}body{padding:15px 25px}}</style></head><body>
+<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1e293b;padding-bottom:10px;margin-bottom:18px">
+  <div><span style="font-weight:900;font-size:18px;letter-spacing:-0.5px">HaemCalc<span style="color:#2563eb">Pro</span></span><span style="font-size:10px;margin-left:8px;color:#94a3b8">v${SITE_VERSION} · Educational Use Only</span></div>
+  <div style="font-size:11px;color:#64748b">${dtStr}</div>
+</div>
+<h1 style="font-size:20px;font-weight:900;margin-bottom:4px">${c.name}</h1>
+<p style="font-size:12px;color:#64748b;margin-bottom:18px">${c.purpose}</p>
+<h2 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#94a3b8;margin-bottom:8px">Inputs Entered</h2>
+<table style="width:100%;border-collapse:collapse;margin-bottom:20px">${inputRows}</table>
+<div style="border:2px solid ${riskLabel};border-radius:8px;padding:16px;margin-bottom:16px;background:${result.risk==='low'?'#f0fdf4':result.risk==='int'?'#fffbeb':result.risk==='high'?'#fef2f2':result.risk==='vhigh'?'#faf5ff':'#f8fafc'}">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+    <div style="width:52px;height:52px;border-radius:8px;background:${riskLabel};display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:${String(result.score).length>3?'13':'18'}px">${result.score}${result.max?'<div style="font-size:9px;opacity:0.7">/' +result.max+'</div>':''}</div>
+    <div><div style="font-size:18px;font-weight:900;color:${riskLabel}">${result.label}</div>${result.stats&&result.stats.length?'<div style="font-size:11px;margin-top:3px;color:#64748b">'+result.stats.map(([k,v])=>`<strong>${k}:</strong> ${v}`).join(' &nbsp;·&nbsp; ')+'</div>':''}</div>
+  </div>
+  <div style="background:rgba(255,255,255,0.7);border-radius:6px;padding:12px;margin-bottom:10px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#2563eb;margin-bottom:4px">What This Means</div><p style="font-size:13px;line-height:1.6;color:#1e293b">${result.interp}</p></div>
+  ${result.next?`<div style="background:rgba(255,255,255,0.7);border-radius:6px;padding:12px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#059669;margin-bottom:4px">What To Do Next</div><p style="font-size:13px;line-height:1.6;color:#1e293b">${result.next}</p></div>`:''}
+</div>
+<div style="border-top:1px solid #e2e8f0;padding-top:12px;font-size:10px;color:#94a3b8">
+  <strong>Source:</strong> ${c.evidence.source}${c.evidence.pmid?' · PMID '+c.evidence.pmid:''} · ${c.evidence.guideline} (${c.evidence.year})<br>
+  <strong>Reviewer:</strong> ${REVIEWER}<br>
+  <strong style="color:#ef4444">DISCLAIMER:</strong> This output is for educational and clinical decision-support purposes only. It does not replace specialist clinical judgement, institutional guidelines, or the original published source. Always verify results before acting on them. Generated ${dtStr}.
+</div>
+<div class="noprint" style="text-align:center;margin-top:20px"><button onclick="window.print()" style="background:#1e293b;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">Print / Save as PDF</button></div>
+<script>window.onload=function(){window.print()}<\/script>
+</body></html>`;
+    const w=window.open('','_blank');
+    if(w){w.document.write(html);w.document.close();}
   };
 
   const bc=dark?'bg-slate-900 border-slate-800':'bg-white border-slate-200';
@@ -3057,25 +3901,43 @@ function CalcView({calcId,openCalc,favs,toggleFav,dark}){
         <div className="flex items-start gap-3">
           <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${dark?'bg-slate-800':'bg-slate-100'}`}><CIcon id={c.cat} size={22} className={dark?'text-slate-400':'text-slate-500'}/></div>
           <div className="flex-1 min-w-0">
+            {/* Breadcrumb: category · disease */}
+            {CAT_STYLE[c.cat]&&<div className="flex items-center gap-1.5 mb-1">
+              <span className={`text-[10px] font-bold uppercase tracking-widest ${dark?'text-slate-500':'text-slate-400'}`}>{CAT_STYLE[c.cat].label}</span>
+              <span className={dark?'text-slate-700':'text-slate-300'}>·</span>
+              <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${dark?CAT_STYLE[c.cat].badgeDark:CAT_STYLE[c.cat].badge}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${CAT_STYLE[c.cat].dot}`}/>{c.disease}
+              </span>
+            </div>}
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-xl font-extrabold tracking-tight">{c.name}</h1>
               <button onClick={()=>toggleFav(calcId)} className={isFav?'text-amber-500':'text-slate-300'}><Star size={16} fill={isFav?'currentColor':'none'}/></button>
             </div>
             <p className={`text-sm mt-1 ${dark?'text-slate-400':'text-slate-500'}`}>{c.purpose}</p>
-            {/* Evidence Badge */}
+            {/* Evidence + Classification Badges */}
             <div className="flex flex-wrap gap-1.5 mt-2">
-              <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full ${dark?'bg-emerald-900/40 text-emerald-400 border border-emerald-800':'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}><BadgeCheck size={10}/>{c.evidence.guideline}</span>
-              <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${dark?'bg-slate-800 text-slate-400':'bg-slate-100 text-slate-500'}`}>{c.evidence.year}</span>
-              {c.evidence.pmid&&<span className={`text-[9px] px-2 py-0.5 rounded-full ${dark?'bg-slate-800 text-slate-400':'bg-slate-100 text-slate-500'}`}>PMID:{c.evidence.pmid}</span>}
+              <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border ${dark?et.badgeDark:et.badge}`}><BadgeCheck size={10}/>{et.label}</span>
+              <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border ${dark?'bg-emerald-900/40 text-emerald-400 border-emerald-800':'bg-emerald-50 text-emerald-700 border-emerald-200'}`}><Shield size={9}/>{c.evidence.guideline}</span>
+              <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border ${dark?'bg-slate-800 text-slate-400 border-slate-700':'bg-slate-100 text-slate-500 border-slate-200'}`}>{c.evidence.year}</span>
+              {c.evidence.pmid&&<span className={`text-[9px] px-2 py-0.5 rounded-full border ${dark?'bg-slate-800 text-slate-400 border-slate-700':'bg-slate-100 text-slate-500 border-slate-200'}`}>PMID {c.evidence.pmid}</span>}
             </div>
           </div>
         </div>
         <div className={`mt-3 pt-3 border-t text-[10px] flex items-center gap-1.5 ${dark?'border-slate-800 text-slate-600':'border-slate-100 text-slate-400'}`}><ShieldAlert size={10}/>This tool supports but does not replace clinical judgement. Always verify against institutional guidelines.</div>
       </div>
 
+      {/* WHEN TO USE — always visible context strip */}
+      <div className={`rounded-xl border px-4 py-3 flex gap-3 ${dark?'bg-slate-900/60 border-slate-800':'bg-slate-50 border-slate-200'}`}>
+        <Check size={14} className={`flex-shrink-0 mt-0.5 ${dark?'text-emerald-400':'text-emerald-600'}`}/>
+        <div>
+          <div className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${dark?'text-emerald-400':'text-emerald-700'}`}>When to Use</div>
+          <p className={`text-xs leading-relaxed ${dark?'text-slate-300':'text-slate-600'}`}>{c.whenUse}</p>
+        </div>
+      </div>
+
       {/* TABS */}
       <div className={`flex gap-1 p-1 rounded-xl ${dark?'bg-slate-900':'bg-slate-100'}`}>
-        {[['calc','Calculator',Calculator],['evidence','Evidence',BookOpen],['notes','Clinical Notes',FileText]].map(([k,l,Ic])=>(
+        {[['calc','Calculator',Calculator],['evidence','Evidence & References',BookOpen],['notes','Limitations & Caveats',AlertTriangle]].map(([k,l,Ic])=>(
           <button key={k} onClick={()=>setTab(k)} className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-colors ${tab===k?(dark?'bg-slate-800 text-white':'bg-white text-slate-900 shadow-sm'):(dark?'text-slate-400':'text-slate-500')}`}><Ic size={13}/>{l}</button>
         ))}
       </div>
@@ -3154,10 +4016,15 @@ function CalcView({calcId,openCalc,favs,toggleFav,dark}){
               <p className={`text-xs ${dark?'text-red-300':'text-red-700'}`}>High-risk result — consider urgent senior review, specialist consultation, or immediate intervention as described above.</p>
             </div>}
 
-            {/* Copy */}
-            <button onClick={copyResult} className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${copied?(dark?'bg-emerald-900/50 text-emerald-400':'bg-emerald-100 text-emerald-700'):(dark?'bg-white/10 text-white/60 hover:bg-white/20':'bg-black/5 text-black/50 hover:bg-black/10')}`}>
-              {copied?<><Check size={12}/>Copied to clipboard</>:<><Copy size={12}/>Copy result for documentation</>}
-            </button>
+            {/* Copy + Print row */}
+            <div className="flex gap-2 flex-wrap">
+              <button onClick={copyResult} className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${copied?(dark?'bg-emerald-900/50 text-emerald-400':'bg-emerald-100 text-emerald-700'):(dark?'bg-white/10 text-white/60 hover:bg-white/20':'bg-black/5 text-black/50 hover:bg-black/10')}`}>
+                {copied?<><Check size={12}/>Copied to clipboard</>:<><Copy size={12}/>Copy result</>}
+              </button>
+              <button onClick={printResult} className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${dark?'bg-white/10 text-white/60 hover:bg-white/20':'bg-black/5 text-black/50 hover:bg-black/10'}`}>
+                <Printer size={12}/>Print / Save PDF
+              </button>
+            </div>
           </div>
         )}
         {result&&result.risk==='info'&&(
@@ -3176,7 +4043,7 @@ function CalcView({calcId,openCalc,favs,toggleFav,dark}){
               </button>
             ))}
             {relatedDiags.map(d=>(
-              <button key={d.id} onClick={()=>{}} className={`flex-shrink-0 px-3 py-2 rounded-xl border text-xs font-medium ${dark?'bg-purple-950/30 border-purple-900/50 text-purple-300':'bg-purple-50 border-purple-200 text-purple-700'} transition-colors flex items-center gap-1.5`}>
+              <button key={d.id} onClick={()=>setPage&&setPage('diag:'+d.id)} className={`flex-shrink-0 px-3 py-2 rounded-xl border text-xs font-medium ${dark?'bg-purple-950/30 border-purple-900/50 text-purple-300':'bg-purple-50 border-purple-200 text-purple-700'} transition-colors flex items-center gap-1.5`}>
                 <GitBranch size={13}/>{d.title}
               </button>
             ))}
@@ -3186,33 +4053,87 @@ function CalcView({calcId,openCalc,favs,toggleFav,dark}){
 
       {/* EVIDENCE TAB */}
       {tab==='evidence'&&(
-        <div className={`rounded-2xl border ${bc} p-5 space-y-4`}>
+        <div className={`rounded-2xl border ${bc} p-5 space-y-5`}>
+
+          {/* Evidence Classification */}
+          <div className="flex items-center gap-3">
+            <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-full border ${dark?et.badgeDark:et.badge}`}><BadgeCheck size={11}/>{et.label}</span>
+          </div>
+
+          {/* Primary Source */}
           <div>
-            <div className="flex items-center gap-2 mb-2"><BookOpen size={14} className="text-blue-500"/><span className="text-xs font-bold uppercase tracking-wider text-blue-600">Source &amp; Guideline</span></div>
-            <p className={`text-sm ${dark?'text-slate-300':'text-slate-600'}`}>{c.evidence.source}</p>
-            <div className="flex flex-wrap gap-2 mt-2">
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${dark?'bg-blue-900/40 text-blue-400':'bg-blue-100 text-blue-700'}`}>{c.evidence.guideline}</span>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${dark?'bg-slate-800 text-slate-400':'bg-slate-100 text-slate-500'}`}>Year: {c.evidence.year}</span>
-              {c.evidence.pmid&&<span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${dark?'bg-slate-800 text-slate-400':'bg-slate-100 text-slate-500'}`}>PMID: {c.evidence.pmid}</span>}
+            <div className="flex items-center gap-2 mb-2"><BookOpen size={14} className="text-blue-500"/><span className="text-xs font-bold uppercase tracking-wider text-blue-600">Primary Source</span></div>
+            <p className={`text-sm leading-relaxed ${dark?'text-slate-300':'text-slate-600'}`}>{c.evidence.source}</p>
+            <div className="flex flex-wrap gap-2 mt-3">
+              {c.evidence.pmid&&<a href={`https://pubmed.ncbi.nlm.nih.gov/${c.evidence.pmid}`} target="_blank" rel="noreferrer"
+                className={`text-[10px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1 ${dark?'bg-blue-900/40 text-blue-400 border-blue-800 hover:border-blue-600':'bg-blue-50 text-blue-700 border-blue-200 hover:border-blue-400'} transition-colors`}>
+                <ExternalLink size={9}/>PubMed PMID {c.evidence.pmid}
+              </a>}
+              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${dark?'bg-slate-800 text-slate-400 border-slate-700':'bg-slate-100 text-slate-500 border-slate-200'}`}>Published {c.evidence.year}</span>
             </div>
+          </div>
+
+          {/* Guideline Alignment */}
+          <div className={`rounded-xl p-4 ${dark?'bg-slate-800/60':'bg-slate-50'}`}>
+            <div className={`text-[10px] font-bold uppercase tracking-wider mb-1.5 ${dark?'text-slate-400':'text-slate-500'}`}>Guideline Alignment</div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full border ${dark?'bg-emerald-900/40 text-emerald-400 border-emerald-800':'bg-emerald-50 text-emerald-700 border-emerald-200'}`}><BadgeCheck size={10}/>{c.evidence.guideline}</span>
+            </div>
+            <p className={`text-xs leading-relaxed ${dark?'text-slate-300':'text-slate-600'}`}>
+              Risk thresholds and clinical interpretations for <strong>{c.name}</strong> reflect recommendations from {c.evidence.guideline} at the time of development ({c.evidence.year}). Clinicians must verify against the current version of local and national guidelines before making treatment decisions.
+            </p>
+          </div>
+
+          {/* Population */}
+          <div className={`rounded-xl p-4 ${dark?'bg-slate-800/60':'bg-slate-50'}`}>
+            <div className={`text-[10px] font-bold uppercase tracking-wider mb-1.5 ${dark?'text-slate-400':'text-slate-500'}`}>Population Validated In</div>
+            <p className={`text-xs ${dark?'text-slate-300':'text-slate-600'}`}>{g.population}</p>
+          </div>
+
+          {/* Governance Panel */}
+          <div className={`rounded-xl border overflow-hidden ${dark?'border-slate-700':'border-slate-200'}`}>
+            <div className={`px-4 py-2.5 border-b flex items-center gap-2 ${dark?'bg-slate-800/80 border-slate-700':'bg-slate-100 border-slate-200'}`}>
+              <Shield size={13} className={dark?'text-slate-400':'text-slate-500'}/>
+              <span className={`text-[10px] font-bold uppercase tracking-widest ${dark?'text-slate-400':'text-slate-500'}`}>Governance Record</span>
+            </div>
+            <div className={`divide-y ${dark?'divide-slate-800':'divide-slate-100'}`}>
+              {[
+                ['Evidence Type',    et.label],
+                ['Guideline Source', c.evidence.guideline],
+                ['Guideline Year',   String(c.evidence.year)],
+                ['Last Reviewed',    g.lastReviewed],
+                ['Next Review Due',  g.nextReview],
+                ['Reviewer / Editor',g.reviewer],
+              ].map(([k,v])=>(
+                <div key={k} className={`flex items-baseline gap-4 px-4 py-2.5 text-xs ${dark?'bg-slate-900':'bg-white'}`}>
+                  <span className={`w-36 flex-shrink-0 font-semibold ${dark?'text-slate-500':'text-slate-400'}`}>{k}</span>
+                  <span className={dark?'text-slate-300':'text-slate-700'}>{v}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className={`text-[10px] flex items-start gap-1.5 ${dark?'text-slate-600':'text-slate-400'}`}>
+            <ShieldAlert size={10} className="flex-shrink-0 mt-0.5"/>
+            Results support but do not replace clinical judgement. Always verify against institutional guidelines and the original source publication.
           </div>
         </div>
       )}
 
-      {/* CLINICAL NOTES TAB */}
+      {/* LIMITATIONS & CAVEATS TAB */}
       {tab==='notes'&&(
         <div className={`rounded-2xl border ${bc} p-5 space-y-4`}>
-          <div>
-            <div className="flex items-center gap-2 mb-2"><Check size={14} className="text-emerald-500"/><span className="text-xs font-bold uppercase tracking-wider text-emerald-600">When to Use</span></div>
-            <p className={`text-sm ${dark?'text-slate-300':'text-slate-600'}`}>{c.whenUse}</p>
-          </div>
-          <div>
+          <div className={`rounded-xl p-4 ${dark?'bg-red-950/20 border border-red-900/40':'bg-red-50 border border-red-200'}`}>
             <div className="flex items-center gap-2 mb-2"><X size={14} className="text-red-500"/><span className="text-xs font-bold uppercase tracking-wider text-red-600">When NOT to Use</span></div>
-            <p className={`text-sm ${dark?'text-slate-300':'text-slate-600'}`}>{c.whenNot}</p>
+            <p className={`text-sm leading-relaxed ${dark?'text-red-200':'text-red-800'}`}>{c.whenNot}</p>
           </div>
-          <div>
-            <div className="flex items-center gap-2 mb-2"><AlertTriangle size={14} className="text-amber-500"/><span className="text-xs font-bold uppercase tracking-wider text-amber-600">Limitations</span></div>
-            <p className={`text-sm ${dark?'text-slate-300':'text-slate-600'}`}>{c.limits}</p>
+          <div className={`rounded-xl p-4 ${dark?'bg-amber-950/20 border border-amber-900/40':'bg-amber-50 border border-amber-200'}`}>
+            <div className="flex items-center gap-2 mb-2"><AlertTriangle size={14} className="text-amber-500"/><span className="text-xs font-bold uppercase tracking-wider text-amber-600">Known Limitations</span></div>
+            <p className={`text-sm leading-relaxed ${dark?'text-amber-200':'text-amber-800'}`}>{c.limits}</p>
+          </div>
+          <div className={`rounded-xl p-4 ${dark?'bg-slate-800/60':'bg-slate-50'}`}>
+            <div className="flex items-center gap-2 mb-2"><Info size={14} className={dark?'text-slate-400':'text-slate-500'}/><span className={`text-xs font-bold uppercase tracking-wider ${dark?'text-slate-400':'text-slate-500'}`}>Disclaimer</span></div>
+            <p className={`text-xs leading-relaxed ${dark?'text-slate-400':'text-slate-500'}`}>This tool is intended to support clinical decision-making and education. It does not replace specialist judgement, local policy, or formal guidelines. All clinical decisions must be made by qualified healthcare professionals in the context of individual patient circumstances.</p>
           </div>
         </div>
       )}
@@ -3295,56 +4216,220 @@ function DiagnosticView({diagId,dark}){
   );
 }
 
-// ─── EDITORIAL & GOVERNANCE PAGE ─────────────────────────────────────────────
+// ─── EDITORIAL STANDARDS & METHODOLOGY PAGE ─────────────────────────────────
 function AboutPage({dark}){
   const bc=dark?'bg-slate-900 border-slate-800':'bg-white border-slate-200';
+  const hc=dark?'text-slate-400':'text-slate-500';
+  const totalCalcs=Object.keys(C).length;
+  const govCounts={
+    validated:  Object.values(GOV).filter(g=>g&&g.type==='validated').length,
+    guideline:  Object.values(GOV).filter(g=>g&&g.type==='guideline').length,
+    derived:    Object.values(GOV).filter(g=>g&&g.type==='derived').length,
+    educational:Object.values(GOV).filter(g=>g&&g.type==='educational').length,
+  };
   return(
-    <div className="max-w-2xl mx-auto p-4 sm:p-6 pb-24 space-y-4">
-      <div className={`rounded-2xl border ${bc} p-6 space-y-5`}>
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${dark?'bg-blue-900/40':'bg-blue-50'}`}><Shield size={20} className="text-blue-500"/></div>
-          <div><h1 className="text-xl font-extrabold">Editorial & Governance</h1>
-          <p className={`text-xs ${dark?'text-slate-400':'text-slate-500'}`}>HaemCalc Pro v4.0 · Mohsin Haematology Academy</p></div>
-        </div>
+    <div className="max-w-2xl mx-auto p-4 sm:p-8 pb-24 space-y-6">
 
-        <div>
-          <h2 className="text-sm font-bold mb-2 flex items-center gap-2"><User size={14}/>Author & Clinical Lead</h2>
-          <p className={`text-sm leading-relaxed ${dark?'text-slate-300':'text-slate-600'}`}>Developed by a <strong>Consultant Haematologist</strong> (MBBS, MRCP UK, FRCPath Haematology, FRCP London) working in the UK National Health Service. All clinical content is authored, reviewed, and maintained by a practising consultant with direct patient care responsibility.</p>
-        </div>
+      {/* PAGE TITLE */}
+      <div>
+        <h1 className="text-2xl font-extrabold tracking-tight">Editorial Standards & Methodology</h1>
+        <p className={`text-sm mt-1 ${hc}`}>HaemCalc Pro v{SITE_VERSION} · {CONTENT_DATE} · Clinical governance, evidence hierarchy, and editorial policy</p>
+      </div>
 
-        <div>
-          <h2 className="text-sm font-bold mb-2 flex items-center gap-2"><BadgeCheck size={14}/>Evidence-Based Methodology</h2>
-          <p className={`text-xs ${dark?'text-slate-400':'text-slate-500'}`}>Every calculator is implemented from original published validation studies with PubMed-indexed references. Risk thresholds match published data. Clinical interpretation reflects current guideline recommendations (ELN, NCCN, ESMO, BSH, NICE, WHO, ISTH, ASH, ASTCT, EBMT) at time of development. Each calculator displays its evidence source, guideline alignment, and year of publication.</p>
-        </div>
-
-        <div>
-          <h2 className="text-sm font-bold mb-2 flex items-center gap-2"><RotateCcw size={14}/>Update Policy</h2>
-          <p className={`text-xs ${dark?'text-slate-400':'text-slate-500'}`}>Clinical content is reviewed when major guideline updates are published (e.g., ELN AML revision, WHO classification update, BSH guideline revision). Calculator algorithms are verified against source publications. Version history is maintained. Users are encouraged to report any discrepancies via feedback.</p>
-        </div>
-
-        <div>
-          <h2 className="text-sm font-bold mb-2 flex items-center gap-2"><FileText size={14}/>Version History</h2>
-          <div className={`text-xs space-y-1 ${dark?'text-slate-400':'text-slate-500'}`}>
-            <p><strong>v4.0</strong> — Acute Haematology Mode, Clinical Decision Blocks, diagnostic modules, evidence badges, 108 calculators, 6 pathways, EBMT-style sidebar, icon system</p>
-            <p><strong>v3.1</strong> — Added transplant/CAR-T/transfusion medicine calculators (GVHD, VOD, ICE, irAE, blood volume, CCI, iron overload)</p>
-            <p><strong>v3.0</strong> — Complete architectural redesign. Gold-standard template for all calculators. Clinical pathways. Search, favourites, dark mode.</p>
+      {/* AUTHOR & EDITOR CARD */}
+      <div className={`rounded-2xl border overflow-hidden ${bc}`}>
+        <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600"/>
+        <div className="p-6">
+          <div className="flex items-start gap-4">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl font-extrabold text-white ${dark?'bg-blue-600':'bg-slate-900'}`}>MM</div>
+            <div className="flex-1">
+              <div className={`text-[9px] font-bold uppercase tracking-widest mb-1 ${dark?'text-blue-400':'text-blue-600'}`}>Lead Author & Clinical Editor</div>
+              <div className="font-extrabold text-lg leading-tight">Dr. Muhammad Mohsin</div>
+              <div className={`text-sm font-semibold mt-0.5 ${dark?'text-slate-300':'text-slate-600'}`}>Consultant Haematologist · NHS United Kingdom</div>
+              <div className={`flex flex-wrap gap-1.5 mt-2`}>
+                {['MBBS','MRCP (UK)','FRCPath (Haematology)','FRCP (London)'].map(q=>(
+                  <span key={q} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${dark?'bg-slate-800 border-slate-700 text-slate-300':'bg-slate-100 border-slate-200 text-slate-600'}`}>{q}</span>
+                ))}
+              </div>
+              <p className={`text-[12px] leading-relaxed mt-3 ${hc}`}>
+                Practising Consultant Haematologist in the NHS with broad experience across malignant haematology (lymphoma, myeloma, MDS, AML), benign haematology (coagulation disorders, haemolytic anaemias, ITP, HLH), haematopoietic stem cell transplantation, and CAR-T therapy. HaemCalc Pro is authored, clinically reviewed, and maintained by Dr. Mohsin as a specialist decision-support resource for haematology practice and education.
+              </p>
+            </div>
           </div>
-        </div>
-
-        <div className={`rounded-xl p-4 ${dark?'bg-amber-900/20 border border-amber-800':'bg-amber-50 border border-amber-200'}`}>
-          <div className="flex items-center gap-2 mb-2"><AlertTriangle size={14} className="text-amber-500"/><span className="text-xs font-bold uppercase text-amber-600">Disclaimer</span></div>
-          <p className={`text-[11px] leading-relaxed ${dark?'text-amber-300':'text-amber-700'}`}>This tool is for <strong>educational and research purposes only</strong>. It does not replace clinical judgement, institutional guidelines, or specialist opinion. All clinical decisions must be made by qualified healthcare professionals in the context of individual patient circumstances. No liability is accepted for clinical outcomes. Always verify scoring criteria against source publications before making treatment decisions.</p>
-        </div>
-
-        <div>
-          <h2 className="text-sm font-bold mb-2 flex items-center gap-2"><Stethoscope size={14}/>Platform Summary</h2>
-          <div className={`grid grid-cols-3 gap-2 text-center ${dark?'text-slate-300':'text-slate-600'}`}>
-            <div className={`rounded-lg p-3 ${dark?'bg-slate-800':'bg-slate-50'}`}><div className="text-lg font-extrabold text-blue-600">{Object.keys(C).length}</div><div className="text-[10px]">Calculators</div></div>
-            <div className={`rounded-lg p-3 ${dark?'bg-slate-800':'bg-slate-50'}`}><div className="text-lg font-extrabold text-blue-600">{PATHWAYS.length}</div><div className="text-[10px]">Pathways</div></div>
-            <div className={`rounded-lg p-3 ${dark?'bg-slate-800':'bg-slate-50'}`}><div className="text-lg font-extrabold text-blue-600">{DIAGNOSTICS.length}</div><div className="text-[10px]">Diagnostic Modules</div></div>
+          <div className={`mt-4 pt-4 border-t flex flex-wrap gap-4 text-[11px] ${dark?'border-slate-800':'border-slate-100'}`}>
+            {[['Malignant Haematology','CircleDot'],['Benign & Coagulation','Droplets'],['Transplant & CAR-T','GitBranch'],['VTE & Thrombosis','Activity']].map(([label])=>(
+              <span key={label} className={`flex items-center gap-1.5 ${dark?'text-slate-400':'text-slate-500'}`}>
+                <BadgeCheck size={11} className={dark?'text-blue-400':'text-blue-600'}/>{label}
+              </span>
+            ))}
           </div>
         </div>
       </div>
+
+      {/* PLATFORM SCOPE SUMMARY */}
+      <div className="grid grid-cols-3 gap-3">
+        {[[totalCalcs,'Clinical Tools',Calculator,'blue'],[PATHWAYS.length,'Pathways',Route,'indigo'],[DIAGNOSTICS.length,'Diagnostic Modules',GitBranch,'purple']].map(([n,label,Icon,col])=>(
+          <div key={label} className={`rounded-xl border p-4 text-center ${bc}`}>
+            <div className={`text-2xl font-extrabold mb-0.5 ${col==='blue'?'text-blue-600':col==='indigo'?'text-indigo-600':'text-purple-600'}`}>{n}</div>
+            <div className={`text-[11px] font-medium ${hc}`}>{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* EVIDENCE CLASSIFICATION BREAKDOWN */}
+      <div className={`rounded-2xl border ${bc} p-6`}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${dark?'bg-blue-900/30':'bg-blue-50'}`}><Layers size={15} className={dark?'text-blue-400':'text-blue-600'}/></div>
+          <div>
+            <h2 className="font-bold text-base">Evidence Classification</h2>
+            <p className={`text-[11px] mt-0.5 ${hc}`}>All tools are categorised by evidence tier. Classification is conservative and based on published derivation/validation data.</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            {type:'validated',  count:govCounts.validated,   desc:'Scoring systems with prospective derivation and/or external validation in relevant clinical populations.'},
+            {type:'guideline',  count:govCounts.guideline,   desc:'Algorithms directly based on published international guideline criteria (ELN, BSH, ISTH, KDIGO, ASTCT).'},
+            {type:'derived',    count:govCounts.derived,     desc:'Formula-based tools, dose calculators, and clinical indices derived from established equations.'},
+            {type:'educational',count:govCounts.educational, desc:'Interpretive frameworks and reference tables. Not independently validated scoring systems.'},
+          ].map(({type,count,desc})=>{
+            const et=EVTYPE[type];
+            return(
+              <div key={type} className={`rounded-xl border p-4 ${dark?'bg-slate-800/40 border-slate-700':'bg-slate-50 border-slate-200'}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border ${dark?et.badgeDark:et.badge}`}><BadgeCheck size={9}/>{et.label}</span>
+                  <span className={`text-lg font-extrabold ${dark?'text-slate-200':'text-slate-700'}`}>{count}</span>
+                </div>
+                <p className={`text-[10px] leading-relaxed ${hc}`}>{desc}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* INTENDED AUDIENCE */}
+      <div className={`rounded-2xl border ${bc} p-6`}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${dark?'bg-violet-900/30':'bg-violet-50'}`}><User size={15} className={dark?'text-violet-400':'text-violet-600'}/></div>
+          <h2 className="font-bold text-base">Intended Audience</h2>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {[
+            {role:'Consultant Haematologists',desc:'Rapid, bedside access to evidence-based risk scoring, prognostic stratification, and dosing tools during ward rounds, MDT, and outpatient clinics.'},
+            {role:'Haematology Trainees (ST3–ST7)',desc:'Structured learning tool aligned with JRCPTB curriculum competencies and current ELN, NICE, and BSH guidance. Supports examination preparation and clinical reasoning.'},
+            {role:'Acute & General Physicians',desc:'Reliable haematology decision support for acute presentations — suspected HLH, TTP/TMA, febrile neutropenia, coagulopathy, and anaemia workup.'},
+            {role:'Laboratory & Clinical Staff',desc:'Interpretive frameworks for abnormal coagulation screens, cytopenias, haemolysis investigations, and laboratory haematology referrals.'},
+          ].map(({role,desc})=>(
+            <div key={role} className={`rounded-xl p-4 ${dark?'bg-slate-800/60':'bg-slate-50'}`}>
+              <div className={`text-xs font-bold mb-1 ${dark?'text-slate-200':'text-slate-700'}`}>{role}</div>
+              <div className={`text-[11px] leading-relaxed ${hc}`}>{desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* EDITORIAL STANDARDS & METHODOLOGY */}
+      <div className={`rounded-2xl border ${bc} p-6 space-y-5`}>
+        <div className="flex items-center gap-3 mb-1">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${dark?'bg-emerald-900/30':'bg-emerald-50'}`}><BadgeCheck size={15} className={dark?'text-emerald-400':'text-emerald-600'}/></div>
+          <h2 className="font-bold text-base">Editorial Standards & Methodology</h2>
+        </div>
+        {[
+          {
+            title:'1. Selection Criteria',
+            body:'Tools are included only where a PubMed-indexed derivation or validation study exists, or where a recognised international guideline body has formally endorsed a scoring algorithm. Calculators lacking published validation, or those formally deprecated by guideline authors, are excluded. Redundant tools where a superior or updated version exists are noted in the Limitations tab.',
+          },
+          {
+            title:'2. Hierarchy of Evidence',
+            body:'Tools are classified by four evidence tiers: (i) Validated Clinical Scores — derived and validated in prospective clinical cohorts; (ii) Guideline-Based Algorithms — directly reflecting published international guideline criteria; (iii) Derived Clinical Tools — established formulae and indices in routine clinical use; (iv) Educational Reference Tools — interpretive frameworks and dose conversion tables. Classification is conservative; evidence strength is not overstated.',
+          },
+          {
+            title:'3. Clinical Interpretation Policy',
+            body:'Every tool presents a result, a risk category or interpretation, and actionable clinical guidance. Results are never displayed as bare numerical outputs. Guidance is derived from the source publication and current guideline recommendations. Interpretation statements are written to reflect consultant-level clinical reasoning, not algorithmic templating.',
+          },
+          {
+            title:'4. Guideline Alignment',
+            body:'Risk thresholds, staging criteria, and management recommendations are aligned with current guidance from ELN, NCCN, ESMO, BSH, ISTH, NICE, ASH, ASTCT, EBMT, iwCLL, and WHO at the time of development. The guideline source and year are declared on every tool. Where guideline bodies have diverging recommendations, the most widely adopted position in UK haematology practice is used.',
+          },
+          {
+            title:'5. Limitations Disclosure',
+            body:'Each tool explicitly states when it should not be used, the populations in which it has not been formally validated, and known clinical pitfalls. This includes pre-Rituximab era tools, paediatric exclusions, and overlap conditions. Clinicians are expected to read the Limitations tab before applying any tool in non-standard clinical scenarios.',
+          },
+          {
+            title:'6. Review & Update Schedule',
+            body:'Content is reviewed annually as a minimum, or promptly following publication of major guideline revisions (e.g., ELN AML 2022, WHO Classification 2022, BSH Thrombocytopenia, ISTH DIC criteria). The review date and next scheduled review are recorded in the Governance Record on each tool. Discrepancies or updates may be reported via the feedback mechanism.',
+          },
+          {
+            title:'7. Independence & Transparency',
+            body:'HaemCalc Pro is an independent clinical resource. It does not receive commercial sponsorship, pharmaceutical funding, or advertising revenue. No content is influenced by commercial entities. All decisions regarding tool inclusion, interpretation, and guideline alignment are made solely by the clinical editor on the basis of published evidence.',
+          },
+        ].map(({title,body})=>(
+          <div key={title} className={`border-l-2 pl-4 ${dark?'border-slate-700':'border-slate-200'}`}>
+            <div className={`text-xs font-bold mb-1 ${dark?'text-slate-200':'text-slate-700'}`}>{title}</div>
+            <p className={`text-[12px] leading-relaxed ${hc}`}>{body}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* SCOPE — HAEMATOLOGY DOMAINS */}
+      <div className={`rounded-2xl border ${bc} p-6`}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${dark?'bg-rose-900/30':'bg-rose-50'}`}><Microscope size={15} className={dark?'text-rose-400':'text-rose-600'}/></div>
+          <h2 className="font-bold text-base">Clinical Scope</h2>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-2.5">
+          {[
+            {domain:'Malignant Haematology',items:'Lymphoma (NHL, HL, PTCL, CNS), multiple myeloma, MDS, AML, CML, MPN, CLL, Waldenström\'s, amyloidosis'},
+            {domain:'Benign Haematology',items:'HLH, TTP/TMA, ITP, HIT, DIC, aplastic anaemia, haemolytic anaemias, iron deficiency, haemostasis'},
+            {domain:'Coagulation & VTE',items:'PE risk, DVT risk, bleeding risk (HAS-BLED), AF/stroke risk (CHA₂DS₂-VASc), VTE prophylaxis, malignancy-associated VTE'},
+            {domain:'Transplant & Cellular Therapy',items:'SCT risk stratification (HCT-CI, DRI, EBMT), CRS grading, conditioning toxicity assessment, GVHD tools'},
+            {domain:'Supportive & Perioperative',items:'Febrile neutropenia (MASCC), performance status (ECOG, KPS), frailty (CFS, G8), fitness for treatment'},
+            {domain:'General & Laboratory',items:'Renal dosing (CrCl, eGFR), dose calculations (BSA, Calvert), acid-base, electrolytes, sepsis scoring'},
+          ].map(({domain,items})=>(
+            <div key={domain} className={`rounded-xl p-3.5 ${dark?'bg-slate-800/50':'bg-slate-50'}`}>
+              <div className={`text-xs font-bold mb-1 ${dark?'text-slate-200':'text-slate-700'}`}>{domain}</div>
+              <p className={`text-[10px] leading-relaxed ${hc}`}>{items}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* VERSION HISTORY */}
+      <div className={`rounded-2xl border ${bc} p-6`}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${dark?'bg-slate-800':'bg-slate-100'}`}><FileText size={15} className={dark?'text-slate-400':'text-slate-500'}/></div>
+          <h2 className="font-bold text-base">Version History</h2>
+        </div>
+        <div className="space-y-3">
+          {[
+            {v:`v${SITE_VERSION}`,date:CONTENT_DATE, note:'Governance & Evidence panel added to all calculators. Evidence classification system (Validated / Guideline / Derived / Educational) implemented across all tools. Editorial Standards page formalised. Per-calculator governance records with population, review dates, and reviewer attribution. Scroll-to-top navigation, BrowsePage, and CalcView breadcrumbs.'},
+            {v:'v4.0',date:'Mar 2025', note:'Gold-standard calculator template with clinical context strip, tabbed evidence/limitations view, and actionable next steps. Diagnostic modules, acute haematology mode, dark mode, search overlay, and favourites system.'},
+            {v:'v3.1',date:'Jan 2025', note:'Transplant, CAR-T, and transfusion medicine tools added (GVHD, VOD, ICE score, irAE, blood volume, iron overload, CCI). Sidebar restructured with collapsible categories.'},
+            {v:'v3.0',date:'Nov 2024', note:'Complete architectural redesign as a React/Vite SPA. Clinical pathways launched. Evidence badge system introduced.'},
+            {v:'v2.0',date:'Sep 2024', note:'Major content expansion. Malignant haematology scoring systems, coagulation calculators, VTE tools, and acute medicine support added.'},
+            {v:'v1.0',date:'Jul 2024', note:'Initial release. Core haematology calculators and basic interface.'},
+          ].map(({v,date,note})=>(
+            <div key={v} className="flex gap-3">
+              <div className="flex-shrink-0 w-14">
+                <span className={`text-[11px] font-extrabold ${dark?'text-blue-400':'text-blue-600'}`}>{v}</span>
+                <div className={`text-[9px] ${dark?'text-slate-600':'text-slate-400'}`}>{date}</div>
+              </div>
+              <p className={`text-[11px] leading-relaxed ${hc}`}>{note}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* DISCLAIMER */}
+      <div className={`rounded-2xl border p-5 ${dark?'bg-amber-950/20 border-amber-900/40':'bg-amber-50 border-amber-200'}`}>
+        <div className="flex items-center gap-2 mb-3"><AlertTriangle size={15} className="text-amber-500"/><span className={`text-xs font-bold uppercase tracking-wider ${dark?'text-amber-400':'text-amber-700'}`}>Medical Disclaimer</span></div>
+        <p className={`text-xs leading-relaxed ${dark?'text-amber-200':'text-amber-800'}`}>
+          HaemCalc Pro is intended for <strong>educational and clinical decision-support purposes only</strong>. It does not constitute medical advice and does not replace the clinical judgement of a qualified healthcare professional, institutional guidelines, or specialist opinion. All clinical decisions must be made by appropriately trained and registered clinicians in the context of individual patient circumstances, local protocols, and current national guidance. No liability is accepted for clinical outcomes arising from use of this platform. Scoring thresholds and interpretations should be verified against current source publications and the most recent version of applicable guidelines before making treatment decisions.
+        </p>
+        <p className={`text-[10px] mt-3 font-semibold ${dark?'text-amber-700':'text-amber-600'}`}>
+          Registered users in the UK are reminded that clinical decision support tools are adjuncts to, not substitutes for, the professional responsibilities set out by the General Medical Council's Good Medical Practice (2024).
+        </p>
+      </div>
+
     </div>
   );
 }
