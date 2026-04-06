@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Search, Moon, Sun, Star, Clock, ChevronRight, ChevronDown, ChevronLeft, AlertTriangle, BookOpen, Info, Activity, Clipboard, Check, Home, Grid3X3, Route, User, X, Menu, Heart, Zap, FlaskConical, Droplets, Calculator, ArrowRight, Shield, Brain, FileText, ExternalLink, RotateCcw, Copy, Printer, Stethoscope, TrendingUp, CircleDot, Microscope, Syringe, Pill, TestTube, Flame, Target, Scale, Gauge, Thermometer, Eye, Bone, Beaker, TreePine, BadgeCheck, ShieldAlert, ChevronUp, Layers, CircleAlert, TriangleAlert, Phone, ListChecks, GitBranch, Trash2, ShieldCheck, Lock, Globe, Accessibility } from "lucide-react";
 
 /* ============================================================================
-   HAEMCALC PRO v4.0 — GOLD-STANDARD CLINICAL DECISION PLATFORM
+   HAEMCALC PRO v4.3 — GOLD-STANDARD CLINICAL DECISION PLATFORM
    Consultant-grade · Evidence-based · Guideline-aligned
    112 calculators · 11 clinical pathways · 7 diagnostic modules
    ============================================================================ */
@@ -3182,7 +3182,7 @@ export default function App(){
             <div className="leading-none">
               <span className="font-extrabold text-sm tracking-tight">HaemCalc</span>
               <span className="text-blue-600 font-extrabold text-sm">Pro</span>
-              <span className={`text-[10px] ml-1.5 font-medium ${dark?'text-slate-500':'text-slate-400'}`}>v4.0</span>
+              <span className={`text-[10px] ml-1.5 font-medium ${dark?'text-slate-500':'text-slate-400'}`}>v4.3</span>
             </div>
           </button>
           <button onClick={()=>setSearch(true)} title="Search (press /)" className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] ${dark?'bg-slate-800 text-slate-400 hover:bg-slate-700':'bg-slate-100 text-slate-500 hover:bg-slate-200'} transition-colors`}>
@@ -3896,7 +3896,7 @@ function HomePage({openCalc,openPathway,favs,toggleFav,recent,dark,setPage,setSe
             <div className="leading-none">
               <span className="font-extrabold text-xl tracking-tight">HaemCalc</span>
               <span className="text-blue-600 font-extrabold text-xl"> Pro</span>
-              <span className={`text-[11px] ml-2 font-medium ${hc}`}>v4.0</span>
+              <span className={`text-[11px] ml-2 font-medium ${hc}`}>v4.3</span>
             </div>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-3 leading-snug">
@@ -4731,6 +4731,7 @@ function AboutPage({dark}){
         </div>
         <div className="space-y-3">
           {[
+            {v:'v4.3',date:'April 2026', note:'Final polish — decision-grade clinical language across 23 calculators. Clinical Action panel moved above Interpretation in all results. Guideline Version added to governance panel. Generic escalation box removed — escalation guidance embedded within each calculator\'s specific clinical action. Explicit OS/mortality figures added throughout. Direct authoritative language replacing hedged phrasing. Calculators updated: HScore, IPI, FLIPI, ISS, IPSS, IPSS-R, DIPSS, Sokal, PLASMIC, 4Ts, CHA₂DS₂-VASc, HAS-BLED, NCCN-IPI, R-IPI, CNS-IPI, CLL-IPI, SOFA, NEWS2, qSOFA, IPS, GIPSS, IPSET, ELTS. Stat badges now dynamic.'},
             {v:'v4.2',date:'April 2026', note:'Multi-reviewer governance panel: Co-Reviewers row on all tools, SITE_GOVERNANCE statement, Join as Reviewer CTA. Session PDF Export: full patient encounter report from LogPage. Search improvements: author/PMID/purpose matching, category chips, Most Used section. Three new diagnostic modules: lymphadenopathy, splenomegaly, coag screen. Compliance page (DCB0129 lite, privacy, accessibility, version history). Three new calculators: DIPSS-Plus, MIPI, MYSEC-PM.'},
             {v:'v4.1',date:'April 2026', note:'Session Result Log (ward round tool, session-only, no PHI stored). Print/Save PDF per calculator. Progressive Web App: manifest, service worker, install banner. Three new pathways: TTP/TMA Management, Myeloma Response Assessment (IMWG), MGUS/SMM Surveillance. IPSS original (1997), IPSS-M molecular (2022), CHRS, CHIP/CCUS Diagnostic Tool added. Keyboard shortcuts (/, Esc, H, B, L, ?).'},
             {v:'v4.0',date:'Mar 2025', note:'Governance & Evidence panel added to all calculators. Evidence classification system (Validated / Guideline / Derived / Educational) implemented. Editorial Standards page formalised. Per-calculator governance records with population, review dates, and reviewer attribution. Gold-standard calculator template with clinical context strip, tabbed evidence/limitations view, and actionable next steps. Diagnostic modules, acute haematology mode, dark mode, search overlay, and favourites system.'},
@@ -4870,6 +4871,7 @@ function CompliancePage({dark}){
       <Section icon={FileText} iconColor="text-slate-500" title="Version History">
         <div className="space-y-3">
           {[
+            {v:'v4.3',date:'April 2026',note:'Decision-grade language across 23 calculators. Clinical Action above Interpretation. Guideline Version in governance. Explicit OS/mortality in all outputs. Direct authoritative language throughout.'},
             {v:'v4.2',date:'April 2026',note:'Multi-reviewer governance panel. Session PDF Export. Search improvements (PMID/guideline/source matching, Most Used). Three diagnostic modules added (lymphadenopathy, splenomegaly, coag screen). This Compliance page. Three new calculators (DIPSS-Plus, MIPI, MYSEC-PM).'},
             {v:'v4.1',date:'April 2026',note:'Session Result Log (ward round, session-only). Print/Save PDF per calculator. PWA install support. Three new clinical pathways (TTP/TMA, Myeloma Response, MGUS/SMM). IPSS, IPSS-M, CHRS, CHIP/CCUS calculators added. Keyboard shortcuts.'},
             {v:'v4.0',date:'Mar 2025',note:'Governance & Evidence panel on all calculators. Evidence classification system. Per-calculator governance records. Diagnostic modules, acute haematology mode, dark mode, search, favourites.'},
