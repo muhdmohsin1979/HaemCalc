@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Search, Moon, Sun, Star, Clock, ChevronRight, ChevronDown, ChevronLeft, AlertTriangle, BookOpen, Info, Activity, Clipboard, Check, Home, Grid3X3, Route, User, X, Menu, Heart, Zap, FlaskConical, Droplets, Calculator, ArrowRight, Shield, Brain, FileText, ExternalLink, RotateCcw, Copy, Printer, Stethoscope, TrendingUp, CircleDot, Microscope, Syringe, Pill, TestTube, Flame, Target, Scale, Gauge, Thermometer, Eye, Bone, Beaker, TreePine, BadgeCheck, ShieldAlert, ChevronUp, Layers, CircleAlert, TriangleAlert, Phone, ListChecks, GitBranch, Trash2 } from "lucide-react";
+import { Search, Moon, Sun, Star, Clock, ChevronRight, ChevronDown, ChevronLeft, AlertTriangle, BookOpen, Info, Activity, Clipboard, Check, Home, Grid3X3, Route, User, X, Menu, Heart, Zap, FlaskConical, Droplets, Calculator, ArrowRight, Shield, Brain, FileText, ExternalLink, RotateCcw, Copy, Printer, Stethoscope, TrendingUp, CircleDot, Microscope, Syringe, Pill, TestTube, Flame, Target, Scale, Gauge, Thermometer, Eye, Bone, Beaker, TreePine, BadgeCheck, ShieldAlert, ChevronUp, Layers, CircleAlert, TriangleAlert, Phone, ListChecks, GitBranch, Trash2, ShieldCheck, Lock, Globe, Accessibility } from "lucide-react";
 
 /* ============================================================================
    HAEMCALC PRO v4.0 — GOLD-STANDARD CLINICAL DECISION PLATFORM
    Consultant-grade · Evidence-based · Guideline-aligned
-   108 calculators · 6 clinical pathways · 4 diagnostic modules
+   112 calculators · 11 clinical pathways · 7 diagnostic modules
    ============================================================================ */
 
 // ─── ICON MAPPING (replaces emojis with Lucide icons) ────────────────────────
@@ -49,11 +49,11 @@ hscore: {
   calc:(v)=>{
     const s=Object.values(v).reduce((a,b)=>a+b,0);
     let prob,risk,interp,next;
-    if(s<90){prob='<1%';risk='low';interp='HLH is very unlikely at this score.';next='Consider alternative diagnoses. If clinical suspicion persists, repeat assessment in 24-48 hours.';}
-    else if(s<130){prob='~3–9%';risk='low';interp='Low probability but cannot be excluded.';next='Send ADAMTS13, sCD25/sIL-2R, NK cell function, triglycerides, fibrinogen. Seek haematology opinion.';}
-    else if(s<150){prob='~36–58%';risk='int';interp='Moderate-high probability of HLH.';next='Urgent haematology consultation. Bone marrow aspirate. Consider empirical dexamethasone while awaiting results.';}
-    else if(s<170){prob='~66–80%';risk='high';interp='High probability of HLH.';next='Initiate HLH-directed therapy: high-dose dexamethasone (10mg/m²). Consider etoposide if no response. Identify and treat trigger (infection, malignancy, autoimmune).';}
-    else{prob='>93%';risk='vhigh';interp='Very high probability of HLH.';next='COMMENCE TREATMENT IMMEDIATELY. Dexamethasone ± etoposide per HLH-94/HLH-2004 protocol. ICU referral if organ dysfunction. Search aggressively for underlying trigger.';}
+    if(s<90){prob='<1%';risk='low';interp='HLH effectively excluded at this score (<1% probability). Alternative diagnoses are substantially more likely.';next='Investigate for sepsis, viral infection (EBV/CMV), lymphoma, or other cause of the clinical picture. Repeat HScore if clinical trajectory worsens.';}
+    else if(s<130){prob='~3–9%';risk='low';interp='Low HLH probability (3–9%). Clinical context and trajectory determine next steps.';next='Send sCD25/sIL-2R, NK cell function, triglycerides, fibrinogen, ADAMTS13 (to exclude TTP). Haematology review within 24 hours.';}
+    else if(s<150){prob='~36–58%';risk='int';interp='Moderate-to-high HLH probability (36–58%). Treat as HLH until proven otherwise.';next='Urgent haematology consultation. Bone marrow aspirate. If clinical deterioration: start empirical dexamethasone 10mg/m² IV without awaiting BM result.';}
+    else if(s<170){prob='~66–80%';risk='high';interp='High HLH probability (66–80%). HLH-directed treatment is indicated.';next='START dexamethasone 10mg/m² IV. Add etoposide if no response at 48–72 hours. Identify and actively treat underlying trigger (infection, lymphoma, autoimmune). ICU referral if organ dysfunction.';}
+    else{prob='>93%';risk='vhigh';interp='HLH confirmed by probability (>93%). This is a life-threatening emergency.';next='COMMENCE TREATMENT NOW — dexamethasone ± etoposide per HLH-94/HLH-2004 protocol. ICU referral mandatory if any organ dysfunction. Aggressive search for underlying trigger is essential and simultaneous.';}
     return{score:s,max:337,risk,label:'HLH Probability: '+prob,stats:[['HLH Probability',prob],['Score',s+'/337']],interp,next};
   }
 },
@@ -75,10 +75,11 @@ ipi: {
   calc:(v)=>{
     const s=Object.values(v).filter(Boolean).length;
     let risk,label,os,interp,next;
-    if(s<=1){risk='low';label='Low Risk';os='~73%';interp='Good prognosis with standard therapy.';next='Standard R-CHOP ×6. Interim PET after 2-4 cycles. Consider R-IPI/NCCN-IPI for more precise stratification.';}
-    else if(s===2){risk='int';label='Low-Intermediate';os='~51%';interp='Intermediate prognosis.';next='R-CHOP ×6 standard. Consider clinical trial enrolment. Interim PET-adapted approach.';}
-    else if(s===3){risk='int';label='High-Intermediate';os='~43%';interp='Below-average prognosis.';next='R-CHOP ×6. Strongly consider clinical trial. Check for double-hit/double-expressor biology (MYC, BCL2 IHC/FISH).';}
-    else{risk='high';label='High Risk';os='~26%';interp='Poor prognosis with standard therapy.';next='R-CHOP may be suboptimal. Consider DA-R-EPOCH or clinical trial. Mandatory FISH for MYC/BCL2/BCL6. CNS prophylaxis assessment.';}
+    if(s<=1){risk='low';label='Low Risk';os='~73%';interp='Favourable prognosis. 5-year OS ~73% in the pre-Rituximab era; outcomes with R-CHOP are substantially better.';next='R-CHOP ×6 cycles. Interim PET-CT after cycles 2–4. Use R-IPI or NCCN-IPI for more precise R-CHOP-era stratification.';}
+    else if(s===2){risk='int';label='Low-Intermediate';os='~51%';interp='Intermediate prognosis. 5-year OS ~51% (pre-Rituximab). R-CHOP outcomes are better in the modern era.';next='R-CHOP ×6 cycles standard. PET-CT after 2–4 cycles. Enrol in clinical trial where available.';}
+    else if(s===3){risk='int';label='High-Intermediate';os='~43%';interp='High-intermediate prognosis. 5-year OS ~43%. Double-hit/double-expressor biology must be excluded before finalising therapy.';next='R-CHOP ×6 cycles. FISH for MYC/BCL2/BCL6 rearrangement mandatory. If double-hit confirmed: DA-R-EPOCH preferred. Enrol in clinical trial.';}
+    else{risk='high';label='High Risk';os='~26%';interp='Poor prognosis. 5-year OS ~26%. R-CHOP is suboptimal for this risk group.';next='DA-R-EPOCH preferred over R-CHOP if MYC/BCL2 rearrangement confirmed. FISH for MYC/BCL2/BCL6 mandatory. CNS-IPI assessment. Enrol in clinical trial.';}
+
     return{score:s,max:5,risk,label,stats:[['5yr OS (pre-R)',os]],interp,next};
   }
 },
@@ -100,9 +101,10 @@ flipi: {
   calc:(v)=>{
     const s=Object.values(v).filter(Boolean).length;
     let risk,label,os,interp,next;
-    if(s<=1){risk='low';label='Low Risk';os='71%';interp='Favourable prognosis.';next='Watch and wait if asymptomatic (GELF/BNLI criteria). If treatment needed: R-Benda or R-CHOP + Rituximab maintenance.';}
-    else if(s===2){risk='int';label='Intermediate Risk';os='51%';interp='Intermediate prognosis.';next='Treatment if symptomatic. R-Benda or R-CHOP. Rituximab maintenance post-induction. Consider FLIPI-2 or PRIMA-PI.';}
-    else{risk='high';label='High Risk';os='36%';interp='Higher-risk disease.';next='Treatment generally indicated. R-Benda preferred. Rituximab maintenance (PRIMA trial benefit greatest in high-FLIPI). Consider clinical trial.';}
+    if(s<=1){risk='low';label='Low Risk';os='71%';interp='Favourable prognosis. 10-year OS ~71% (pre-Rituximab); modern outcomes are better. Low-risk disease is often managed with watch-and-wait.';next='Watch and wait if asymptomatic (apply GELF/BNLI criteria formally). When treatment indicated: R-Bendamustine preferred over R-CHOP. Add Rituximab maintenance post-induction (PRIMA trial).';}
+    else if(s===2){risk='int';label='Intermediate Risk';os='51%';interp='Intermediate prognosis. 10-year OS ~51% (pre-Rituximab). Treatment decisions are guided by symptom burden and GELF criteria.';next='Treat when symptomatic or GELF criteria met. R-Bendamustine or R-CHOP followed by Rituximab maintenance. Enrol in clinical trial if available. Apply PRIMA-PI for simpler re-stratification.';}
+    else{risk='high';label='High Risk';os='36%';interp='Higher-risk disease. 10-year OS ~36% (pre-Rituximab). Treatment is indicated when symptomatic or GELF criteria are met.';next='Treat when symptomatic. R-Bendamustine preferred. Rituximab maintenance provides greatest benefit in high-FLIPI patients (PRIMA trial). Enrol in clinical trial.';}
+
     return{score:s,max:5,risk,label,stats:[['10yr OS (pre-R)',os]],interp,next};
   }
 },
@@ -128,8 +130,8 @@ iss: {
     if(iss===1&&!v.ldh&&!v.cytogen){riss=1;rissOS='~82%';risk='low';}
     else if(iss===3&&(v.ldh||v.cytogen)){riss=3;rissOS='~40%';risk='high';}
     else{riss=2;rissOS='~62%';risk='int';}
-    const interp=riss===1?'Good prognosis. Standard induction + ASCT if eligible.':riss===3?'Poor prognosis. Consider intensified therapy, tandem ASCT, or clinical trial.':'Intermediate prognosis. Standard risk-adapted therapy.';
-    const next=riss===3?'Discuss with MDT. VRd induction preferred. ASCT if eligible. Maintenance lenalidomide ± bortezomib. Consider MRD-guided approaches and clinical trials.':'VRd induction standard. ASCT if eligible (age <70, fit). Lenalidomide maintenance. Monitor MRD.';
+    const interp=riss===1?'Favourable prognosis. 5-year OS ~82% (R-ISS I). Standard induction and ASCT if eligible.':riss===3?'Poor prognosis. 5-year OS ~40% (R-ISS III). Intensified therapy or clinical trial is appropriate.':'Intermediate prognosis. 5-year OS ~62% (R-ISS II). Standard risk-adapted therapy.';
+    const next=riss===3?'VRd induction (bortezomib, lenalidomide, dexamethasone). ASCT if eligible. Tandem ASCT in selected high-risk patients. Lenalidomide maintenance. MRD-guided approaches and clinical trial enrolment strongly recommended.':'VRd induction standard. ASCT if eligible (age <70 and fit). Lenalidomide maintenance. Incorporate MRD assessment at CR/sCR.';
     return{score:'ISS '+iss+' / R-ISS '+riss,max:null,risk,label:'ISS Stage '+iss+' · R-ISS Stage '+riss,stats:[['ISS Median OS',issOS],['R-ISS 5yr OS',rissOS],['β2M',b2m+' mg/L'],['Albumin',alb+' g/dL']],interp,next};
   }
 },
@@ -153,10 +155,10 @@ ipss: {
     const cytoScore=cyto>=2?0.5:0;
     const s=(v.blasts||0)+(v.kary||0)+cytoScore;
     let risk,label,os,aml,interp,next;
-    if(s===0){risk='low';label='Low';os='5.7 yrs';aml='9.4 yrs';interp='Low-risk MDS. Conservative management appropriate.';next='Observation. Supportive care: transfusions for symptomatic anaemia, EPO (if serum EPO <500 IU/L). NOT eligible for azacitidine under NICE TA218. Consider lenalidomide if del(5q).';}
-    else if(s<=1){risk='low';label='Intermediate-1';os='3.5 yrs';aml='3.3 yrs';interp='Intermediate-1 risk. Lower-risk category — watchful waiting often appropriate.';next='Supportive care. EPO/luspatercept for anaemia. Lenalidomide if del(5q). NOT eligible for azacitidine under NICE TA218. Consider clinical trial. If trajectory worsening: reassess IPSS category.';}
-    else if(s<=2){risk='int';label='Intermediate-2';os='1.2 yrs';aml='1.1 yrs';interp='Intermediate-2 risk. Active treatment indicated. Azacitidine eligible under NICE TA218.';next='NICE TA218 ELIGIBLE: Azacitidine 75 mg/m² SC days 1–7 every 28 days (minimum 6 cycles). Refer for allo-SCT assessment if age ≤70 and HCT-CI acceptable. Obtain IPSS-M / full molecular profiling. Enrol in clinical trial if available.';}
-    else{risk='high';label='High';os='0.4 yrs';aml='0.2 yrs';interp='High-risk MDS. Urgent treatment required. Azacitidine eligible under NICE TA218.';next='NICE TA218 ELIGIBLE: Azacitidine 75 mg/m² SC days 1–7 every 28 days. URGENT allo-SCT referral — median OS without treatment is <6 months. Bridge with azacitidine. Full molecular profiling (IPSS-M). Discuss goals of care. Consider venetoclax combinations if trial available.';}
+    if(s===0){risk='low';label='Low';os='5.7 yrs';aml='9.4 yrs';interp='Low-risk MDS. Median OS 5.7 years. Not eligible for azacitidine under NICE TA218.';next='Observation and supportive care: transfusions for symptomatic anaemia, EPO if serum EPO <500 IU/L. Lenalidomide if del(5q). NOT eligible for azacitidine under NICE TA218. Supplement with IPSS-R and IPSS-M.';}
+    else if(s<=1){risk='low';label='Intermediate-1';os='3.5 yrs';aml='3.3 yrs';interp='Intermediate-1 risk. Median OS 3.5 years. Lower-risk category — watchful waiting is appropriate unless cytopenias are symptomatic.';next='Supportive care: EPO, luspatercept, or transfusions. Lenalidomide if del(5q). NOT eligible for azacitidine under NICE TA218. If disease trajectory is worsening: reassess IPSS category and obtain molecular profiling (IPSS-M).';}
+    else if(s<=2){risk='int';label='Intermediate-2';os='1.2 yrs';aml='1.1 yrs';interp='Intermediate-2 risk. Median OS 1.2 years. Active treatment is indicated. NICE TA218 azacitidine eligible.';next='NICE TA218 ELIGIBLE — Azacitidine 75 mg/m² SC days 1–7 every 28 days (minimum 6 cycles). Refer for allo-SCT assessment if age ≤70 and HCT-CI acceptable. Obtain IPSS-M and full molecular profiling. Enrol in clinical trial.';}
+    else{risk='high';label='High';os='0.4 yrs';aml='0.2 yrs';interp='High-risk MDS. Median OS <6 months without treatment. NICE TA218 azacitidine eligible. Urgent action required.';next='NICE TA218 ELIGIBLE — Azacitidine 75 mg/m² SC days 1–7 every 28 days. URGENT allo-SCT referral — bridge with azacitidine. Full molecular profiling (IPSS-M) to identify targetable mutations. Discuss goals of care. Venetoclax combinations via clinical trial where available.';}
     return{score:s.toFixed(1),max:null,risk,label,
       stats:[['IPSS Score',s.toFixed(1)],['Risk Category',label],['Median OS',os],['25% AML transform',aml],['NICE TA218',s>=1.5?'✓ ELIGIBLE (Int-2/High)':'✗ Not eligible (Low/Int-1)']],
       interp,next};
@@ -186,11 +188,11 @@ ipssr: {
     let aP=0; if(v.anc<0.8)aP=0.5;
     const s=kary+bP+hP+pP+aP;
     let risk,label,os,interp,next;
-    if(s<=1.5){risk='low';label='Very Low';os='8.8 yrs';interp='Excellent prognosis. Low risk of AML transformation.';next='Observation. Supportive care (transfusions, EPO). No indication for disease-modifying therapy unless symptomatic cytopenias worsen.';}
-    else if(s<=3){risk='low';label='Low';os='5.3 yrs';interp='Good prognosis.';next='Observation + supportive care. Lenalidomide if del(5q). EPO for symptomatic anaemia (if EPO level <500). Consider luspatercept for RS.';}
-    else if(s<=4.5){risk='int';label='Intermediate';os='3.0 yrs';interp='Intermediate prognosis. Treatment decision depends on trajectory and patient factors.';next='Risk-benefit discussion. If age <70 and fit: consider azacitidine or allo-SCT referral. Obtain molecular profiling (IPSS-M at mds-risk.org).';}
-    else if(s<=6){risk='high';label:'High';os='1.6 yrs';interp='Poor prognosis with risk of AML transformation.';next='Azacitidine standard of care. Urgent transplant referral if eligible (<70, HCT-CI acceptable). Molecular profiling essential. Clinical trial.';}
-    else{risk='vhigh';label='Very High';os='0.8 yrs';interp='Very poor prognosis.';next='Azacitidine. Urgent transplant assessment. Consider venetoclax combinations (trial). Discuss goals of care. Molecular profiling with IPSS-M.';}
+    if(s<=1.5){risk='low';label='Very Low';os='8.8 yrs';interp='Excellent prognosis. Median OS 8.8 years. AML transformation risk is very low.';next='Observation and supportive care (transfusions, EPO if EPO <500 IU/L, luspatercept for RS-MDS). No disease-modifying therapy unless symptomatic cytopenias progress.';}
+    else if(s<=3){risk='low';label='Low';os='5.3 yrs';interp='Good prognosis. Median OS 5.3 years. Lower-risk disease.';next='Supportive care. Lenalidomide if del(5q). EPO or luspatercept for symptomatic anaemia. Supplement with IPSS-M molecular profiling if treatment decisions are uncertain.';}
+    else if(s<=4.5){risk='int';label='Intermediate';os='3.0 yrs';interp='Intermediate prognosis. Median OS 3.0 years. Treatment is guided by symptom burden, trajectory, and patient fitness.';next='Assess for azacitidine or allo-SCT referral if age <70 and adequate comorbidity profile. Molecular profiling (IPSS-M at mds-risk-model.com) is essential for treatment decisions at this risk level.';}
+    else if(s<=6){risk='high';label='High';os='1.6 yrs';interp='Poor prognosis. Median OS 1.6 years. AML transformation risk is significant.';next='Azacitidine is standard of care. Urgent transplant referral if age <70 and HCT-CI acceptable. Molecular profiling (IPSS-M) essential. Enrol in clinical trial.';}
+    else{risk='vhigh';label='Very High';os='0.8 yrs';interp='Very poor prognosis. Median OS <1 year. Immediate treatment is indicated.';next='Azacitidine as standard of care and bridge to transplant. URGENT allo-SCT referral. Venetoclax combinations via clinical trial where available. Discuss goals of care. Molecular profiling with IPSS-M to guide trial eligibility.';}
     return{score:s.toFixed(1),max:null,risk,label,stats:[['Median OS',os],['IPSS-R Score',s.toFixed(1)]],interp,next};
   }
 },
@@ -290,10 +292,10 @@ dipss: {
   calc:(v)=>{
     const s=(v.age?1:0)+(v.const?1:0)+(v.hgb?2:0)+(v.wbc?1:0)+(v.blasts?1:0);
     let risk,label,os,interp,next;
-    if(s===0){risk='low';label='Low Risk';os='Not reached';interp='Excellent prognosis.';next='Observation if asymptomatic. Ruxolitinib for symptomatic splenomegaly or constitutional symptoms. Transplant NOT indicated.';}
-    else if(s<=2){risk='int';label='Intermediate-1';os='~14 yrs';interp='Moderate prognosis.';next='Ruxolitinib for symptoms. Transplant not routinely indicated. Annual reassessment. Consider molecular profiling (MIPSS70+ v2).';}
-    else if(s<=4){risk='high';label='Intermediate-2';os='~4 yrs';interp='Poor prognosis. Transplant should be considered.';next='Ruxolitinib standard. REFER FOR TRANSPLANT ASSESSMENT. Obtain HCT-CI. Molecular profiling essential. Consider fedratinib if ruxolitinib-intolerant.';}
-    else{risk='vhigh';label='High Risk';os='~1.5 yrs';interp='Very poor prognosis.';next='URGENT transplant referral. Bridge with ruxolitinib/fedratinib/pacritinib. Discuss goals of care. Clinical trial if available.';}
+    if(s===0){risk='low';label='Low Risk';os='Not reached';interp='Favourable prognosis. Median OS not reached in the original cohort. Transplant is not indicated at this stage.';next='Observation if asymptomatic. Start ruxolitinib for symptomatic splenomegaly or constitutional symptoms. Obtain molecular profiling (MIPSS70+ v2.0 or GIPSS) to refine risk further.';}
+    else if(s<=2){risk='int';label='Intermediate-1';os='~14 yrs';interp='Intermediate prognosis. Median OS ~14 years. Transplant is not routinely indicated.';next='Ruxolitinib for symptomatic disease (splenomegaly, constitutional symptoms, anaemia). Annual reassessment. Obtain molecular profiling (MIPSS70+ v2.0) — may upstage risk and change transplant decision.';}
+    else if(s<=4){risk='high';label='Intermediate-2';os='~4 yrs';interp='Poor prognosis. Median OS ~4 years. Transplant referral is indicated.';next='Ruxolitinib to control symptoms and bridge to transplant. REFER FOR TRANSPLANT ASSESSMENT — obtain HCT-CI. Molecular profiling (MIPSS70+ v2.0, GIPSS) is mandatory. Fedratinib or pacritinib if ruxolitinib-intolerant.';}
+    else{risk='vhigh';label='High Risk';os='~1.5 yrs';interp='Very poor prognosis. Median OS ~1.5 years. Transplant is the only potentially curative option.';next='URGENT transplant referral. Bridge with ruxolitinib, fedratinib, or pacritinib. Clinical trial enrolment. Discuss goals of care with patient and family.';}
     return{score:s,max:6,risk,label,stats:[['Median OS',os]],interp,next};
   }
 },
@@ -316,9 +318,9 @@ sokal: {
     const s=Math.exp(0.0116*(v.age-43.4)+0.0345*(v.spleen-7.51)+0.188*((v.plt/700)**2-0.563)+0.0887*((v.blasts||0)-2.1));
     const sr=Math.round(s*100)/100;
     let risk,label,interp,next;
-    if(sr<0.8){risk='low';label='Low Risk';interp='Best prognosis on TKI therapy.';next='Imatinib 400mg or 2nd-gen TKI (dasatinib/nilotinib/bosutinib). Monitor BCR::ABL1 at 3, 6, 12 months per ELN milestones.';}
-    else if(sr<=1.2){risk='int';label='Intermediate Risk';interp='Intermediate prognosis.';next='2nd-generation TKI may be preferred over imatinib. Monitor BCR::ABL1 closely. ELN milestones: BCR::ABL1 ≤10% at 3mo, ≤1% at 6mo, ≤0.1% at 12mo.';}
-    else{risk='high';label='High Risk';interp='Higher risk of progression.';next='2nd-generation TKI recommended (dasatinib or nilotinib preferred over imatinib). Close monitoring. Consider ELTS score for TKI-era prognosis.';}
+    if(sr<0.8){risk='low';label='Low Risk';interp='Low risk. Best expected outcomes on TKI therapy (pre-imatinib era derivation).';next='Imatinib 400mg daily or 2nd-gen TKI (dasatinib, nilotinib, or bosutinib). Monitor BCR::ABL1 at 3, 6, and 12 months per ELN 2020 milestones. Use ELTS score for TKI-era prognosis.';}
+    else if(sr<=1.2){risk='int';label='Intermediate Risk';interp='Intermediate Sokal risk. 2nd-gen TKI provides better molecular response rates than imatinib.';next='2nd-gen TKI preferred (dasatinib or nilotinib). Monitor BCR::ABL1 at ELN milestones: ≤10% at 3mo, ≤1% at 6mo, ≤0.1% at 12mo. Use ELTS score for TKI-era risk stratification.';}
+    else{risk='high';label='High Risk';interp='High Sokal risk. TKI resistance and earlier progression are more likely in this group.';next:'2nd-gen TKI mandatory (dasatinib or nilotinib over imatinib). Very close molecular monitoring. Consider ABL1 mutation analysis if suboptimal response. ELTS score for TKI-era prognosis. Clinical trial enrolment if available.';}
     return{score:sr,max:null,risk,label,stats:[['Sokal Score',sr.toFixed(2)]],interp,next};
   }
 },
@@ -342,8 +344,8 @@ plasmic: {
   calc:(v)=>{
     const s=Object.values(v).filter(Boolean).length;
     let risk,label,interp,next;
-    if(s<=4){risk='low';label='Low — TTP Unlikely';interp='ADAMTS13 severe deficiency unlikely (<5%).';next='Consider alternative diagnoses: HUS (STEC/aHUS), DIC, sepsis-associated TMA, drug-induced TMA. Monitor closely.';}
-    else if(s===5){risk='int';label='Intermediate Risk';interp='ADAMTS13 deficiency possible (5–25%).';next='SEND URGENT ADAMTS13 activity assay. Discuss plasma exchange with haematology. Consider empirical PEX if clinical deterioration.';}
+    if(s<=4){risk='low';label='Low — TTP Unlikely';interp='ADAMTS13 severe deficiency unlikely (<5%). Alternative TMA diagnoses are more probable.';next='Investigate alternative TMA diagnoses: STEC-HUS (stool culture, E. coli O157 toxin), aHUS (complement panel: C3, C4, factor H), DIC, sepsis-associated TMA, drug-induced TMA. Monitor closely for deterioration.';}
+    else if(s===5){risk='int';label='Intermediate Risk';interp='ADAMTS13 severe deficiency possible (5–25%). Clinical deterioration warrants empirical plasma exchange.';next='SEND URGENT ADAMTS13 activity assay (do not wait for result before treating if clinical worsening). Discuss plasma exchange with haematology immediately. Start empirical PEX if any clinical deterioration while awaiting result.';}
     else{risk='high';label='High — TTP Likely';interp='ADAMTS13 severe deficiency highly likely (>72%).';next='COMMENCE PLASMA EXCHANGE IMMEDIATELY. Do NOT wait for ADAMTS13 result. Start corticosteroids. Consider caplacizumab. Avoid platelet transfusion unless life-threatening bleeding.';}
     return{score:s,max:7,risk,label,stats:[],interp,next};
   }
@@ -365,9 +367,9 @@ fourts: {
   calc:(v)=>{
     const s=Object.values(v).reduce((a,b)=>a+b,0);
     let risk,label,interp,next;
-    if(s<=3){risk='low';label='Low Probability (~5%)';interp='HIT unlikely. High negative predictive value (~99%).';next='HIT is unlikely. Consider alternative causes. Usually safe to continue heparin if clinically needed. No need for anti-PF4 antibody testing in most cases.';}
-    else if(s<=5){risk='int';label='Intermediate Probability (~14%)';interp='HIT cannot be excluded.';next='STOP heparin. Switch to non-heparin anticoagulant (argatroban, fondaparinux, or DOAC). Send anti-PF4 antibody ELISA ± functional assay (SRA). Do NOT give warfarin until platelets >150.';}
-    else{risk='high';label='High Probability (~64%)';interp='HIT highly likely.';next='STOP ALL HEPARIN IMMEDIATELY (including flushes). Start therapeutic-dose non-heparin anticoagulant. Send PF4 antibody. Imaging for thrombosis. Do NOT transfuse platelets. Do NOT start warfarin until plt >150.';}
+    if(s<=3){risk='low';label='Low Probability (~5%)';interp='HIT unlikely. Negative predictive value ~99%. Alternative causes of thrombocytopenia are substantially more likely.';next='HIT effectively excluded. Investigate alternative causes (sepsis, drugs, DIC, other). Heparin continuation is safe if clinically indicated. Anti-PF4 antibody testing is not required.';}
+    else if(s<=5){risk='int';label='Intermediate Probability (~14%)';interp='HIT cannot be excluded. Treat as HIT until proven otherwise.';next='STOP ALL HEPARIN IMMEDIATELY (including line flushes). Switch to therapeutic-dose non-heparin anticoagulant (argatroban, fondaparinux, or DOAC). Send anti-PF4 antibody ELISA ± functional assay (SRA). Do NOT start warfarin until platelets >150.';}
+    else{risk='high';label='High Probability (~64%)';interp='HIT highly likely (~64%). Thrombotic risk is substantial, including in the absence of confirmed thrombosis.';next:'STOP ALL HEPARIN IMMEDIATELY (including all flushes and LMWH). Start therapeutic-dose non-heparin anticoagulant NOW. Send anti-PF4 antibody urgently. Image for occult thrombosis. Do NOT transfuse platelets — paradoxically worsens thrombotic risk. Do NOT start warfarin until platelet count >150.';}
     return{score:s,max:8,risk,label,stats:[],interp,next};
   }
 },
@@ -441,9 +443,9 @@ chads: {
   calc:(v)=>{
     const s=(v.chf?1:0)+(v.htn?1:0)+(v.age75?2:0)+(v.dm?1:0)+(v.stroke?2:0)+(v.vasc?1:0)+(v.age65?1:0)+(v.female?1:0);
     let risk,label,annual,interp,next;
-    if(s===0){risk='low';label='Low Risk';annual='~0.2%';interp='Very low stroke risk.';next='No anticoagulation recommended (male score 0). Reassess annually or if new risk factors develop.';}
-    else if(s===1){risk='int';label='Low-Moderate Risk';annual='~0.6–1.3%';interp='Low-moderate stroke risk.';next='Male score 1: consider OAC (individualised). Female score 1 (sex alone): no OAC needed. If OAC started: DOAC preferred over warfarin.';}
-    else{risk='high';label='Moderate-High Risk';annual=s<=3?'~2.2–3.2%':'>4%';interp='Anticoagulation clearly indicated.';next='Start OAC. DOAC preferred (apixaban, rivaroxaban, dabigatran, edoxaban) unless contraindicated. Assess bleeding risk with HAS-BLED. High HAS-BLED does NOT contraindicate OAC — address modifiable risk factors.';}
+    if(s===0){risk='low';label='Low Risk';annual='~0.2%';interp='Very low stroke risk (~0.2%/year). Annual risk is comparable to general population. Anticoagulation is not recommended.';next='No OAC indicated (male score 0). Reassess annually and at any change in clinical status or new risk factor development.';}
+    else if(s===1){risk='int';label='Low-Moderate Risk';annual='~0.6–1.3%';interp='Low-moderate stroke risk (~0.6–1.3%/year). Anticoagulation decision is individualised.';next:'For male patients: OAC is an individual decision (annual risk 0.6–1.3%). For female patients with score 1 from sex alone: OAC is NOT indicated. If OAC started: DOAC preferred over warfarin. Assess bleeding risk (HAS-BLED).';}
+    else{risk='high';label='Moderate-High Risk';annual=s<=3?'~2.2–3.2%':'>4%';interp:'Anticoagulation is clearly indicated (annual stroke risk '+(s<=3?'~2.2–3.2%':'>4%')+').';next='Start OAC. DOAC preferred (apixaban, rivaroxaban, dabigatran, or edoxaban) unless contraindicated. Assess bleeding risk with HAS-BLED — a high HAS-BLED score identifies modifiable risk factors to address, NOT a reason to withhold OAC.';}
     return{score:s,max:9,risk,label,stats:[['Annual stroke risk',annual]],interp,next};
   }
 },
@@ -466,10 +468,10 @@ sofa: {
   calc:(v)=>{
     const s=Object.values(v).reduce((a,b)=>a+b,0);
     let risk,label,mort,interp,next;
-    if(s<=1){risk='low';label='Minimal Organ Dysfunction';mort='~0%';interp='No notable organ dysfunction.';next='Continue monitoring. If suspected infection present, reassess for sepsis with repeat SOFA at 6-12 hours.';}
-    else if(s<=5){risk='int';label='Mild-Moderate Dysfunction';mort='~6–20%';interp='Mild organ dysfunction. May meet Sepsis-3 criteria if acute increase ≥2.';next='If infection suspected + SOFA increase ≥2: this IS sepsis. Start Sepsis-3 bundle: blood cultures, empirical antibiotics within 1 hour, fluid resuscitation 30mL/kg crystalloid.';}
-    else if(s<=9){risk='high';label='Moderate-Severe Dysfunction';mort='~33%';interp='Multi-organ dysfunction.';next='ICU care. Sepsis bundle. Source control. Consider vasopressors if MAP <65 despite fluids. Serial SOFA monitoring. If haematology patient: consider HLH/DIC.';}
-    else{risk='vhigh';label='Severe Organ Failure';mort='>50%';interp='Multi-organ failure with very high mortality.';next='Maximal ICU support. Escalation/ceiling of care discussion with patient/family. Goals of care review. If haematology patient: urgent senior review, consider TLS/DIC/HLH.';}
+    if(s<=1){risk='low';label='Minimal Organ Dysfunction';mort='<1%';interp='Minimal or no organ dysfunction detectable. This score does not support an acute SOFA increase ≥2 from a normal baseline.';next='Continue monitoring. If infection is suspected, repeat SOFA at 6–12 hours to identify trajectory. Sepsis is defined by an acute increase ≥2 SOFA points — a single low value does not rule it out if the clinical picture is evolving.';}
+    else if(s<=5){risk='int';label='Mild-Moderate Dysfunction';mort='~6–20%';interp='Mild-to-moderate organ dysfunction. If infection is present and this represents an acute increase ≥2 from baseline, Sepsis-3 criteria are met.';next='If infection is suspected and SOFA has risen ≥2 acutely: initiate Sepsis-6 bundle within 1 hour — blood cultures ×2, IV broad-spectrum antibiotics, IV fluid bolus 500mL crystalloid, monitor lactate, urine output, and oxygen saturations. ICU review if trajectory worsening.';}
+    else if(s<=9){risk='high';label='Moderate-Severe Dysfunction';mort='~33%';interp='Multi-organ dysfunction. Hospital mortality ~33%. This score meets criteria for sepsis in the context of infection and mandates ICU-level care.';next='ICU referral required. Sepsis bundle + source control. Vasopressors (noradrenaline) if MAP <65 mmHg despite 30 mL/kg crystalloid. Serial SOFA monitoring every 6–12 hours to track trajectory. If haematology patient: actively exclude HLH (ferritin, sCD25), DIC (PT/APTT/fibrinogen/D-dimer), and TLS.';}
+    else{risk='vhigh';label='Severe Organ Failure';mort='>50%';interp='Severe multi-organ failure. Hospital mortality exceeds 50%. This represents the highest-acuity bracket on SOFA.';next='Maximal ICU support. Senior clinician must immediately review goals of care with patient and family. Escalation ceiling discussion and documentation required. If haematology patient: urgent exclusion of treatable reversible causes — HLH, DIC, TLS, catastrophic APLS, viral reactivation (CMV/EBV). Each hour of delay in reversible cause identification worsens outcome.';}
     return{score:s,max:24,risk,label,stats:[['Hospital mortality',mort]],interp,next};
   }
 },
@@ -493,9 +495,9 @@ news2: {
   calc:(v)=>{
     const s=Object.values(v).reduce((a,b)=>a+b,0);
     let risk,label,interp,next;
-    if(s<=4){risk='low';label='Low Risk (NEWS '+s+')';interp='Continue routine monitoring.';next='Minimum 12-hourly observations. Registered nurse assessment. Increase monitoring if clinical concern.';}
-    else if(s<=6){risk='int';label='Medium Risk (NEWS '+s+')';interp='Key threshold for escalation.';next='Minimum 1-hourly observations. Urgent nurse assessment. Inform medical team for bedside review within 1 hour. Consider cause (sepsis, PE, ACS, bleeding).';}
-    else{risk='high';label='High Risk (NEWS ≥7)';interp='High risk of deterioration.';next='CONTINUOUS MONITORING. Emergency assessment by clinical team with competence in acute illness. Consider critical care referral. Sepsis-6 bundle if infection suspected.';}
+    if(s<=4){risk='low';label='Low Risk (NEWS '+s+')';interp='Low risk of acute deterioration at current observations. Routine ward care is appropriate.';next='Minimum 12-hourly observations. Registered nurse assessment. Escalate immediately if any single parameter scores 3, or if clinical concern overrides the score. A NEWS2 of 0 does not exclude early sepsis if clinical features are present.';}
+    else if(s<=6){risk='int';label='Medium Risk (NEWS '+s+')';interp='NEWS2 5–6 is the defined threshold for urgent clinical escalation. This patient requires medical review — not only increased observations.';next='Minimum 1-hourly observations. Inform the medical team: bedside review required within 1 hour. Identify the cause: sepsis (check Sepsis-6 criteria), PE, ACS, pneumonia, haemorrhage. In haematology patients: neutropenic sepsis protocol if ANC <0.5. Document escalation and response time.';}
+    else{risk='high';label='High Risk (NEWS ≥7)';interp='High risk of clinical deterioration and adverse outcome. NEWS2 ≥7 mandates emergency clinical response.';next='EMERGENCY RESPONSE REQUIRED. Continuous monitoring. Immediate assessment by senior clinician with competence in acute illness management. Critical care referral. If infection suspected: blood cultures ×2 and IV broad-spectrum antibiotics within 1 hour (Sepsis-6). Haematology patients: neutropenic sepsis algorithm if ANC <0.5 — do not wait for cultures before starting antibiotics.';}
     return{score:s,max:20,risk,label,stats:[['NEWS2 Score',s]],interp,next};
   }
 },
@@ -576,8 +578,8 @@ hasbled: {
   calc:(v)=>{
     const s=Object.values(v).filter(Boolean).length;
     let risk,label,interp,next;
-    if(s<=2){risk='low';label='Low-Moderate Bleeding Risk';interp='Acceptable bleeding risk for anticoagulation.';next='Proceed with OAC if CHA₂DS₂-VASc indicates. DOAC preferred over warfarin (lower ICH risk). Review modifiable risk factors annually.';}
-    else{risk='high';label='High Bleeding Risk (≥3)';interp='Elevated bleeding risk — but this does NOT contraindicate anticoagulation.';next='Address ALL modifiable factors: control BP, stop NSAIDs, manage alcohol, optimise INR/switch to DOAC. More frequent monitoring. OAC still indicated if stroke risk warrants it.';}
+    if(s<=2){risk='low';label='Low-Moderate Bleeding Risk';interp='Acceptable bleeding risk. HAS-BLED ≤2 does not require modification to anticoagulation management.';next='Anticoagulate as per CHA₂DS₂-VASc indication. DOAC preferred over warfarin (lower intracranial haemorrhage risk). Review all modifiable risk factors at each follow-up.';}
+    else{risk='high';label='High Bleeding Risk (≥3)';interp='HAS-BLED ≥3 — elevated bleeding risk. This identifies modifiable risk factors to correct. It does NOT contraindicate anticoagulation in patients with high stroke risk.';next='Address ALL modifiable HAS-BLED factors: control BP to target, stop NSAIDs/antiplatelet agents where not essential, manage alcohol, switch labile INR to DOAC. OAC remains indicated where CHA₂DS₂-VASc warrants it. Increase review frequency.';}
     return{score:s,max:9,risk,label,stats:[['HAS-BLED Score',s]],interp,next};
   }
 },
@@ -603,9 +605,9 @@ cnsipi: {
     // Kidney/adrenal adds to IPI-based score
     const s=(v.age?1:0)+(v.ldh?1:0)+(v.ecog?1:0)+(v.stage?1:0)+(v.extra?1:0)+(v.kidney?1:0);
     let risk,label,cns2yr,interp,next;
-    if(s<=1){risk='low';label='Low Risk';cns2yr='~0.6%';interp='Very low risk of CNS relapse.';next='CNS prophylaxis NOT routinely indicated. Standard R-CHOP. If testicular DLBCL: prophylaxis still recommended regardless of CNS-IPI.';}
-    else if(s<=3){risk='int';label='Intermediate Risk';cns2yr='~3.4%';interp='Moderate CNS relapse risk.';next='Consider CNS prophylaxis if additional high-risk features (double-hit, testicular, breast, uterine involvement). Discuss at MDT. If given: 2-4 cycles IT methotrexate or 2 cycles high-dose IV methotrexate.';}
-    else{risk='high';label='High Risk';cns2yr='~10.2%';interp='High risk of CNS relapse (~1 in 10 at 2 years).';next='CNS PROPHYLAXIS RECOMMENDED. Options: intrathecal methotrexate ×4-6 doses with each R-CHOP cycle, OR systemic high-dose methotrexate (3g/m² IV) ×2-4 cycles intercalated. Baseline diagnostic LP ± MRI brain. Consider DA-R-EPOCH.';}
+    if(s<=1){risk='low';label='Low Risk';cns2yr='~0.6%';interp='Very low CNS relapse risk at 2 years (~0.6%). CNS prophylaxis does not alter outcomes in this group.';next='CNS prophylaxis is NOT indicated. Standard R-CHOP ×6. Exception: testicular DLBCL always requires CNS prophylaxis regardless of CNS-IPI score.';}
+    else if(s<=3){risk='int';label='Intermediate Risk';cns2yr='~3.4%';interp='Clinically meaningful CNS relapse risk (~3.4% at 2 years). Routine prophylaxis has not been shown to reduce relapse in this group, but high-risk co-features may change the decision.';next='Prophylaxis is not routinely indicated at this score alone. Escalate to CNS prophylaxis protocol if additional risk features present: double-hit/double-expressor biology, testicular, breast, uterine, or paravertebral involvement. Discuss at MDT. If prophylaxis given: 2–4 doses IT methotrexate per R-CHOP cycle, or 2 cycles systemic HD-MTX intercalated.';}
+    else{risk='high';label='High Risk';cns2yr='~10.2%';interp='High CNS relapse risk (~10% at 2 years). One in ten patients in this group will develop CNS disease despite systemic therapy.';next='CNS PROPHYLAXIS IS INDICATED. Perform baseline diagnostic LP (send cytology + flow cytometry) and MRI brain/spine before starting treatment. Prophylaxis options: systemic high-dose methotrexate (3g/m² IV) ×2–4 cycles intercalated with R-CHOP (preferred), or intrathecal methotrexate ×4–6 doses. Consider DA-R-EPOCH if double-hit confirmed.';}
     return{score:s,max:6,risk,label,stats:[['2yr CNS relapse rate',cns2yr],['CNS-IPI Score',s+'/6']],interp,next};
   }
 },
@@ -627,10 +629,10 @@ nccnipi: {
   calc:(v)=>{
     const s=(v.age||0)+(v.ldh||0)+(v.ecog?1:0)+(v.stage?1:0)+(v.extra?1:0);
     let risk,label,os,interp,next;
-    if(s<=1){risk='low';label='Low Risk';os='~96%';interp='Excellent prognosis with R-CHOP.';next='Standard R-CHOP ×6. Interim PET after 2-4 cycles.';}
-    else if(s<=3){risk='int';label='Low-Intermediate';os='~82%';interp='Good prognosis.';next='R-CHOP ×6 standard. Monitor response with interim PET.';}
-    else if(s<=5){risk='high';label='High-Intermediate';os='~64%';interp='Below-average prognosis.';next='Consider clinical trial or intensified approach. Check double-hit biology. CNS-IPI assessment.';}
-    else{risk='vhigh';label='High Risk';os='~33%';interp='Poor prognosis — worst quartile.';next='Clinical trial preferred. Mandatory FISH for MYC/BCL2/BCL6. CNS prophylaxis assessment. Consider DA-R-EPOCH or novel combinations.';}
+    if(s<=1){risk='low';label='Low Risk';os='~96%';interp='Excellent prognosis. 5-year OS ~96% with R-CHOP. This is the best-outcome NCCN-IPI group.';next='Standard R-CHOP ×6 cycles. Interim PET-CT after cycles 2–4. End-of-treatment PET-CT to confirm CR.';}
+    else if(s<=3){risk='int';label='Low-Intermediate';os='~82%';interp='Good prognosis. 5-year OS ~82% with R-CHOP. Majority of patients achieve durable remission.';next='R-CHOP ×6 cycles. Interim PET-CT after cycle 2–4. Complete CNS-IPI assessment. No dose escalation outside clinical trial.';}
+    else if(s<=5){risk='high';label='High-Intermediate';os='~64%';interp='Below-average prognosis. 5-year OS ~64% with R-CHOP. Approximately one-third relapse or are refractory.';next='Complete CNS-IPI assessment (LP if score ≥4). FISH for MYC/BCL2/BCL6 rearrangements to exclude double-hit. Clinical trial enrolment is appropriate at this risk level. Intensified regimen (DA-R-EPOCH) if double-hit confirmed.';}
+    else{risk='vhigh';label='High Risk';os='~33%';interp='Poor prognosis. 5-year OS ~33% with standard R-CHOP — the highest-risk NCCN-IPI group. Relapse and early progression are common.';next='FISH for MYC/BCL2/BCL6 is mandatory. CNS prophylaxis assessment required (LP + IT MTX if CNS-IPI high). Clinical trial is the preferred approach. DA-R-EPOCH for double-hit/double-expressor biology. MDT discussion before treatment initiation.';}
     return{score:s,max:8,risk,label,stats:[['5yr OS (R-CHOP)',os]],interp,next};
   }
 },
@@ -652,9 +654,9 @@ ripi: {
   calc:(v)=>{
     const s=Object.values(v).filter(Boolean).length;
     let risk,label,os,interp,next;
-    if(s===0){risk='low';label='Very Good';os='~94%';interp='Excellent prognosis.';next='Standard R-CHOP ×6.';}
-    else if(s<=2){risk='int';label='Good';os='~79%';interp='Good prognosis.';next='R-CHOP ×6. Consider NCCN-IPI for finer stratification.';}
-    else{risk='high';label='Poor';os='~55%';interp='Below-average prognosis.';next='Consider clinical trial. FISH for double-hit. CNS-IPI assessment.';}
+    if(s===0){risk='low';label='Very Good';os='~94%';interp='Excellent prognosis. 4-year OS ~94% with R-CHOP. This is the lowest-risk R-IPI group and generally cured with standard therapy.';next='Standard R-CHOP ×6 cycles. Interim and end-of-treatment PET-CT. No intensification indicated outside trial.';}
+    else if(s<=2){risk='int';label='Good';os='~79%';interp='Good prognosis. 4-year OS ~79% with R-CHOP. Most patients achieve durable remission.';next='R-CHOP ×6 cycles. Interim PET-CT after cycle 2–4. Use NCCN-IPI for finer risk stratification within this group if LDH ratio is available.';}
+    else{risk='high';label='Poor';os='~55%';interp='Below-average prognosis. 4-year OS ~55% with R-CHOP. Approximately half of patients relapse or are primary refractory.';next='FISH for MYC/BCL2/BCL6 rearrangements. CNS-IPI assessment — LP if score ≥4. Clinical trial enrolment is appropriate. DA-R-EPOCH if double-hit lymphoma confirmed. MDT review before treatment.';}
     return{score:s,max:5,risk,label,stats:[['4yr OS (R-CHOP)',os]],interp,next};
   }
 },
@@ -681,8 +683,8 @@ ips: {
     const d=data[Math.min(s,7)];
     let risk=s<=2?'low':s<=4?'int':'high';
     return{score:s,max:7,risk,label:d.l+' Risk',stats:[['5yr FFP (pre-PET era)',d.ffp]],
-      interp:s<=2?'Good prognosis with modern therapy.':'Higher-risk disease.',
-      next:s<=2?'Standard ABVD ×6 or BEACOPPesc ×2 + ABVD ×4 depending on PET-2 response. Interim PET after cycle 2 is now the key decision point.':'Consider BEACOPPesc as initial therapy. Interim PET-adapted de-escalation (RATHL approach). BV-AVD may be considered based on ECHELON-1. Discuss at lymphoma MDT.'};
+      interp:s<=2?'Good prognosis. 5-year freedom from progression ~77–84%. In modern PET-adapted therapy, interim PET-2 response is a more important prognostic marker than IPS for treatment adaptation.':'Elevated risk of disease progression. 5-year FFP ~42–67% depending on score. IPS was derived in the pre-PET era — treatment decisions are now guided by interim PET response.',
+      next:s<=2?'Standard ABVD ×2 then interim PET-2. PET-negative: continue ABVD or de-escalate to AVD (RATHL data). PET-positive: escalate to BEACOPPesc. BV-AVD is an alternative based on ECHELON-1 (OS benefit in stage III/IV). Discuss at lymphoma MDT.':'Escalated therapy should be discussed. BEACOPPesc ×4–6 cycles or BV-AVD (ECHELON-1). Interim PET-adapted response guides ongoing treatment. ASCT for PET-positive after escalation. Clinical trial is appropriate. Lymphoma MDT review before first cycle.'};
   }
 },
 rai: {
@@ -733,10 +735,10 @@ cllipi: {
   calc:(v)=>{
     const s=(v.tp53?4:0)+(v.ighv?2:0)+(v.b2m?2:0)+(v.stage?1:0)+(v.age?1:0);
     let risk,label,os,interp,next;
-    if(s<=1){risk='low';label='Low Risk';os='~93%';interp='Excellent prognosis.';next='Observation. Most will not require treatment for years. Re-stage if symptomatic progression.';}
-    else if(s<=3){risk='int';label='Intermediate Risk';os='~79%';interp='Moderate prognosis.';next='Watch and wait until iwCLL criteria met. When treatment needed: consider IGHV status for therapy selection.';}
-    else if(s<=6){risk='high';label='High Risk';os='~63%';interp='Poor prognosis with earlier treatment need.';next='Early treatment likely needed. BTKi or venetoclax-based preferred. If TP53 disrupted: avoid chemoimmunotherapy entirely.';}
-    else{risk='vhigh';label='Very High Risk';os='~23%';interp='Very poor prognosis.';next='URGENT specialist management. BTKi (continuous) or venetoclax-obinutuzumab (fixed-duration). Chemoimmunotherapy CONTRAINDICATED. Consider clinical trial. Allogeneic SCT discussion if young/fit.';}
+    if(s<=1){risk='low';label='Low Risk';os='~93%';interp='Excellent prognosis. 5-year OS ~93%. The majority of patients in this group will not require treatment for many years, and some never will.';next='Observation. Monitor with FBC every 3–6 months and clinical review. Treat only when iwCLL criteria for treatment are met. No early intervention benefit has been demonstrated in this risk group.';}
+    else if(s<=3){risk='int';label='Intermediate Risk';os='~79%';interp='Intermediate prognosis. 5-year OS ~79%. Treatment will be required in a proportion of patients within a few years of diagnosis.';next='Watch and wait until iwCLL treatment criteria are fulfilled (rapid lymphocyte doubling, progressive cytopenias, symptomatic disease, bulky nodes). When treatment is indicated: use IGHV mutation status and TP53 status to guide therapy choice. IGHV unmutated or TP53 disrupted: BTKi or venetoclax preferred over chemoimmunotherapy.';}
+    else if(s<=6){risk='high';label='High Risk';os='~63%';interp='Poor prognosis. 5-year OS ~63%. Early treatment requirement is common. Chemoimmunotherapy outcomes are inferior in this group.';next='Treatment is likely required earlier. At treatment initiation: BTKi (ibrutinib or acalabrutinib) or venetoclax-obinutuzumab are preferred. If TP53 disrupted: chemoimmunotherapy is contraindicated — use BTKi or venetoclax-based regimen only. Clinical trial enrolment is appropriate.';}
+    else{risk='vhigh';label='Very High Risk';os='~23%';interp='Very poor prognosis. 5-year OS ~23%. Rapid disease progression and resistance to chemotherapy are expected, particularly with TP53 disruption.';next='Specialist haematology management required. Chemoimmunotherapy (FCR, BR) is CONTRAINDICATED. Use BTKi (ibrutinib/acalabrutinib, continuous) or venetoclax-obinutuzumab (fixed-duration). Clinical trial is the preferred approach. Allogeneic SCT discussion in eligible young/fit patients achieving remission.';}
     return{score:s,max:10,risk,label,stats:[['5yr OS',os],['TP53',v.tp53?'Disrupted (4pts)':'Wild-type'],['IGHV',v.ighv?'Unmutated (2pts)':'Mutated']],interp,next};
   }
 },
@@ -782,9 +784,9 @@ elts: {
     const s=0.0025*(v.age/10)**3+0.0615*(v.spleen||0)+0.1052*((v.blasts||0)/10)+0.4104*((v.plt||0)/1000)**(-0.5146);
     const sr=Math.round(s*1000)/1000;
     let risk,label,interp,next;
-    if(sr<=1.5680){risk='low';label='Low Risk';interp='Best long-term survival on TKI.';next='Imatinib 400mg OR 2nd-gen TKI (either acceptable). Monitor BCR::ABL1 per ELN milestones at 3, 6, 12 months.';}
-    else if(sr<=2.2185){risk='int';label='Intermediate Risk';interp='Intermediate TKI-era prognosis.';next='2nd-generation TKI may be preferred. Close monitoring. ELN milestones: ≤10% at 3mo, ≤1% at 6mo, ≤0.1% (MMR) at 12mo.';}
-    else{risk='high';label='High Risk';interp='Higher risk on TKI therapy.';next='2nd-generation TKI RECOMMENDED (dasatinib or nilotinib over imatinib). Very close monitoring. Consider mutation analysis if suboptimal response. Clinical trial if available.';}
+    if(sr<=1.5680){risk='low';label='Low Risk';interp='Low ELTS risk. Best expected long-term survival outcomes with TKI therapy. This is the most favourable CML prognostic group in the TKI era.';next='Imatinib 400mg daily or a 2nd-generation TKI (dasatinib or nilotinib) are both acceptable choices. Monitor BCR::ABL1 (IS) at 3, 6, 12 months per ELN 2020 milestones. Target: ≤10% at 3mo, ≤1% at 6mo, ≤0.1% (MMR) at 12mo.';}
+    else if(sr<=2.2185){risk='int';label='Intermediate Risk';interp='Intermediate ELTS risk. Long-term outcomes are moderate. A 2nd-generation TKI may improve the depth and speed of molecular response compared with imatinib.';next='2nd-generation TKI (dasatinib or nilotinib) is preferred in this risk group. Monitor BCR::ABL1 strictly at ELN milestones. If ELN warning criteria met: mutation analysis (BCR::ABL1 kinase domain), MDT review, consider TKI switch.';}
+    else{risk='high';label='High Risk';interp='High ELTS risk. This is the poorest-outcome CML group on TKI therapy. 2nd-generation TKI from the outset is standard of care.';next='2nd-generation TKI IS RECOMMENDED (dasatinib or nilotinib over imatinib). Failure/warning criteria at ELN milestones should prompt urgent mutation analysis and TKI switch to a 3rd-generation agent (ponatinib/asciminib) if T315I or composite mutation detected. Clinical trial enrolment is appropriate. Consider ASCT discussion if suboptimal response persists.';}
     return{score:sr.toFixed(3),max:null,risk,label,stats:[['ELTS Score',sr.toFixed(3)]],interp,next};
   }
 },
@@ -807,10 +809,10 @@ gipss: {
   calc:(v)=>{
     const s=(v.unfav?1:0)+(v.vunfav?2:0)+(v.triple?2:0)+(v.asxl1?1:0)+(v.srsf2?1:0)+(v.u2af1?1:0);
     let risk,label,os,interp,next;
-    if(s===0){risk='low';label='Low Risk';os='26.4 yrs';interp='Excellent genetic profile.';next='Observation if asymptomatic. Ruxolitinib for symptoms. Transplant NOT indicated.';}
-    else if(s===1){risk='int';label='Intermediate-1';os='8 yrs';interp='Intermediate genetic risk.';next='Ruxolitinib for symptomatic disease. Monitor for progression. Transplant not routinely indicated.';}
-    else if(s===2){risk='high';label='Intermediate-2';os='4.2 yrs';interp='Poor genetic profile.';next='Ruxolitinib standard. REFER FOR TRANSPLANT ASSESSMENT. HCT-CI evaluation. Molecular monitoring.';}
-    else{risk='vhigh';label='High Risk';os='2 yrs';interp='Very poor genetic profile.';next='URGENT transplant referral. Bridge with ruxolitinib/fedratinib/pacritinib. Discuss goals of care.';}
+    if(s===0){risk='low';label='Low Risk';os='26.4 yrs';interp='Excellent genetic profile. Median OS ~26 years — this group has near-normal life expectancy. Allogeneic transplant is not indicated.';next='Observation if asymptomatic. Ruxolitinib for symptomatic splenomegaly or constitutional symptoms. Transplant is NOT indicated in this genetic risk group. Annual molecular review.';}
+    else if(s===1){risk='int';label='Intermediate-1';os='8 yrs';interp='Intermediate genetic risk. Median OS ~8 years. A proportion of patients will progress and require active management.';next='Ruxolitinib for symptomatic disease (splenomegaly, constitutional symptoms, anaemia). Monitor closely for progression (blasts, new mutations, worsening blood counts). Allogeneic SCT is not routinely indicated but should be reassessed if DIPSS clinical risk escalates.';}
+    else if(s===2){risk='high';label='Intermediate-2';os='4.2 yrs';interp='Poor genetic profile. Median OS ~4 years. This group has a meaningful risk of blast transformation and early mortality.';next='Ruxolitinib standard of care for symptoms. REFER FOR ALLOGENEIC SCT ASSESSMENT. Evaluate HCT-CI and identify a suitable donor now. Fedratinib or pacritinib as alternatives if ruxolitinib-intolerant. Molecular monitoring every 6 months for acquisition of new adverse mutations.';}
+    else{risk='vhigh';label='High Risk';os='2 yrs';interp='Very poor genetic profile. Median OS ~2 years. High risk of early blast transformation. This group derives the most benefit from allogeneic SCT.';next='URGENT ALLOGENEIC SCT REFERRAL. Bridge to transplant with ruxolitinib, fedratinib, or pacritinib (based on spleen/symptoms). Enrol in clinical trial if transplant-ineligible. Goals of care discussion if not proceeding to SCT. Regular blast count monitoring.';}
     return{score:s,max:null,risk,label,stats:[['Median OS',os],['GIPSS Score',s]],interp,next};
   }
 },
@@ -830,10 +832,10 @@ ipset: {
   ],
   calc:(v)=>{
     let risk,label,annual,interp,next;
-    if(v.thrombo||(v.age60&&v.jak2)){risk='high';label='High Risk';annual='~4.3%/yr';interp='High thrombotic risk — cytoreduction indicated.';next='HYDROXYUREA is first-line cytoreductive therapy. Target platelets <400. Aspirin 75mg daily (unless contraindicated). Address all CV risk factors. If HU-intolerant/resistant: anagrelide or interferon-alpha.';}
-    else if(v.age60&&!v.jak2){risk='int';label='Intermediate Risk';annual='~2.6%/yr';interp='Intermediate thrombotic risk.';next='Consider cytoreduction on individual basis. Aspirin 75mg daily. Address CV risk factors aggressively. Close monitoring.';}
-    else if(!v.age60&&v.jak2){risk='low';label='Low Risk';annual='~1.0%/yr';interp='Low thrombotic risk but JAK2-positive.';next='Aspirin 75mg daily (consider twice daily if CV risk factors present). No cytoreduction routinely needed. Monitor for progression.';}
-    else{risk='low';label:'Very Low Risk';annual='~0.4%/yr';interp='Lowest thrombotic risk.';next='Observation only. Consider low-dose aspirin if CV risk factors. No cytoreduction. Annual review.';}
+    if(v.thrombo||(v.age60&&v.jak2)){risk='high';label='High Risk';annual='~4.3%/yr';interp='High thrombotic risk (~4.3% per year). Either prior thrombosis or the combination of age >60 and JAK2 V617F are present. Cytoreductive therapy is indicated.';next='HYDROXYUREA is first-line cytoreductive therapy (ELN/BSH recommendation). Target platelet count <400 ×10⁹/L. Aspirin 75mg daily unless contraindicated by bleeding history or platelet count >1,500. Address all modifiable cardiovascular risk factors. If hydroxyurea-intolerant or resistant: anagrelide or pegylated interferon-alpha.';}
+    else if(v.age60&&!v.jak2){risk='int';label='Intermediate Risk';annual='~2.6%/yr';interp='Intermediate thrombotic risk (~2.6% per year). Age >60 without JAK2 V617F. Thrombotic risk is lower than JAK2-positive elderly patients.';next='Cytoreduction on an individual basis — not mandated by guidelines but may be appropriate with other risk features. Aspirin 75mg daily. Aggressive CV risk factor management. Monitor for new thrombotic events and disease progression.';}
+    else if(!v.age60&&v.jak2){risk='low';label='Low Risk';annual='~1.0%/yr';interp='Low thrombotic risk (~1.0% per year). JAK2-positive but age ≤60 without prior thrombosis. No cytoreduction is indicated at this stage.';next='Aspirin 75mg daily (consider twice-daily dosing if significant CV risk factors present). Cytoreduction is NOT routinely indicated. Annual haematology review and monitoring for disease progression or new risk factors.';}
+    else{risk='low';label='Very Low Risk';annual='~0.4%/yr';interp='Lowest thrombotic risk (~0.4% per year). JAK2-negative, age ≤60, no prior thrombosis. This group has close to population-level vascular risk in the short term.';next='Observation only. Low-dose aspirin may be considered if cardiovascular risk factors are present, but routine aspirin is not universally recommended in very low-risk ET. No cytoreduction. Annual review.';}
     return{score:'',max:null,risk,label,stats:[['Annual thrombosis rate',annual]],interp,next};
   }
 },
@@ -1055,8 +1057,8 @@ qsofa2: {
   calc:(v)=>{
     const s=Object.values(v).filter(Boolean).length;
     let risk,label,interp,next;
-    if(s<=1){risk='low';label='qSOFA '+s+' — Low Risk';interp='Low qSOFA score. Does NOT exclude sepsis.';next='Continue clinical assessment. If infection suspected, monitor closely and consider full SOFA/NEWS2. Low qSOFA does not rule out sepsis — maintain clinical vigilance.';}
-    else{risk='high';label='qSOFA ≥2 — High Risk';interp='Positive screen for possible sepsis with higher risk of poor outcomes.';next='URGENT assessment for organ dysfunction. Start Sepsis-6 bundle: blood cultures, empirical antibiotics within 1 hour, IV fluids, lactate, urine output monitoring, oxygen. Consider ICU referral.';}
+    if(s<=1){risk='low';label='qSOFA '+s+' — Low Risk';interp='Low qSOFA score. This does NOT rule out sepsis — qSOFA has a sensitivity of approximately 50% and cannot be used to exclude the diagnosis. Clinical judgment takes precedence.';next='If infection is clinically suspected, continue close assessment regardless of this score. Calculate full SOFA if the patient is deteriorating. Check NEWS2 for a more sensitive ward-based risk stratification. A negative qSOFA in a patient with clinical signs of sepsis does not change the need for assessment and treatment.';}
+    else{risk='high';label='qSOFA ≥2 — High Risk';interp='Positive sepsis screen. qSOFA ≥2 identifies patients with suspected infection who are at high risk of organ dysfunction and death. This is a trigger for urgent action, not a diagnostic endpoint.';next='URGENT ASSESSMENT REQUIRED. Calculate full SOFA to confirm organ dysfunction. Initiate Sepsis-6 within 1 hour: blood cultures ×2 sets, IV broad-spectrum antibiotics, IV fluid bolus 500mL crystalloid, measure serum lactate, hourly urine output monitoring, supplemental oxygen if SpO₂ <94%. ICU review if SOFA ≥2 or clinical deterioration. In haematology patients with ANC <0.5: neutropenic sepsis protocol immediately.';}
     return{score:s,max:3,risk,label,stats:[['qSOFA Score',s+'/3']],interp,next};
   }
 },
@@ -2638,6 +2640,109 @@ chipDiag:{
     return{score:'CHIP',max:null,risk:'low',label:'CHIP — Clonal Haematopoiesis of Indeterminate Potential',stats:[['VAF',['<2%','2-10%','10-20%','>20%'][vaff]],['Cytopenia','Absent']],interp:'Somatic mutation(s) ≥2% VAF, no cytopenia, no dysplasia, no MDS-defining features = CHIP.',next:'Apply CHRS for personalised risk score. Monitor FBC annually. Repeat NGS in 12-24 months. Cardiovascular risk optimisation. Haematology referral if non-DTA mutation or VAF >20%.'};
   }
 },
+dipssplus:{
+  id:'dipssplus', name:'DIPSS-Plus', purpose:'Refined prognostication in primary myelofibrosis incorporating DIPSS score plus cytogenetics, platelet count, and transfusion requirement.',
+  cat:'malignant', disease:'Myelofibrosis',
+  tags:['myelofibrosis','mpn','mf','dipss','prognosis','transplant','cytogenetics'],
+  evidence:{source:'Gangat N et al. J Clin Oncol. 2011;29(4):392-7.',guideline:'ELN / NCCN',year:2011,pmid:'21149677'},
+  whenUse:'Primary myelofibrosis when cytogenetic data and transfusion history are available. Superior to DIPSS alone for risk stratification at diagnosis.',
+  whenNot:'Post-PV/ET myelofibrosis (use MYSEC-PM). Pre-fibrotic MPN. When cytogenetic data unavailable (use DIPSS).',
+  limits:'Does not incorporate molecular data (JAK2, CALR, MPL, high-risk mutations). MIPSS70+ v2 or GIPSS preferred when full molecular profiling available.',
+  inputs:[
+    {id:'sect1',label:'— DIPSS Base Factors —',type:'section'},
+    {id:'age',label:'Age >65 years',type:'check'},
+    {id:'const',label:'Constitutional symptoms (weight loss >10%, night sweats, fevers)',type:'check'},
+    {id:'hgb',label:'Haemoglobin <10 g/dL (scores 2 points in DIPSS)',type:'check'},
+    {id:'wbc',label:'WBC >25 ×10⁹/L',type:'check'},
+    {id:'blasts',label:'Peripheral blood blasts ≥1%',type:'check'},
+    {id:'sect2',label:'— DIPSS-Plus Additional Factors —',type:'section'},
+    {id:'plt',label:'Platelet count <100 ×10⁹/L',type:'check'},
+    {id:'transfusion',label:'Requires RBC transfusion',type:'check'},
+    {id:'karyotype',label:'Unfavourable karyotype (+8, -7/7q-, isochromosome 17q, inv(3), -5/5q-, 12p-, or 11q23 rearrangement)',type:'check'},
+  ],
+  calc:(v)=>{
+    // DIPSS component
+    const dipssScore=(v.age?1:0)+(v.const?1:0)+(v.hgb?2:0)+(v.wbc?1:0)+(v.blasts?1:0);
+    let dipssRisk;
+    if(dipssScore===0) dipssRisk=0;
+    else if(dipssScore<=2) dipssRisk=1;
+    else if(dipssScore<=4) dipssRisk=2;
+    else dipssRisk=3;
+    // DIPSS-Plus additional points
+    const plusPoints=(v.plt?1:0)+(v.transfusion?1:0)+(v.karyotype?1:0);
+    const total=dipssRisk+plusPoints;
+    let risk,label,os,interp,next;
+    if(total===0){risk='low';label='Low Risk';os='Not reached';interp='Favourable prognosis.';next='Observation if asymptomatic. Ruxolitinib for symptomatic splenomegaly or constitutional symptoms. Transplant NOT indicated in low risk.';}
+    else if(total===1){risk='int';label='Intermediate-1';os='~14.2 yrs';interp='Moderate prognosis.';next='Ruxolitinib for symptomatic burden or splenomegaly. Transplant generally not indicated. Annual reassessment. Obtain full molecular profiling (JAK2/CALR/MPL/HMR mutations) for MIPSS70+ risk refinement.';}
+    else if(total<=3){risk='high';label='Intermediate-2';os='~4 yrs';interp='Poor prognosis. Transplant should be considered.';next='Ruxolitinib as standard initial therapy. REFER FOR TRANSPLANT ASSESSMENT — this is the pivotal decision. Obtain HCT-CI, donor search. Fedratinib or pacritinib if ruxolitinib-intolerant. Molecular profiling essential.';}
+    else{risk='vhigh';label='High Risk';os='~1.5 yrs';interp='Very poor prognosis. Transplant is the only potentially curative option.';next='URGENT transplant referral (median OS 1.5 yrs without cure). Bridge with ruxolitinib/pacritinib/fedratinib. Consider luspatercept for anaemia if transfusion-dependent. Discuss goals of care. Clinical trial enrolment.';}
+    const dipssLabel=['Low','Int-1','Int-2','High'][dipssRisk];
+    return{score:total,max:6,risk,label,
+      stats:[['DIPSS Base Score',dipssScore+' ('+dipssLabel+')'],['DIPSS-Plus Points','+'+plusPoints],['Total DIPSS-Plus',total+'/6'],['Median OS',os]],
+      interp,next};
+  }
+},
+mipi:{
+  id:'mipi', name:'MIPI', purpose:'Risk stratification in Mantle Cell Lymphoma (MCL) at diagnosis to guide treatment intensity.',
+  cat:'malignant', disease:'Mantle Cell Lymphoma',
+  tags:['mcl','mantle cell lymphoma','mipi','prognosis','lymphoma','ibrutinib','r-chop','r-dhap'],
+  evidence:{source:'Hoster E et al. Blood. 2008;111(2):558-65.',guideline:'ESMO / NCCN / EHA',year:2008,pmid:'17962512'},
+  whenUse:'Newly diagnosed Mantle Cell Lymphoma at diagnosis for risk stratification and treatment planning.',
+  whenNot:'Post-treatment assessment. Non-MCL lymphomas. Blastoid/pleomorphic MCL may have worse prognosis independent of MIPI score.',
+  limits:'Developed in pre-ibrutinib/targeted therapy era. MIPI-c (combined with Ki-67) provides superior discrimination — request Ki-67 on diagnostic biopsy where possible. MIPI in isolation may underestimate risk in blastoid variant.',
+  inputs:[
+    {id:'age',label:'Age (years)',type:'number',min:18,max:100,step:1},
+    {id:'ecog',label:'ECOG Performance Status ≥2',type:'check'},
+    {id:'ldh',label:'LDH (U/L)',type:'number',min:1,max:5000,step:1},
+    {id:'ldhUln',label:'LDH upper limit of normal (U/L)',type:'number',min:100,max:500,step:1,placeholder:'e.g. 250'},
+    {id:'wbc',label:'WBC count (×10⁹/L)',type:'number',min:0.1,max:500,step:0.1},
+  ],
+  calc:(v)=>{
+    if(!v.age||!v.ldh||!v.ldhUln||!v.wbc) return{score:'-',max:null,risk:'info',label:'Enter all required values',stats:[],interp:'',next:''};
+    const ldhRatio=v.ldh/v.ldhUln;
+    if(ldhRatio<=0||v.wbc<=0) return{score:'-',max:null,risk:'info',label:'Invalid input values',stats:[],interp:'',next:''};
+    const wbcPerUl=v.wbc*1000; // convert ×10⁹/L → per µL for log10
+    const mipi=(0.03535*v.age)+(v.ecog?0.6978:0)+(1.367*Math.log10(ldhRatio))+(0.9393*Math.log10(wbcPerUl));
+    const score=Math.round(mipi*100)/100;
+    let risk,label,os5yr,interp,next;
+    if(mipi<5.7){risk='low';label='Low Risk';os5yr='~60%';interp='Favourable MIPI. Good prognosis.';next='R-CHOP × 6 cycles ± autologous SCT consolidation in fit patients <65. BTK inhibitor combinations (ibrutinib/acalabrutinib) in frontline trials. Anti-CD20 maintenance (rituximab) standard post-induction.';}
+    else if(mipi<=6.2){risk='int';label='Intermediate Risk';os5yr='~35%';interp='Intermediate MIPI.';next='R-CHOP or R-DHAP alternating ± autologous SCT for transplant-eligible. BTK inhibitor-based regimens increasingly used. Ki-67 ≥30% (high MIPI-c) warrants more intensive approach. Clinical trial enrolment recommended.';}
+    else{risk='high';label='High Risk';os5yr='~20%';interp='High MIPI — poor prognosis. Aggressive approach required.';next='R-DHAP/R-HyperCVAD with autologous SCT for fit patients. BTK inhibitor combinations (ibrutinib/venetoclax). Allogeneic SCT in relapse/refractory. Clinical trial. Reduced-intensity approach for unfit patients. Blastoid morphology warrants cytarabine-containing regimen.';}
+    return{score:score,max:null,risk,label,
+      stats:[['MIPI Score',score.toFixed(2)],['LDH/ULN ratio',ldhRatio.toFixed(2)],['WBC (×10⁹/L)',v.wbc],['5-year OS',os5yr]],
+      interp,next};
+  }
+},
+mysecpm:{
+  id:'mysecpm', name:'MYSEC-PM', purpose:'Predict survival in secondary myelofibrosis developing after Polycythaemia Vera or Essential Thrombocythaemia.',
+  cat:'malignant', disease:'Post-PV/ET Myelofibrosis',
+  tags:['myelofibrosis','mpn','post-pv mf','post-et mf','prognosis','transplant','mysec','calr','jak2'],
+  evidence:{source:'Passamonti F et al. Blood. 2017;129(16):2246-52.',guideline:'ELN / NCCN',year:2017,pmid:'28154879'},
+  whenUse:'Myelofibrosis arising from prior PV or ET (secondary MF). Do NOT use for primary myelofibrosis (use DIPSS or DIPSS-Plus).',
+  whenNot:'Primary myelofibrosis (use DIPSS/DIPSS-Plus). Pre-fibrotic MPN. Essential thrombocythaemia or PV without fibrotic transformation.',
+  limits:'Does not incorporate all high-risk mutations. CALR mutational subtype required (type-1/like vs other). Molecular data (ASXL1, EZH2, IDH1/2, SRSF2) not included.',
+  inputs:[
+    {id:'age',label:'Age at MF diagnosis (years)',type:'number',min:18,max:100,step:1},
+    {id:'hgb',label:'Haemoglobin <11 g/dL',type:'check'},
+    {id:'blasts',label:'Circulating blasts ≥3%',type:'check'},
+    {id:'calr',label:'Non-type-1/like CALR mutation OR JAK2/MPL/triple-negative (i.e. not CALR type-1/like)',type:'check'},
+    {id:'symptoms',label:'Constitutional symptoms (weight loss >10%, night sweats, or fever)',type:'check'},
+  ],
+  calc:(v)=>{
+    if(!v.age) return{score:'-',max:null,risk:'info',label:'Enter age to calculate',stats:[],interp:'',next:''};
+    const score=(v.age*0.15)+(v.hgb?2:0)+(v.blasts?2:0)+(v.calr?3:0)+(v.symptoms?2:0);
+    const s=Math.round(score*10)/10;
+    let risk,label,os,interp,next;
+    if(s<11){risk='low';label='Low Risk';os='Not reached';interp='Favourable prognosis in post-PV/ET MF.';next='Ruxolitinib for symptom control and splenomegaly. Observation if minimal symptoms. Transplant generally not indicated. Annual reassessment with repeat molecular profiling.';}
+    else if(s<14){risk='int';label='Intermediate-1';os='~9.3 yrs';interp='Moderate prognosis.';next='Ruxolitinib standard. Transplant discussion if high-risk mutations co-present (ASXL1, EZH2, IDH1/2, SRSF2). Obtain full molecular profiling. Clinical trial enrolment where available.';}
+    else if(s<16){risk='high';label='Intermediate-2';os='~4.4 yrs';interp='Poor prognosis. Transplant should be considered.';next='Ruxolitinib or fedratinib as initial therapy. REFER FOR TRANSPLANT ASSESSMENT. Obtain HCT-CI, donor search. Full molecular profiling for additional risk refinement. Discuss goals of care.';}
+    else{risk='vhigh';label='High Risk';os='~2.1 yrs';interp='Very poor prognosis.';next='URGENT transplant referral — only potentially curative treatment. Bridge therapy with ruxolitinib/pacritinib/fedratinib. Manage anaemia (luspatercept, danazol, EPO-based, transfusion support). Discuss goals of care. Clinical trial preferred.';}
+    const calrNote=v.calr?'Non-type-1/like CALR or JAK2/MPL/triple-neg':'CALR type-1/like';
+    return{score:s,max:null,risk,label,
+      stats:[['MYSEC-PM Score',s.toFixed(1)],['Age contribution',(v.age*0.15).toFixed(1)],['Molecular status',calrNote],['Median OS',os]],
+      interp,next};
+  }
+},
 ironload:{id:'ironload',name:'Transfusion Iron Overload',purpose:'Estimate transfusional iron loading and assess chelation need.',cat:'benign',disease:'Transfusion',icon:'🩸',tags:['iron','overload','chelation','transfusion','ferritin','deferasirox','thalassaemia','mds'],evidence:{source:'Porter JB. Hematol Oncol Clin N Am. 2014;28(4):683.',guideline:'BSH / TIF',year:2014,pmid:'25064707'},whenUse:'Regularly transfused patients (thalassaemia, MDS, sickle cell, MF, AA).',whenNot:'Iron deficiency. Infrequent transfusion.',limits:'Ferritin is imperfect (acute phase). Liver MRI T2* is gold standard for LIC. Cardiac T2* for cardiac iron.',inputs:[{id:'units',label:'Lifetime RBC units transfused',type:'number',min:0,max:2000,step:1},{id:'ferr',label:'Current ferritin (µg/L)',type:'number',min:0,max:100000,step:1},{id:'cardiac',label:'Cardiac T2* MRI',type:'select',opts:[['Not measured',0],['>20 ms (normal)',1],['10-20 ms (mild)',2],['<10 ms (severe)',3]]}],calc:(v)=>{const iron=(v.units||0)*200;const f=v.ferr||0;let risk,label,interp,next;if(f>2500||(v.cardiac||0)>=2){risk='high';label='Iron Overload — Chelation Required';interp='Confirmed overload.'+(v.cardiac>=3?' ⚠ CARDIAC IRON — urgent.':'');next='Deferasirox 14-28 mg/kg/day first-line. Deferoxamine SC/IV for cardiac loading. Deferiprone for best cardiac T2* response. Monitor: ferritin q3mo, liver MRI yearly, cardiac T2* yearly.';}else if(f>1000||(v.units||0)>=20){risk='int';label='At Risk — Monitor';interp='Approaching chelation threshold.';next='Consider chelation if ferritin persistently >1000. Baseline: liver MRI, cardiac MRI, LFTs, renal function.';}else{risk='low';label='Low Iron Burden';interp='Below threshold.';next='Monitor ferritin q3-6mo if regularly transfused.';}return{score:f,max:null,risk,label,stats:[['Iron load',iron+' mg (~'+(iron/1000).toFixed(1)+' g)'],['Ferritin',f+' µg/L'],['Units',v.units||0]],interp,next};}},
 };
 
@@ -2764,6 +2869,22 @@ const PATHWAYS=[
   {title:'MRD Assessment',text:'MRD testing is recommended at suspected CR/sCR. Methods: (1) Next-generation flow cytometry (NGF) — sensitivity 10⁻⁵ to 10⁻⁶; (2) Next-generation sequencing (NGS) — sensitivity 10⁻⁵ to 10⁻⁶; (3) PET-CT — functional imaging for extramedullary disease. MRD-negative (10⁻⁵) = no evidence of clonal plasma cells at that sensitivity. MRD-negative (10⁻⁶) = deeper response. MRD negativity is associated with improved PFS and OS in multiple myeloma trials (e.g. FORTE, MAIA, GMMG-CONCEPT). Sustained MRD negativity (×2, ≥12 months apart) is a key endpoint.',action:'Interpret and plan'},
   {title:'Progressive Disease & Relapse',text:'Progressive Disease (PD): any one of: ≥25% increase in serum M-protein (absolute ≥5g/L); ≥25% increase in urine M-protein (absolute ≥200mg/24h); ≥25% increase in FLC (absolute ≥100mg/L); ≥25% increase in BM plasma cell % (absolute ≥10%); new/enlarging bone lesion or soft-tissue plasmacytoma; new hypercalcaemia. Biochemical relapse: PD without symptoms. Clinical relapse: PD + CRAB criteria (Calcium, Renal, Anaemia, Bone) or soft tissue plasmacytoma. Treatment decision depends on: time since last therapy (>12 months preferred), prior lines, fitness, and donor availability if allo-SCT planned.',action:'Complete'},
 ]},
+{id:'polycythaemia',title:'Polycythaemia / Erythrocytosis Pathway',icon:'poly',desc:'GP pre-referral and haematology management pathway for polycythaemia — distinguishing PV from secondary and relative causes (Barnsley NHSFT, Dr M Mohsin)',
+ steps:[
+  {title:'Step 1 — Confirm True Erythrocytosis',text:'Repeat FBC after 2–3 weeks to exclude dehydration or haemoconcentration before acting. Thresholds for investigation: Men — Hct >0.52; Women — Hct >0.48. True erythrocytosis is confirmed when the raised Hct persists on a repeat fasting sample. Coexisting iron deficiency can mask a raised Hct in PV — check ferritin in all patients.',action:'Rule out secondary causes'},
+  {title:'Step 2 — Rule Out Secondary & Relative Causes',text:'History: smoking (commonest cause), alcohol, high-altitude exposure. OSA symptoms (snoring, daytime somnolence — consider overnight oximetry or sleep study). Chronic lung or cardiac disease. Recent thrombosis. Medications: testosterone / anabolic steroids, SGLT-2 inhibitors (dapagliflozin, empagliflozin), EPO or analogues, danazol, diuretics (relative). Examination: obesity, cyanosis, clubbing, splenomegaly, signs of cardiopulmonary disease. Investigations in primary care: O₂ saturation (resting ± overnight), U&E, LFTs, urate, ferritin, glucose, urine dipstick (renal disease), abdominal USS (renal/hepatic lesion if suspected), serum EPO level (low in PV, high/normal in secondary causes). Note: JAK2 V617F should only be sent from primary care if pre-agreed with a named haematology consultant.',action:'Apply referral criteria'},
+  {title:'Step 3 — Referral Criteria',text:'EMERGENCY — Discuss with haematologist on-call via switchboard: Hct >0.60 (male) or >0.56 (female) in absence of congenital cyanotic heart disease or chronic hypoxia.\n\nURGENT REFERRAL — Hct >0.52 (male) or >0.48 (female) PLUS any of: recent arterial/venous thrombosis (DVT, PE, CVA/TIA, MI, unstable angina, PVD); neurological symptoms; visual loss; abnormal bleeding; splenomegaly; elevated WCC or platelets.\n\nROUTINE REFERRAL — Persistent unexplained elevated Hct. Secondary causes identified but requiring specialist input (cardiac, endocrine, renal/hepatic tumour, drug-related).\n\nDO NOT REFER if: Clear secondary cause identified (COPD, OSA, testosterone therapy, SGLT-2 inhibitor, renal disease, dehydration); JAK2 negative + EPO normal/high + stable counts + no red-flag features.',action:'Haematology assessment'},
+  {title:'Step 4 — Haematology Assessment',text:'Full history, examination, and repeat FBC + blood film. Essential investigations: JAK2 V617F mutation (positive in ~95% PV); serum EPO (suppressed = PV, elevated = secondary); ferritin (iron deficiency common in PV — may mask erythrocytosis); red cell mass (isotope dilution if borderline erythrocytosis). If JAK2 negative but high clinical suspicion: JAK2 exon 12 mutation; consider bone marrow biopsy (PV features: hypercellular, plethoric megakaryocytes, reticulin ±). Confirm WHO 2022 criteria for PV: major criteria = BM biopsy showing panmyelosis, Hb ≥185g/L male or ≥165g/L female (or raised RCM), JAK2 V617F or exon 12 positive. Minor criterion = subnormal EPO. Diagnosis requires all 3 major OR major 1+2 and minor.',action:'Check ferritin / iron status',calcId:'ferritin'},
+  {title:'Step 5 — Management',text:'POLYCYTHAEMIA VERA: (1) Venesection to maintain Hct <0.45 (men and women) — reduces thrombosis risk. (2) Low-dose aspirin 75mg daily unless contraindicated. (3) Cytoreduction if: age ≥60, prior thrombosis, poor venesection tolerance, symptomatic splenomegaly, or platelets >1500 — first-line hydroxycarbamide. (4) Ruxolitinib (JAK inhibitor) for hydroxycarbamide failure or intolerance. (5) Monitor FBC every 3 months and annual bone marrow review if MF transformation suspected (new splenomegaly, worsening counts, leukoerythroblastic film). Risk-stratify for MF/blast transformation using PV DIPSS.\n\nSECONDARY POLYCYTHAEMIA — GP Monitoring: Repeat FBC every 6 months. Optimise underlying condition: smoking cessation; CPAP for OSA; stop/reduce testosterone or SGLT-2 if possible; control COPD/cardiac/renal disease; lifestyle (hydration, exercise, reduce alcohol). Venesection threshold for secondary: Hct >0.60 (men) or >0.56 (women), OR symptomatic hyperviscosity (headaches, dizziness, visual disturbance, pruritus), OR history of thrombosis + persistent high Hct. Target Hct with venesection: <0.55 (consider lower if thrombotic history). SGLT-2 inhibitors: consider venesection if Hct >0.60 or symptomatic. Re-refer to haematology if: persistent Hct despite optimisation; new thrombosis; rapidly rising counts.',action:'PV DIPSS risk stratification',calcId:'pvdipss'},
+]},
+{id:'splenomegaly_pathway',title:'Asymptomatic Mild Splenomegaly Pathway',icon:'spleen_path',desc:'GP and secondary care management pathway for incidental asymptomatic mild splenomegaly (<15 cm) — risk stratification and referral criteria (Barnsley NHSFT, Dr M Mohsin)',
+ steps:[
+  {title:'Step 1 — Confirm & Characterise',text:'Mild splenomegaly is defined as a spleen >12 cm but <15 cm on ultrasound. This is a common incidental finding and most often reflects benign causes (metabolic, hepatic, reactive). Define: Is it truly asymptomatic? Any constitutional symptoms (weight loss, night sweats, fever)? Any cytopenias on FBC? Any lymphadenopathy? Recent infections?\n\nAbdominal ultrasound should characterise: exact spleen size (cm); liver morphology (fatty liver, cirrhosis, hepatomegaly); portal and hepatic vein Doppler; hilar lymphadenopathy; presence of ascites. If spleen ≥15 cm: refer to haematology regardless of other findings.',action:'Initial investigations'},
+  {title:'Step 2 — Initial Investigations (Primary Care)',text:'Mandatory in all patients: FBC + blood film (ESSENTIAL — look for cytopenias, lymphocytosis, monocytosis, blasts, leukoerythroblastic features), LFTs and liver synthetic function, LDH and uric acid (raised = haematological malignancy), ferritin and CRP (inflammatory/reactive cause), HIV serology, hepatitis B and C serology, FBC + reticulocyte count.\n\nIf clinically indicated: JAK2 V617F + BCR::ABL1 PCR (if neutrophilia or basophilia — possible MPN or CML); CMV and EBV serology (acute infection); serum immunoglobulins + protein electrophoresis (lymphoproliferative); autoimmune screen — ANA, dsDNA (if systemic autoimmune disease suspected); monospot test; malaria film + antigen (if travel history).\n\nNote: Abdominal USS is mandatory if not already done.',action:'Risk stratify by USS findings'},
+  {title:'Step 3A — Mild Splenomegaly + Fatty Liver (Metabolic)',text:'If: FBC and blood film are normal (no cytopenias, no abnormal cells) AND ultrasound shows fatty liver as sole finding (no portal hypertension, no hepatomegaly, no lymphadenopathy) — manage in PRIMARY CARE:\n\n(1) Lifestyle advice: weight reduction, alcohol cessation, exercise, Mediterranean diet. (2) Metabolic risk factor management: optimise diabetes, dyslipidaemia, hypertension. (3) Calculate FIB-4 score to assess liver fibrosis risk (age × AST / [platelets × √ALT]). (4) Repeat abdominal USS at 12 months. (5) Repeat FBC + LFTs + LDH annually.\n\nREFER TO HAEMATOLOGY if any of the following develop: cytopenias or abnormal blood film; persistent polycythaemia, leucocytosis (neutrophilia, monocytosis, lymphocytosis >10×10⁹/L), or thrombocytosis for >3 months; raised LDH or uric acid; positive JAK2/CALR/MPL/BCR::ABL1 on subsequent testing; B symptoms (weight loss, night sweats, fever).',action:'Step 3B — If not simple fatty liver'},
+  {title:'Step 3B — Other Causes of Mild Splenomegaly',text:'If FBC abnormal, or splenomegaly NOT explained by fatty liver alone, or USS shows portal hypertension/hepatomegaly/lymphadenopathy — the following are the key differentials to consider:\n\nHAEMATOLOGICAL: Lymphoma (NHL/HL — lymphadenopathy, B symptoms, LDH elevated); MPN (CML — raised WBC with basophilia; PV — raised Hct; ET; early MF); CLL/SLL (lymphocytosis, smear cells); hairy cell leukaemia (pancytopenia, dry tap); early myelofibrosis (leukoerythroblastic film, raised LDH).\n\nHEPATIC/PORTAL: Cirrhosis — portal hypertension; viral hepatitis (B/C); alcohol-related liver disease; Budd-Chiari syndrome or portal vein thrombosis (note: check JAK2 in all unexplained portal vein thrombosis).\n\nINFECTIVE: EBV/CMV mononucleosis; malaria; visceral leishmaniasis (kala-azar); brucellosis.\n\nAUTOIMMUNE: SLE, sarcoidosis, Felty syndrome (RA + neutropenia + splenomegaly).\n\nMETABOLIC/STORAGE: Gaucher disease (check β-glucocerebrosidase enzyme assay if splenomegaly + bone pain + anaemia). If early MF suspected (leukoerythroblastic film, dry tap, raised LDH) — apply DIPSS for risk stratification.',action:'If MPN/MF suspected: DIPSS',calcId:'dipss'},
+  {title:'Step 4 — Haematology Investigation & Discharge Criteria',text:'HAEMATOLOGY WORKUP (if referred): CT chest/abdomen/pelvis with contrast (staging, lymphadenopathy, vascular anatomy); bone marrow aspirate + trephine + cytogenetics + molecular panel if haematological malignancy suspected (dry tap → MF likely); JAK2 V617F, CALR, MPL (if MPN suspected); BCR::ABL1 PCR; direct antiglobulin test (if haemolysis); serum immunoglobulins + electrophoresis; ADAMTS13 (if TTP suspected); beta-glucocerebrosidase (if Gaucher suspected).\n\nDISCHARGE CRITERIA from specialist clinic (all must be met): Spleen <15 cm and stable on repeat imaging at 12 months; Normal FBC, blood film, LDH, and uric acid; No cytopenias or B symptoms; Underlying cause identified and managed (or benign/metabolic confirmed). GP follow-up with annual FBC + LFTs + LDH + repeat USS in 1–2 years for all patients with any degree of splenomegaly until stable for ≥2 years.',action:'Complete'},
+]},
 {id:'mgus_smm',title:'MGUS / SMM Surveillance',icon:'mgus',desc:'Mayo risk stratification and surveillance intervals for MGUS and smouldering myeloma',
  steps:[
   {title:'Confirm Diagnosis',text:'MGUS: serum M-protein <30g/L, BM plasma cells <10%, NO CRAB criteria (Calcium>2.75, Renal creatinine>177, Anaemia Hb<100, Bone lytic lesions), no end-organ damage. SMM (Smouldering Multiple Myeloma): serum M-protein ≥30g/L OR BM plasma cells 10–60%, NO CRAB or SLiM criteria. Key test at diagnosis: whole-body MRI or PET-CT to exclude lytic bone lesions or focal lesions (changes staging). If ≥1 focal MRI lesion: repeat in 3–6 months to confirm SMM rather than active myeloma.',action:'Risk stratify'},
@@ -2803,6 +2924,31 @@ const DIAGNOSTICS=[
   {heading:'Ferritin >10,000 µg/L — URGENT',items:['HLH/MAS (most likely if fever + cytopenias + splenomegaly — HScore)','Adult-onset Still\'s disease (glycosylated ferritin <20%)','Fulminant hepatic failure','Rarely: catastrophic antiphospholipid syndrome (cAPS)']},
   {heading:'Key Discriminating Tests',items:['Transferrin saturation (>45% = true iron overload → HFE genotyping)','CRP (raised = inflammatory/reactive ferritin)','Glycosylated ferritin (<20% suggests HLH or Still\'s disease)','Liver MRI T2*/FerriScan (gold standard for liver iron quantification)','If HLH suspected: HScore, sCD25/sIL-2R, triglycerides, fibrinogen']},
 ]},
+{id:'lymphadenopathy_ddx',title:'Lymphadenopathy Differential',icon:'lymph',
+ sections:[
+  {heading:'Step 1: Characterise the Node(s)',items:['Site: localised (single region) vs generalised (≥2 non-contiguous regions)','Size: nodes >1 cm axilla/groin or >0.5 cm epitrochlear warrant investigation; >2 cm → biopsy strongly considered','Character: hard/fixed/matted → malignancy; soft/tender/mobile → reactive/infective','Duration: >4–6 weeks without resolving → biopsy; >8 weeks unexplained → urgent referral (2WW in UK)','B symptoms: drenching night sweats, weight loss >10%, fever → strongly suggests lymphoma']},
+  {heading:'Localised Lymphadenopathy — Common Causes by Site',items:['Cervical: URTI, EBV (infectious mononucleosis), dental/tonsillar infection, head & neck SCC, thyroid cancer, lymphoma (HL most common in young adults)','Axillary: breast pathology (malignancy, mastitis), cat-scratch disease (Bartonella), melanoma, lymphoma','Inguinal: STIs (syphilis, LGV, HSV), lower limb infections, melanoma/anal/vulval cancer, lymphoma','Mediastinal: sarcoidosis, lymphoma (HL often mediastinal), tuberculosis, thymoma','Supraclavicular (always significant): Left = Virchow\'s (abdominal/pelvic malignancy); Right = lung/mediastinal/oesophageal']},
+  {heading:'Generalised Lymphadenopathy — Differential',items:['Infective: EBV, CMV, HIV (acute seroconversion), toxoplasmosis, brucellosis, TB','Haematological malignancy: lymphoma (HL/NHL), CLL, ALL, hairy cell leukaemia','Autoimmune: SLE, rheumatoid arthritis, Sjögren\'s, sarcoidosis','Drugs: phenytoin, allopurinol, carbamazepine (drug hypersensitivity)','Other: Kikuchi-Fujimoto disease (self-limiting, young women), Castleman disease (rare, check HHV-8, IL-6)']},
+  {heading:'Key Investigations',items:['FBC + film (lymphocytosis → CLL/viral; atypical lymphocytes → EBV; blasts → leukaemia)','Monospot / EBV serology + CMV, HIV (4th gen), toxoplasma IgM/IgG','LDH, uric acid, CRP, ESR, LFTs','CT chest/abdomen/pelvis (staging CT) if malignancy suspected','PET-CT preferred if lymphoma likely — superior for staging and biopsy site selection','Excision biopsy (not FNA) for suspected lymphoma — FNA insufficient for architecture','Bone marrow biopsy if systemic haematological malignancy suspected']},
+  {heading:'Red Flags Requiring Urgent Action',items:['Node >2 cm + B symptoms → 2-week-wait urgent haematology referral','Supraclavicular lymphadenopathy at any size','Rapidly enlarging node(s) over days','Compression symptoms (SVC obstruction, airway compromise)','Lymphadenopathy + splenomegaly + FBC abnormality → haematology same day']},
+]},
+{id:'splenomegaly_ddx',title:'Splenomegaly Differential',icon:'spleen',
+ sections:[
+  {heading:'Degree of Splenomegaly',items:['Mild: <5 cm below costal margin — usually infective or haematological','Moderate: 5–10 cm — portal hypertension, lymphoma, myeloproliferative','Massive (>10 cm or crossing midline): Myelofibrosis, CML, visceral leishmaniasis (kala-azar), Gaucher disease, malaria — limited DDx','Tip only: Common finding on USS — often normal variant or mild portal hypertension']},
+  {heading:'Haematological Causes (most common in haematology clinic)',items:['Lymphoma (HL and NHL) — commonly moderate','Chronic Lymphocytic Leukaemia (CLL) — progressive splenomegaly','Myeloproliferative neoplasms: CML (can be massive), PV, ET (variable), MF (massive — hallmark)','Haemolytic anaemias: HS, AIHA, sickle cell disease (acute splenic sequestration in young patients)','Hairy Cell Leukaemia — splenomegaly + pancytopenia + dry tap + CD103+ / CD25+','PNH — usually mild-moderate; presents with thrombosis, haemolysis']},
+  {heading:'Non-Haematological Causes',items:['Infective: EBV (mononucleosis), malaria, kala-azar (visceral leishmaniasis), brucellosis, schistosomiasis, bacterial endocarditis','Liver disease / portal hypertension: cirrhosis, hepatic vein thrombosis (Budd-Chiari), portal vein thrombosis — check for occult MPN (JAK2 in PVT/BCS)','Inflammatory: SLE, sarcoidosis, Felty\'s syndrome (RA + neutropenia + splenomegaly)','Storage diseases: Gaucher disease (massive spleen, bone marrow infiltration — enzyme assay β-glucocerebrosidase)','Infiltrative: amyloidosis, haemophagocytic lymphohistiocytosis (HLH)']},
+  {heading:'Key Investigations',items:['FBC + reticulocytes + blood film (ESSENTIAL)','LDH, uric acid, LFTs, hepatitis B/C serology','JAK2 V617F (mandatory if MPN suspected — also in unexplained portal vein or hepatic vein thrombosis)','BCR-ABL1 (PCR or FISH) if CML possible (massive spleen + high WCC)','CALR / MPL mutations if JAK2 negative + MPN suspected','CT abdomen + pelvis with contrast (assess size, porta hepatis, nodes)','Bone marrow aspirate + trephine if haematological malignancy suspected (dry tap → MF likely)','USS Doppler portal/hepatic veins if portal hypertension suspected']},
+  {heading:'Urgent/Emergency Scenarios',items:['Acute splenic sequestration (sickle cell) — acute fall in Hb, enlarging spleen, urgent transfusion','Splenic rupture (EBV — avoid contact sports; trauma) — surgical emergency','Massive splenomegaly with respiratory compromise — urgent haematology assessment','CML with WBC >100×10⁹/L + massive spleen — risk of leucostasis, urgent cytoreduction']},
+]},
+{id:'coag_screen_abnormal',title:'Abnormal Coagulation Screen',icon:'coag',
+ sections:[
+  {heading:'Understand the Tests',items:['PT (Prothrombin Time): tests extrinsic pathway (Factor VII → X → II → fibrin) — reflects warfarin effect and liver synthesis','APTT (Activated Partial Thromboplastin Time): tests intrinsic pathway (XII → XI → IX → VIII → X → II → fibrin) — reflects heparin effect, haemophilia','Fibrinogen (Clauss): reflects final common pathway + acute phase reactant — low in DIC, liver failure, consumption','TT (Thrombin Time): tests fibrinogen → fibrin conversion — prolonged by heparin, direct thrombin inhibitors, low fibrinogen, dysfibrinogenaemia']},
+  {heading:'Isolated Prolonged PT (APTT normal)',items:['Early warfarin / vitamin K deficiency (FVII shortest half-life — drops first)','Mild liver disease (FVII also drops first in early liver failure)','Factor VII deficiency (rare, autosomal recessive — check FVII level)','Early DIC (PT rises before APTT in some cases)','Action: Check drug history, nutrition, LFTs; if no cause → factor VII level']},
+  {heading:'Isolated Prolonged APTT (PT normal)',items:['Heparin (UFH) contamination — most common in hospital setting (check anti-Xa or TT)','Lupus anticoagulant — paradoxically prothrombotic, NOT a bleeding risk; confirm with DRVVT/SCT','Haemophilia A (FVIII deficiency) or B (FIX deficiency) — males; FVIII/FIX levels','Acquired haemophilia A (FVIII inhibitor) — older patients, autoimmune; FVIII level + inhibitor screen','von Willebrand Disease — severe type 1 or type 2N lowers FVIII secondarily','Factor XI deficiency — mild bleeding (often post-surgery), common in Ashkenazi Jewish population','Factor XII deficiency — NO bleeding risk; incidental finding; do NOT give FFP','Action: Mixing study (50:50 with normal plasma) ± 2h incubation → see APTT Algorithm module']},
+  {heading:'Both PT and APTT Prolonged',items:['DIC (most important — check urgently): D-dimer ↑↑, fibrinogen ↓, thrombocytopenia, fragments on film (→ DIC Score)','Severe liver disease: synthetic failure (PT prolonged first); check LFTs, albumin, FVII','Warfarin / DOAC effect: check drug history; anti-Xa for DOAC; PT most sensitive for warfarin','Vitamin K deficiency: malabsorption, NBM, antibiotics; responds to IV/PO vitamin K','Massive transfusion / dilutional coagulopathy: >1.5× blood volume replacement without FFP','Afibrinogenaemia / hypofibrinogenaemia: very rare congenital; check fibrinogen level','Combined factor deficiencies (rare): autoimmune, anticoagulant inhibitors, amyloid (FX)']},
+  {heading:'Isolated Low Fibrinogen',items:['DIC (consumption) — usually combined with PT/APTT abnormality','Congenital hypofibrinogenaemia / afibrinogenaemia — check family history','Thrombolytic therapy (tPA, streptokinase) — check clinical context','L-asparaginase therapy in ALL — causes hypofibrinogenaemia; monitor closely','Severe liver failure — reduced synthesis']},
+  {heading:'Key Rules and Practical Points',items:['Never give FFP for a prolonged APTT alone in an asymptomatic patient — investigate first','Lupus anticoagulant: 12-week repeat positive test required for APS diagnosis (not one-off)','Before any surgery/procedure: If PT/APTT >1.5× control + no obvious cause → haematology input before proceeding','Heparin contamination: commonest cause of unexplained APTT prolongation in hospital — check TT (normal TT excludes heparin)','DIC management: treat underlying cause; cryoprecipitate for fibrinogen <1.5 g/L; FFP for PT/APTT prolongation + active bleeding; platelets if <50 + bleeding']},
+]},
 ];
 
 // ─── ACUTE HAEMATOLOGY TOOLS ────────────────────────────────────────────────
@@ -2820,6 +2966,8 @@ function useLocalStorage(key,init){
 
 // ─── SESSION RESULT LOG ──────────────────────────────────────────────────────
 function LogPage({log,setLog,openCalc,dark,navTo}){
+  const[patientRef,setPatientRef]=useState('');
+
   const riskColors={
     low:{bg:dark?'bg-emerald-950/40 border-emerald-800':'bg-emerald-50 border-emerald-300',dot:'bg-emerald-500',text:dark?'text-emerald-400':'text-emerald-700'},
     int:{bg:dark?'bg-amber-950/40 border-amber-800':'bg-amber-50 border-amber-300',dot:'bg-amber-500',text:dark?'text-amber-400':'text-amber-700'},
@@ -2827,6 +2975,48 @@ function LogPage({log,setLog,openCalc,dark,navTo}){
     vhigh:{bg:dark?'bg-purple-950/40 border-purple-800':'bg-purple-50 border-purple-300',dot:'bg-purple-500',text:dark?'text-purple-400':'text-purple-700'},
   };
   const getColors=(risk)=>riskColors[risk]||{bg:dark?'bg-slate-900 border-slate-700':'bg-slate-50 border-slate-200',dot:'bg-slate-400',text:dark?'text-slate-300':'text-slate-600'};
+
+  const exportSessionPDF=(entries,ref)=>{
+    const dtStr=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const riskHex={low:'#059669',int:'#d97706',high:'#dc2626',vhigh:'#7c3aed'};
+    const riskBg={low:'#f0fdf4',int:'#fffbeb',high:'#fef2f2',vhigh:'#faf5ff'};
+    const entryCards=entries.map((e,i)=>{
+      const col=riskHex[e.risk]||'#475569';
+      const bg=riskBg[e.risk]||'#f8fafc';
+      return`<div style="border:2px solid ${col};border-radius:10px;padding:16px;margin-bottom:14px;background:${bg};page-break-inside:avoid">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <div style="width:46px;height:46px;border-radius:8px;background:${col};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:14px;flex-shrink:0;text-align:center">${e.score??'—'}</div>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:2px">
+              <span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em">${e.time}</span>
+              <span style="font-size:13px;font-weight:900;color:${col}">${e.label}</span>
+            </div>
+            <div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:4px">${e.calcName}</div>
+            ${e.next?`<p style="font-size:11px;line-height:1.5;color:#475569;margin:0">${e.next}</p>`:''}
+          </div>
+          <div style="flex-shrink:0;font-size:10px;font-weight:700;color:#94a3b8">#${i+1}</div>
+        </div>
+      </div>`;
+    }).join('');
+    const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>HaemCalc Pro — Patient Encounter Report</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:13px;color:#1e293b;background:#fff;padding:30px 40px}@media print{.noprint{display:none!important}body{padding:15px 25px}}</style></head><body>
+<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1e293b;padding-bottom:10px;margin-bottom:18px">
+  <div><span style="font-weight:900;font-size:20px;letter-spacing:-0.5px">HaemCalc<span style="color:#2563eb">Pro</span></span><span style="font-size:10px;margin-left:8px;color:#94a3b8">v${SITE_VERSION} · Patient Encounter Report</span></div>
+  <div style="font-size:11px;color:#64748b">${dtStr}</div>
+</div>
+${ref?`<div style="background:#f1f5f9;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#475569"><strong style="color:#1e293b">Patient reference:</strong> ${ref} &nbsp;·&nbsp; <em style="color:#94a3b8">Session only — not stored</em></div>`:''}
+<h2 style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#94a3b8;margin-bottom:12px">${entries.length} calculator result${entries.length!==1?'s':''} this session</h2>
+${entryCards}
+<div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-top:8px;font-size:10px;color:#94a3b8">
+  <strong>Reviewer / Editor:</strong> ${REVIEWER}<br>
+  <strong style="color:#ef4444">DISCLAIMER:</strong> These results are for educational and clinical decision-support purposes only. They do not replace specialist clinical judgement, institutional guidelines, or the original published scoring systems. Always verify results before acting on them. No patient data is stored or transmitted by HaemCalc Pro. Generated ${dtStr}.
+</div>
+<div class="noprint" style="text-align:center;margin-top:20px"><button onclick="window.print()" style="background:#1e293b;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer">Print / Save as PDF</button></div>
+<script>window.onload=function(){window.print()}<\/script>
+</body></html>`;
+    const w=window.open('','_blank');
+    if(w){w.document.write(html);w.document.close();}
+  };
 
   return(
     <div className="max-w-2xl mx-auto p-4 sm:p-6 pb-24 space-y-4">
@@ -2855,6 +3045,29 @@ function LogPage({log,setLog,openCalc,dark,navTo}){
         )}
       </div>
 
+      {/* Patient reference + Export — only when log has entries */}
+      {log.length>0&&(
+        <div className={`rounded-2xl border p-4 space-y-3 ${dark?'bg-slate-900 border-slate-800':'bg-white border-slate-200'}`}>
+          <div>
+            <label className={`block text-[11px] font-semibold mb-1.5 ${dark?'text-slate-400':'text-slate-500'}`}>Patient reference <span className={`font-normal ${dark?'text-slate-600':'text-slate-400'}`}>(optional · session only · not stored)</span></label>
+            <input
+              type="text"
+              value={patientRef}
+              onChange={e=>setPatientRef(e.target.value)}
+              placeholder="e.g. Bed 4 · Ward 12 · or leave blank"
+              maxLength={80}
+              className={`w-full px-3 py-2 rounded-lg border text-xs ${dark?'bg-slate-800 border-slate-700 text-slate-200 placeholder:text-slate-600':'bg-slate-50 border-slate-200 text-slate-700 placeholder:text-slate-400'} outline-none focus:border-blue-500`}
+            />
+          </div>
+          <button
+            onClick={()=>exportSessionPDF(log,patientRef)}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-800 text-white font-bold text-sm hover:bg-slate-700 transition-colors dark:bg-blue-700 dark:hover:bg-blue-600"
+          >
+            <Printer size={15}/>Export Patient Encounter Report (PDF)
+          </button>
+        </div>
+      )}
+
       {/* Empty state */}
       {log.length===0&&(
         <div className={`rounded-2xl border p-10 text-center ${dark?'bg-slate-900 border-slate-800':'bg-white border-slate-200'}`}>
@@ -2872,7 +3085,6 @@ function LogPage({log,setLog,openCalc,dark,navTo}){
           return(
             <div key={i} className={`rounded-2xl border-2 p-4 ${col.bg} transition-all`}>
               <div className="flex items-start gap-3">
-                {/* Colour dot + score */}
                 <div className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center font-extrabold text-white flex-shrink-0 ${
                   entry.risk==='low'?'bg-emerald-600':entry.risk==='int'?'bg-amber-500':entry.risk==='high'?'bg-red-600':entry.risk==='vhigh'?'bg-purple-600':'bg-slate-500'
                 }`}>
@@ -2926,6 +3138,20 @@ export default function App(){
   const navTo=(p)=>{setPage(p);setMenu(false);window.scrollTo(0,0)};
 
   const[showKeys,setShowKeys]=useState(false);
+  const[installPrompt,setInstallPrompt]=useState(null);
+  const[showInstall,setShowInstall]=useState(false);
+
+  // PWA install prompt capture
+  useEffect(()=>{
+    const handler=(e)=>{e.preventDefault();setInstallPrompt(e);setShowInstall(true);};
+    window.addEventListener('beforeinstallprompt',handler);
+    return()=>window.removeEventListener('beforeinstallprompt',handler);
+  },[]);
+  const handleInstall=()=>{
+    if(!installPrompt)return;
+    installPrompt.prompt();
+    installPrompt.userChoice.then(()=>{setInstallPrompt(null);setShowInstall(false);});
+  };
 
   // Global keyboard shortcuts
   useEffect(()=>{
@@ -2988,7 +3214,8 @@ export default function App(){
           {page==='browse'&&<BrowsePage {...{openCalc,favs,toggleFav,dark}}/>}
           {page==='calc'&&calcId&&<CalcView {...{calcId,openCalc,favs,toggleFav,dark,setPage,addToLog}}/>}
           {page==='pathway'&&pathId&&<PathwayView {...{pathId,openCalc,dark}}/>}
-          {page==='about'&&<AboutPage dark={dark}/>}
+          {page==='about'&&<AboutPage dark={dark} navTo={navTo}/>}
+          {page==='compliance'&&<CompliancePage dark={dark}/>}
           {page==='log'&&<LogPage {...{log,setLog,openCalc,dark,navTo}}/>}
           {page.startsWith('diag:')&&<DiagnosticView diagId={page.split(':')[1]} dark={dark}/>}
         </main>
@@ -3015,7 +3242,7 @@ export default function App(){
       </div>
 
       {/* SEARCH OVERLAY */}
-      {search&&<SearchOverlay {...{openCalc,close:()=>setSearch(false),dark}}/>}
+      {search&&<SearchOverlay {...{openCalc,close:()=>setSearch(false),dark,recent}}/>}
 
       {/* KEYBOARD SHORTCUTS MODAL */}
       {showKeys&&(
@@ -3039,6 +3266,21 @@ export default function App(){
         </div>
       )}
 
+      {/* PWA INSTALL BANNER */}
+      {showInstall&&(
+        <div className={`fixed bottom-16 lg:bottom-4 inset-x-4 lg:left-auto lg:right-4 lg:w-80 z-40 rounded-2xl border shadow-2xl p-4 flex items-center gap-3 ${dark?'bg-slate-900 border-slate-700':'bg-white border-slate-200'}`}>
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-xs flex-shrink-0 ${dark?'bg-blue-600':'bg-slate-900'}`}>HC</div>
+          <div className="flex-1 min-w-0">
+            <div className="font-bold text-sm">Add to Home Screen</div>
+            <div className={`text-xs ${dark?'text-slate-400':'text-slate-500'}`}>Install HaemCalc Pro for offline access</div>
+          </div>
+          <div className="flex gap-1.5">
+            <button onClick={handleInstall} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors">Install</button>
+            <button onClick={()=>setShowInstall(false)} className={`px-2 py-1.5 rounded-lg text-xs ${dark?'text-slate-400 hover:bg-slate-800':'text-slate-500 hover:bg-slate-100'} transition-colors`}><X size={14}/></button>
+          </div>
+        </div>
+      )}
+
       {/* FOOTER */}
       <footer className={`lg:ml-64 pb-20 lg:pb-0 border-t mt-8 ${dark?'border-slate-800 bg-slate-900/50':'border-slate-200 bg-slate-50/80'}`}>
         <div className="max-w-[1400px] mx-auto px-6 py-8 grid grid-cols-1 sm:grid-cols-3 gap-8">
@@ -3058,7 +3300,7 @@ export default function App(){
           <div>
             <div className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${dark?'text-slate-500':'text-slate-400'}`}>Platform</div>
             <div className="space-y-2">
-              {[['Home',goHome],['Browse All',()=>navTo('browse')],['Clinical Pathways',()=>navTo('pathways_list')],['Diagnostic Modules',()=>navTo('diag:'+DIAGNOSTICS[0]?.id)],['About & Editorial',()=>navTo('about')]].map(([label,fn])=>(
+              {[['Home',goHome],['Browse All',()=>navTo('browse')],['Clinical Pathways',()=>navTo('pathways_list')],['Diagnostic Modules',()=>navTo('diag:'+DIAGNOSTICS[0]?.id)],['About & Editorial',()=>navTo('about')],['Compliance & Privacy',()=>navTo('compliance')]].map(([label,fn])=>(
                 <div key={label}><button onClick={fn} className={`text-[12px] ${dark?'text-slate-400 hover:text-slate-200':'text-slate-500 hover:text-slate-700'} transition-colors`}>{label}</button></div>
               ))}
             </div>
@@ -3224,10 +3466,13 @@ function SideNav({openCalc,openPathway,goHome,favs,toggleFav,dark,calcId,setPage
         );
       })}
 
-      {/* About */}
+      {/* About + Compliance */}
       <div className={`pt-3 ${divider}`}>
         <button onClick={()=>setPage('about')} className={`${rowBase} ${dark?'text-slate-500 hover:bg-slate-800 hover:text-slate-300':'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>
           <User size={13} className="flex-shrink-0"/><span>About</span>
+        </button>
+        <button onClick={()=>setPage('compliance')} className={`${rowBase} ${dark?'text-slate-500 hover:bg-slate-800 hover:text-slate-300':'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>
+          <ShieldCheck size={13} className="flex-shrink-0"/><span>Compliance & Privacy</span>
         </button>
       </div>
     </div>
@@ -3262,8 +3507,10 @@ const EVTYPE={
 // ─── GOVERNANCE & EVIDENCE METADATA ──────────────────────────────────────────
 // Supplements per-calculator evidence objects. Defaults applied for unlisted calcs.
 const REVIEWER='Dr. Muhammad Mohsin, Consultant Haematologist · FRCPath (Haematology) · FRCP (London)';
-const SITE_VERSION='4.1';
-const CONTENT_DATE='April 2025';
+const SITE_VERSION='4.2';
+const CONTENT_DATE='April 2026';
+
+const SITE_GOVERNANCE=`HaemCalc Pro applies a structured editorial process to all clinical content. Tools are included only where a PubMed-indexed derivation or validation study exists, or where an international guideline body has formally endorsed a scoring algorithm. Each calculator is classified by evidence tier (Validated / Guideline-Based / Derived / Educational), aligned to current ELN, BSH, NICE, ISTH, ASH, and WHO guidance, and assigned a named reviewer with a scheduled next-review date. Content is updated promptly following major guideline revisions and as a minimum annually. No commercial sponsorship, pharmaceutical funding, or advertising revenue is accepted; all editorial decisions are made solely on the basis of published evidence. The platform carries a clear educational-use disclaimer and does not replace specialist clinical judgement or local institutional protocols. Community peer review from NHS haematology consultants is actively invited to strengthen multi-site governance.`;
 
 const GOV={
   // ── Malignant Haematology ──────────────────────────────────────────────────
@@ -3377,35 +3624,74 @@ const GOV={
   mysecpm:  {type:'derived',    population:'Adults — see source documentation for population details'},
   _default: {type:'derived',    population:'General adult population'},
 };
-const gov=(id)=>({reviewer:REVIEWER,lastReviewed:CONTENT_DATE,nextReview:'April 2026',...GOV._default,...(GOV[id]||{})});
+const gov=(id)=>({reviewer:REVIEWER,coReviewers:[],lastReviewed:CONTENT_DATE,nextReview:'April 2027',...GOV._default,...(GOV[id]||{})});
 
 // ─── SEARCH OVERLAY ──────────────────────────────────────────────────────────
-function SearchOverlay({openCalc,close,dark}){
+function SearchOverlay({openCalc,close,dark,recent}){
   const[q,setQ]=useState('');
   const[catFilter,setCatFilter]=useState('all');
   const ref=useRef();
   useEffect(()=>{ref.current?.focus()},[]);
-  // Close on ESC key
   useEffect(()=>{
     const handler=(e)=>{if(e.key==='Escape')close()};
     window.addEventListener('keydown',handler);
     return()=>window.removeEventListener('keydown',handler);
   },[close]);
 
+  const allCalcs=useMemo(()=>Object.values(C),[]);
+
+  // Most-used = recent session calcs first, then fill with first-listed calcs
+  const mostUsed=useMemo(()=>{
+    const recentCalcs=(recent||[]).map(id=>C[id]).filter(Boolean);
+    const recentIds=new Set((recent||[]).map(id=>id));
+    const fallback=allCalcs.filter(c=>!recentIds.has(c.id)).slice(0,8-recentCalcs.length);
+    return[...recentCalcs,...fallback].slice(0,8);
+  },[recent,allCalcs]);
+
   const results=useMemo(()=>{
-    const all=Object.values(C);
-    const filtered=catFilter==='all'?all:all.filter(c=>c.cat===catFilter);
-    if(!q.trim())return filtered.slice(0,10);
+    const base=catFilter==='all'?allCalcs:allCalcs.filter(c=>c.cat===catFilter);
+    if(!q.trim()){
+      return catFilter==='all'?[]:base;
+    }
     const t=q.toLowerCase();
-    return filtered.filter(c=>
+    return base.filter(c=>
       c.name.toLowerCase().includes(t)||
       c.disease.toLowerCase().includes(t)||
       c.tags.some(tg=>tg.includes(t))||
-      c.purpose.toLowerCase().includes(t)
+      c.purpose.toLowerCase().includes(t)||
+      (c.evidence?.source||'').toLowerCase().includes(t)||
+      (c.evidence?.guideline||'').toLowerCase().includes(t)||
+      (c.evidence?.pmid||'').toString().includes(t)
     );
-  },[q,catFilter]);
+  },[q,catFilter,allCalcs]);
+
+  const showMostUsed=!q.trim()&&catFilter==='all';
+  const displayList=showMostUsed?mostUsed:results;
 
   const cs=CAT_STYLE;
+
+  const ResultRow=({c,badge})=>{
+    const style=cs[c.cat];
+    return(
+      <button key={c.id} onClick={()=>{openCalc(c.id);close()}}
+        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b
+          ${dark?'hover:bg-slate-800 border-slate-800/50':'hover:bg-slate-50 border-slate-100'}`}>
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${dark?'bg-slate-800':'bg-slate-100'}`}>
+          <CIcon id={c.cat} size={16} className={dark?'text-slate-400':'text-slate-500'}/>
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`font-semibold text-sm ${dark?'text-white':'text-slate-900'}`}>{c.name}</span>
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${dark?style?.badgeDark:style?.badge}`}>{c.disease}</span>
+            {badge&&<span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${dark?'bg-amber-900/30 text-amber-400 border border-amber-800/40':'bg-amber-50 text-amber-600 border border-amber-200'}`}>{badge}</span>}
+          </div>
+          <div className={`text-[11px] mt-0.5 line-clamp-1 ${dark?'text-slate-400':'text-slate-500'}`}>{c.purpose}</div>
+        </div>
+        <ChevronRight size={13} className={`flex-shrink-0 ${dark?'text-slate-600':'text-slate-300'}`}/>
+      </button>
+    );
+  };
+
   return(
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4" onClick={close}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"/>
@@ -3415,7 +3701,7 @@ function SearchOverlay({openCalc,close,dark}){
         <div className={`flex items-center gap-3 px-4 py-3.5 border-b ${dark?'border-slate-800':'border-slate-100'}`}>
           <Search size={17} className="text-slate-400 flex-shrink-0"/>
           <input ref={ref} value={q} onChange={e=>setQ(e.target.value)}
-            placeholder="Search calculators, diseases, scores, tags…"
+            placeholder="Search by name, disease, guideline, PMID, tags…"
             className={`flex-1 bg-transparent outline-none text-sm ${dark?'text-white placeholder:text-slate-500':'text-slate-900 placeholder:text-slate-400'}`}/>
           {q&&<button onClick={()=>setQ('')} className="text-slate-400 hover:text-slate-600"><X size={15}/></button>}
           <kbd onClick={close} className={`cursor-pointer text-[10px] px-1.5 py-0.5 rounded ${dark?'bg-slate-800 text-slate-400 border border-slate-700':'bg-slate-100 text-slate-400 border border-slate-200'}`}>ESC</kbd>
@@ -3434,33 +3720,35 @@ function SearchOverlay({openCalc,close,dark}){
           ))}
         </div>
 
-        {/* Results */}
+        {/* Results list */}
         <div className="max-h-[400px] overflow-y-auto">
-          {!q.trim()&&<div className={`px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest ${dark?'text-slate-600':'text-slate-400'}`}>
-            {catFilter==='all'?'Popular calculators':'Showing all '+cs[catFilter]?.label+' tools'}
-          </div>}
-          {results.length===0&&<div className="p-8 text-center text-sm text-slate-400">No calculators match your search.</div>}
-          {results.map(c=>{
-            const style=cs[c.cat];
-            return(
-              <button key={c.id} onClick={()=>{openCalc(c.id);close()}}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b
-                  ${dark?'hover:bg-slate-800 border-slate-800/50':'hover:bg-slate-50 border-slate-100'}`}>
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${dark?'bg-slate-800':'bg-slate-100'}`}>
-                  <CIcon id={c.cat} size={16} className={dark?'text-slate-400':'text-slate-500'}/>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-sm">{c.name}</span>
-                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${dark?style?.badgeDark:style?.badge}`}>{c.disease}</span>
-                  </div>
-                  <div className={`text-[11px] mt-0.5 line-clamp-1 ${dark?'text-slate-400':'text-slate-500'}`}>{c.purpose}</div>
-                </div>
-                <ChevronRight size={13} className={`flex-shrink-0 ${dark?'text-slate-600':'text-slate-300'}`}/>
-              </button>
-            );
-          })}
-          {results.length>0&&<div className={`px-4 py-2 text-[10px] text-center ${dark?'text-slate-600':'text-slate-400'}`}>{results.length} result{results.length!==1?'s':''}{q?' found':''}</div>}
+          {showMostUsed&&(
+            <>
+              <div className={`px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest ${dark?'text-slate-600':'text-slate-400'}`}>
+                {(recent||[]).length>0?'Most recently used':'Popular calculators'}
+              </div>
+              {mostUsed.map(c=><ResultRow key={c.id} c={c} badge={(recent||[]).includes(c.id)?'recent':null}/>)}
+            </>
+          )}
+          {!showMostUsed&&catFilter!=='all'&&!q.trim()&&(
+            <>
+              <div className={`px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest ${dark?'text-slate-600':'text-slate-400'}`}>
+                All {cs[catFilter]?.label||catFilter} tools
+              </div>
+              {results.map(c=><ResultRow key={c.id} c={c}/>)}
+            </>
+          )}
+          {q.trim()&&results.length===0&&(
+            <div className="p-8 text-center text-sm text-slate-400">No calculators match your search.</div>
+          )}
+          {q.trim()&&results.length>0&&(
+            <>
+              <div className={`px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest ${dark?'text-slate-600':'text-slate-400'}`}>
+                {results.length} result{results.length!==1?'s':''} found
+              </div>
+              {results.map(c=><ResultRow key={c.id} c={c}/>)}
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -3619,7 +3907,7 @@ function HomePage({openCalc,openPathway,favs,toggleFav,recent,dark,setPage,setSe
             A consultant-grade platform designed for haematologists, trainees, and acute physicians. Risk scores, prognostic indices, dosing tools, step-by-step clinical pathways, and diagnostic frameworks — all guideline-aligned and ready for the ward.
           </p>
           <div className="flex flex-wrap gap-2 mb-6">
-            {[[totalCalcs+' Calculators',Calculator,'blue'],['6 Clinical Pathways',Route,'indigo'],['4 Diagnostic Modules',GitBranch,'purple']].map(([label,Icon,col])=>(
+            {[[totalCalcs+' Calculators',Calculator,'blue'],[PATHWAYS.length+' Clinical Pathways',Route,'indigo'],[DIAGNOSTICS.length+' Diagnostic Modules',GitBranch,'purple']].map(([label,Icon,col])=>(
               <span key={label} className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border
                 ${col==='blue'?(dark?'bg-blue-900/30 border-blue-800/60 text-blue-300':'bg-blue-50 border-blue-200 text-blue-700'):
                   col==='indigo'?(dark?'bg-indigo-900/30 border-indigo-800/60 text-indigo-300':'bg-indigo-50 border-indigo-200 text-indigo-700'):
@@ -3672,8 +3960,8 @@ function HomePage({openCalc,openPathway,favs,toggleFav,recent,dark,setPage,setSe
         <div className="grid sm:grid-cols-3 gap-3">
           {[
             {title:'Calculators',desc:totalCalcs+' risk scores, prognostic indices, and dosing tools across malignant haematology, coagulation, VTE, transfusion, and general medicine.',icon:Calculator,accent:dark?'text-blue-400':'text-blue-600',bg:dark?'bg-blue-900/20 border-blue-800/40':'bg-blue-50 border-blue-100',action:()=>setSearch(true)},
-            {title:'Clinical Pathways',desc:'6 step-by-step management algorithms — HLH, VTE, anaemia, pancytopenia, neutropenic sepsis, and thrombocytopenia.',icon:Route,accent:dark?'text-indigo-400':'text-indigo-600',bg:dark?'bg-indigo-900/20 border-indigo-800/40':'bg-indigo-50 border-indigo-100',action:()=>setPage('pathways_list')},
-            {title:'Diagnostics',desc:'4 structured frameworks guiding workup and differential diagnosis, from prolonged APTT to hyperferritinaemia.',icon:GitBranch,accent:dark?'text-purple-400':'text-purple-600',bg:dark?'bg-purple-900/20 border-purple-800/40':'bg-purple-50 border-purple-100',action:()=>setPage('diag:'+DIAGNOSTICS[0]?.id)},
+            {title:'Clinical Pathways',desc:PATHWAYS.length+' step-by-step management algorithms — HLH, VTE, anaemia, pancytopenia, neutropenic sepsis, thrombocytopenia, TTP/TMA, myeloma response assessment, MGUS/SMM surveillance, polycythaemia/erythrocytosis, and mild splenomegaly.',icon:Route,accent:dark?'text-indigo-400':'text-indigo-600',bg:dark?'bg-indigo-900/20 border-indigo-800/40':'bg-indigo-50 border-indigo-100',action:()=>setPage('pathways_list')},
+            {title:'Diagnostics',desc:'7 structured frameworks guiding workup and differential diagnosis — lymphadenopathy, splenomegaly, APTT, coagulation screen, haemolysis, pancytopenia, and hyperferritinaemia.',icon:GitBranch,accent:dark?'text-purple-400':'text-purple-600',bg:dark?'bg-purple-900/20 border-purple-800/40':'bg-purple-50 border-purple-100',action:()=>setPage('diag:'+DIAGNOSTICS[0]?.id)},
           ].map(({title,desc,icon:Icon,accent,bg,action})=>(
             <button key={title} onClick={action}
               className={`text-left p-5 rounded-xl border transition-all hover:shadow-md ${bc}`}>
@@ -3849,7 +4137,7 @@ function CalcView({calcId,openCalc,favs,toggleFav,dark,setPage,addToLog}){
   const printResult=()=>{
     if(!result)return;
     const dtStr=new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    const inputRows=c.inputs.map(inp=>{
+    const inputRows=c.inputs.filter(inp=>inp.type!=='section').map(inp=>{
       const v=vals[inp.id];
       let display='—';
       if(inp.type==='select'&&inp.opts){const found=inp.opts.find(([,val])=>val===v);display=found?found[0]:'—';}
@@ -3945,7 +4233,11 @@ function CalcView({calcId,openCalc,favs,toggleFav,dark,setPage,addToLog}){
       {/* CALCULATOR TAB */}
       {tab==='calc'&&(<>
         <div className={`rounded-2xl border ${bc} p-4 space-y-2.5`}>
-          {c.inputs.map(inp=>(
+          {c.inputs.map(inp=>{
+            if(inp.type==='section') return(
+              <div key={inp.id} className={`pt-1 pb-0.5 border-t text-[10px] font-bold uppercase tracking-widest ${dark?'border-slate-700 text-slate-500':'border-slate-200 text-slate-400'}`}>{inp.label}</div>
+            );
+            return(
             <div key={inp.id}>
               <label className={`block text-[11px] font-semibold mb-1 ${dark?'text-slate-300':'text-slate-600'}`}>{inp.label}</label>
               {inp.type==='check'&&(
@@ -3960,11 +4252,12 @@ function CalcView({calcId,openCalc,favs,toggleFav,dark,setPage,addToLog}){
                 </select>
               )}
               {inp.type==='number'&&(
-                <input type="number" value={vals[inp.id]??''} onChange={e=>update(inp.id,e.target.value===''?undefined:Number(e.target.value))} min={inp.min} max={inp.max} step={inp.step} placeholder={`${inp.min||''}–${inp.max||''}`}
+                <input type="number" value={vals[inp.id]??''} onChange={e=>update(inp.id,e.target.value===''?undefined:Number(e.target.value))} min={inp.min} max={inp.max} step={inp.step} placeholder={inp.placeholder||(inp.min!==undefined&&inp.max!==undefined?`${inp.min}–${inp.max}`:'')}
                   className={`w-full px-3 py-1.5 rounded-lg border text-xs ${dark?'bg-slate-800 border-slate-700 text-slate-200':'bg-slate-50 border-slate-200'} outline-none focus:border-blue-500`}/>
               )}
             </div>
-          ))}
+            );
+          })}
           <div className="flex gap-2 pt-2">
             <button onClick={calculate} className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"><Calculator size={15}/>Calculate</button>
             <button onClick={reset} className={`px-4 py-3 rounded-xl border font-semibold text-sm ${dark?'border-slate-700 text-slate-400 hover:bg-slate-800':'border-slate-200 text-slate-500 hover:bg-slate-50'} transition-colors`}><RotateCcw size={14}/></button>
@@ -3998,23 +4291,23 @@ function CalcView({calcId,openCalc,favs,toggleFav,dark,setPage,addToLog}){
               </div>
             </div>
 
-            {/* Interpretation — WHAT THIS MEANS */}
+            {/* CLINICAL ACTION — primary focus for time-pressured use */}
+            {result.next&&<div className={`rounded-xl p-4 border-l-4 ${
+              rc==='emerald'?(dark?'bg-emerald-950/30 border-emerald-500':'bg-emerald-50 border-emerald-500'):
+              rc==='amber'?(dark?'bg-amber-950/30 border-amber-500':'bg-amber-50 border-amber-500'):
+              rc==='red'?(dark?'bg-red-950/30 border-red-500':'bg-red-50 border-red-500'):
+              rc==='purple'?(dark?'bg-purple-950/30 border-purple-500':'bg-purple-50 border-purple-500'):
+              (dark?'bg-slate-800 border-slate-500':'bg-slate-50 border-slate-400')
+            }`}>
+              <div className="flex items-center gap-2 mb-2"><ListChecks size={14} className={rc==='emerald'?'text-emerald-500':rc==='amber'?'text-amber-500':rc==='red'?'text-red-500':rc==='purple'?'text-purple-500':'text-slate-500'}/><span className={`text-[10px] font-bold uppercase tracking-wider ${rc==='emerald'?'text-emerald-600':rc==='amber'?'text-amber-600':rc==='red'?'text-red-600':rc==='purple'?'text-purple-600':'text-slate-500'}`}>Clinical Action</span></div>
+              <p className={`text-sm font-medium leading-relaxed ${dark?'text-slate-100':'text-slate-800'}`}>{result.next}</p>
+            </div>}
+
+            {/* Interpretation — supporting clinical context */}
             <div className={`rounded-xl p-4 ${dark?'bg-black/20':'bg-white/60'}`}>
-              <div className="flex items-center gap-2 mb-2"><Brain size={14} className="text-blue-500"/><span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">What This Means</span></div>
-              <p className={`text-sm leading-relaxed ${dark?'text-slate-200':'text-slate-700'}`}>{result.interp}</p>
+              <div className="flex items-center gap-2 mb-2"><Brain size={14} className="text-blue-500"/><span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">Interpretation</span></div>
+              <p className={`text-sm leading-relaxed ${dark?'text-slate-300':'text-slate-600'}`}>{result.interp}</p>
             </div>
-
-            {/* Next Steps — WHAT TO DO NEXT */}
-            {result.next&&<div className={`rounded-xl p-4 ${dark?'bg-black/20':'bg-white/60'}`}>
-              <div className="flex items-center gap-2 mb-2"><ListChecks size={14} className="text-emerald-500"/><span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">What To Do Next</span></div>
-              <p className={`text-sm leading-relaxed ${dark?'text-slate-200':'text-slate-700'}`}>{result.next}</p>
-            </div>}
-
-            {/* WHEN TO ESCALATE — urgent triggers */}
-            {(result.risk==='high'||result.risk==='vhigh')&&<div className={`rounded-xl p-3 border ${dark?'bg-red-950/20 border-red-900/50':'bg-red-50 border-red-200'}`}>
-              <div className="flex items-center gap-2 mb-1"><Phone size={13} className="text-red-500"/><span className="text-[10px] font-bold uppercase tracking-wider text-red-600">When to Escalate</span></div>
-              <p className={`text-xs ${dark?'text-red-300':'text-red-700'}`}>High-risk result — consider urgent senior review, specialist consultation, or immediate intervention as described above.</p>
-            </div>}
 
             {/* Copy + Print row */}
             <div className="flex gap-2 flex-wrap">
@@ -4100,7 +4393,7 @@ function CalcView({calcId,openCalc,favs,toggleFav,dark,setPage,addToLog}){
               {[
                 ['Evidence Type',    et.label],
                 ['Guideline Source', c.evidence.guideline],
-                ['Guideline Year',   String(c.evidence.year)],
+                ['Guideline Version',c.evidence.guideline+' ('+c.evidence.year+')'],
                 ['Last Reviewed',    g.lastReviewed],
                 ['Next Review Due',  g.nextReview],
                 ['Reviewer / Editor',g.reviewer],
@@ -4110,6 +4403,16 @@ function CalcView({calcId,openCalc,favs,toggleFav,dark,setPage,addToLog}){
                   <span className={dark?'text-slate-300':'text-slate-700'}>{v}</span>
                 </div>
               ))}
+              {/* Co-Reviewers row — always shown */}
+              <div className={`flex items-baseline gap-4 px-4 py-2.5 text-xs ${dark?'bg-slate-900':'bg-white'}`}>
+                <span className={`w-36 flex-shrink-0 font-semibold ${dark?'text-slate-500':'text-slate-400'}`}>Co-Reviewers</span>
+                {g.coReviewers&&g.coReviewers.length>0
+                  ?<span className={dark?'text-slate-300':'text-slate-700'}>{g.coReviewers.join(' · ')}</span>
+                  :<span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${dark?'bg-amber-900/30 text-amber-400 border border-amber-800/50':'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                    <AlertTriangle size={9}/>Pending — community review invited
+                  </span>
+                }
+              </div>
             </div>
           </div>
 
@@ -4236,6 +4539,17 @@ function AboutPage({dark}){
         <p className={`text-sm mt-1 ${hc}`}>HaemCalc Pro v{SITE_VERSION} · {CONTENT_DATE} · Clinical governance, evidence hierarchy, and editorial policy</p>
       </div>
 
+      {/* SITE GOVERNANCE STATEMENT */}
+      <div className={`rounded-2xl border overflow-hidden ${dark?'border-emerald-900/60':'border-emerald-200'}`}>
+        <div className={`px-5 py-3 border-b flex items-center gap-2 ${dark?'bg-emerald-950/30 border-emerald-900/60':'bg-emerald-50 border-emerald-200'}`}>
+          <BadgeCheck size={15} className={dark?'text-emerald-400':'text-emerald-600'}/>
+          <span className={`text-[11px] font-bold uppercase tracking-widest ${dark?'text-emerald-400':'text-emerald-700'}`}>Governance Statement</span>
+        </div>
+        <div className={`px-5 py-4 ${dark?'bg-emerald-950/10':'bg-white'}`}>
+          <p className={`text-[12px] leading-relaxed ${dark?'text-slate-300':'text-slate-600'}`}>{SITE_GOVERNANCE}</p>
+        </div>
+      </div>
+
       {/* AUTHOR & EDITOR CARD */}
       <div className={`rounded-2xl border overflow-hidden ${bc}`}>
         <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600"/>
@@ -4264,6 +4578,22 @@ function AboutPage({dark}){
             ))}
           </div>
         </div>
+      </div>
+
+      {/* JOIN AS REVIEWER CTA */}
+      <div className={`rounded-2xl border p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 ${dark?'bg-blue-950/20 border-blue-900/50':'bg-blue-50 border-blue-200'}`}>
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${dark?'bg-blue-900/40':'bg-blue-100'}`}>
+          <User size={18} className={dark?'text-blue-400':'text-blue-600'}/>
+        </div>
+        <div className="flex-1">
+          <div className={`text-sm font-extrabold mb-1 ${dark?'text-blue-300':'text-blue-800'}`}>Join as a Peer Reviewer</div>
+          <p className={`text-[12px] leading-relaxed ${dark?'text-blue-200/70':'text-blue-700'}`}>
+            HaemCalc Pro is actively seeking NHS haematology consultant co-reviewers to strengthen multi-site governance and clinical credibility. Reviewers are credited by name on each tool they validate. If you are a Consultant Haematologist with FRCPath and would like to contribute, please get in touch.
+          </p>
+        </div>
+        <a href="mailto:muhdmohsin@gmail.com?subject=HaemCalc%20Pro%20Reviewer%20Application" className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors ${dark?'bg-blue-700 hover:bg-blue-600 text-white':'bg-blue-600 hover:bg-blue-700 text-white'}`}>
+          Contact Dr. Mohsin
+        </a>
       </div>
 
       {/* PLATFORM SCOPE SUMMARY */}
@@ -4401,8 +4731,9 @@ function AboutPage({dark}){
         </div>
         <div className="space-y-3">
           {[
-            {v:`v${SITE_VERSION}`,date:CONTENT_DATE, note:'Governance & Evidence panel added to all calculators. Evidence classification system (Validated / Guideline / Derived / Educational) implemented across all tools. Editorial Standards page formalised. Per-calculator governance records with population, review dates, and reviewer attribution. Scroll-to-top navigation, BrowsePage, and CalcView breadcrumbs.'},
-            {v:'v4.0',date:'Mar 2025', note:'Gold-standard calculator template with clinical context strip, tabbed evidence/limitations view, and actionable next steps. Diagnostic modules, acute haematology mode, dark mode, search overlay, and favourites system.'},
+            {v:'v4.2',date:'April 2026', note:'Multi-reviewer governance panel: Co-Reviewers row on all tools, SITE_GOVERNANCE statement, Join as Reviewer CTA. Session PDF Export: full patient encounter report from LogPage. Search improvements: author/PMID/purpose matching, category chips, Most Used section. Three new diagnostic modules: lymphadenopathy, splenomegaly, coag screen. Compliance page (DCB0129 lite, privacy, accessibility, version history). Three new calculators: DIPSS-Plus, MIPI, MYSEC-PM.'},
+            {v:'v4.1',date:'April 2026', note:'Session Result Log (ward round tool, session-only, no PHI stored). Print/Save PDF per calculator. Progressive Web App: manifest, service worker, install banner. Three new pathways: TTP/TMA Management, Myeloma Response Assessment (IMWG), MGUS/SMM Surveillance. IPSS original (1997), IPSS-M molecular (2022), CHRS, CHIP/CCUS Diagnostic Tool added. Keyboard shortcuts (/, Esc, H, B, L, ?).'},
+            {v:'v4.0',date:'Mar 2025', note:'Governance & Evidence panel added to all calculators. Evidence classification system (Validated / Guideline / Derived / Educational) implemented. Editorial Standards page formalised. Per-calculator governance records with population, review dates, and reviewer attribution. Gold-standard calculator template with clinical context strip, tabbed evidence/limitations view, and actionable next steps. Diagnostic modules, acute haematology mode, dark mode, search overlay, and favourites system.'},
             {v:'v3.1',date:'Jan 2025', note:'Transplant, CAR-T, and transfusion medicine tools added (GVHD, VOD, ICE score, irAE, blood volume, iron overload, CCI). Sidebar restructured with collapsible categories.'},
             {v:'v3.0',date:'Nov 2024', note:'Complete architectural redesign as a React/Vite SPA. Clinical pathways launched. Evidence badge system introduced.'},
             {v:'v2.0',date:'Sep 2024', note:'Major content expansion. Malignant haematology scoring systems, coagulation calculators, VTE tools, and acute medicine support added.'},
@@ -4428,6 +4759,146 @@ function AboutPage({dark}){
         <p className={`text-[10px] mt-3 font-semibold ${dark?'text-amber-700':'text-amber-600'}`}>
           Registered users in the UK are reminded that clinical decision support tools are adjuncts to, not substitutes for, the professional responsibilities set out by the General Medical Council's Good Medical Practice (2024).
         </p>
+      </div>
+
+    </div>
+  );
+}
+
+// ─── COMPLIANCE & PRIVACY PAGE ────────────────────────────────────────────────
+function CompliancePage({dark}){
+  const bc=dark?'bg-slate-900 border-slate-800':'bg-white border-slate-200';
+  const hc=dark?'text-slate-300':'text-slate-600';
+  const head=dark?'text-slate-100':'text-slate-900';
+
+  const Section=({icon:Icon,iconColor,title,children})=>(
+    <div className={`rounded-2xl border ${bc} overflow-hidden`}>
+      <div className={`px-5 py-3 border-b flex items-center gap-2.5 ${dark?'bg-slate-800/40 border-slate-700':'bg-slate-50 border-slate-100'}`}>
+        <Icon size={15} className={iconColor}/>
+        <span className={`text-[11px] font-bold uppercase tracking-widest ${dark?'text-slate-300':'text-slate-600'}`}>{title}</span>
+      </div>
+      <div className={`px-5 py-4 ${dark?'bg-slate-900':'bg-white'}`}>{children}</div>
+    </div>
+  );
+
+  return(
+    <div className="max-w-2xl mx-auto p-4 sm:p-6 pb-24 space-y-5">
+      {/* Page header */}
+      <div className={`rounded-2xl border ${bc} p-5`}>
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${dark?'bg-blue-900/30':'bg-blue-50'}`}>
+            <ShieldCheck size={20} className="text-blue-500"/>
+          </div>
+          <div>
+            <h1 className={`text-xl font-extrabold tracking-tight ${head}`}>Compliance &amp; Privacy</h1>
+            <p className={`text-xs mt-0.5 ${dark?'text-slate-400':'text-slate-500'}`}>
+              HaemCalc Pro v{SITE_VERSION} · Reviewed {CONTENT_DATE}
+            </p>
+          </div>
+        </div>
+        <p className={`text-[12px] mt-4 leading-relaxed ${hc}`}>
+          This page sets out how HaemCalc Pro is designed and operated to meet NHS digital safety standards, UK data protection law, and WCAG 2.1 accessibility requirements. The platform is a clinical decision-support and educational tool and is not registered as a medical device under UK MDR 2002 / UKCA provisions.
+        </p>
+      </div>
+
+      {/* DCB0129 Clinical Risk */}
+      <Section icon={Shield} iconColor="text-emerald-500" title="Clinical Risk Management (DCB0129 Lite)">
+        <div className="space-y-3">
+          {[
+            {label:'Hazard Identification','value':'All content is reviewed against PubMed-indexed source publications and named guideline bodies (ELN, BSH, NICE, ISTH, ASH, WHO). No calculator or pathway is added without a citable evidence source.'},
+            {label:'Risk Classification','value':'HaemCalc Pro is classified as a low-risk decision-support tool. All outputs are labelled as educational only. The platform does not prescribe, order, or administer treatments.'},
+            {label:'Clinical Safety Officer','value':REVIEWER},
+            {label:'Residual Risk Mitigations','value':'Every calculator carries a "Medical Disclaimer" panel. Results panels include a contextual "next steps" field to prompt clinical correlation. No patient-identifiable data is collected or stored. Session log clears on reload.'},
+            {label:'Review Cadence','value':'Annual minimum review cycle. Urgent update triggered by major guideline revision (e.g. ELN AML, BSH TTP). Next scheduled review: April 2027.'},
+          ].map(({label,value})=>(
+            <div key={label} className={`flex gap-4 py-2 border-b text-xs ${dark?'border-slate-800':'border-slate-100'} last:border-0`}>
+              <span className={`w-40 flex-shrink-0 font-semibold ${dark?'text-slate-400':'text-slate-500'}`}>{label}</span>
+              <span className={hc}>{value}</span>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* Data Privacy */}
+      <Section icon={Lock} iconColor="text-purple-500" title="Data Privacy (UK GDPR / DPA 2018)">
+        <div className="space-y-2.5">
+          <p className={`text-xs leading-relaxed ${hc}`}>HaemCalc Pro is designed with privacy-by-default. No personal data, patient data, or NHS patient identifiers are collected, processed, or transmitted.</p>
+          <div className="space-y-1.5">
+            {[
+              ['Data collected','None. HaemCalc Pro does not require registration or login.'],
+              ['Local storage','Calculator favourites and recent history are stored in browser localStorage only — on your device, not on any server.'],
+              ['Session result log','Held in memory (React state) for the duration of your browser session only. Cleared on page reload. Not transmitted or stored.'],
+              ['Optional patient reference','Free-text field in the Session Log PDF export. Stored nowhere — present only in the printed/PDF document you generate.'],
+              ['Cookies','No tracking cookies. No analytics. No advertising scripts.'],
+              ['Third-party services','Lucide React (icon library, client-side only). No external API calls are made during normal use.'],
+              ['Data controller','Dr. Muhammad Mohsin (personal educational project). Contact: muhdmohsin@gmail.com'],
+            ].map(([k,v])=>(
+              <div key={k} className={`flex gap-4 py-1.5 border-b text-xs ${dark?'border-slate-800':'border-slate-100'} last:border-0`}>
+                <span className={`w-40 flex-shrink-0 font-semibold ${dark?'text-slate-400':'text-slate-500'}`}>{k}</span>
+                <span className={hc}>{v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Section>
+
+      {/* Accessibility */}
+      <Section icon={Globe} iconColor="text-sky-500" title="Accessibility (WCAG 2.1 AA)">
+        <p className={`text-xs leading-relaxed mb-3 ${hc}`}>HaemCalc Pro is designed to meet WCAG 2.1 AA accessibility standards. The following provisions are implemented:</p>
+        <div className="space-y-1.5">
+          {[
+            ['Colour contrast','Dark and light modes both maintain ≥4.5:1 text contrast ratio on primary text.'],
+            ['Keyboard navigation','All interactive elements are reachable and operable via keyboard. / opens search; Esc closes overlays; H/B/L navigate sections.'],
+            ['Text sizing','Base font size 13–14px. All relative units used for text scaling support.'],
+            ['Screen reader support','Semantic HTML elements used throughout. Icon-only buttons carry aria-labels or visible text companions.'],
+            ['Focus indicators','Visible focus ring retained on all interactive controls.'],
+            ['Responsive design','Full functionality maintained from 320 px mobile width to widescreen. No horizontal scroll on content pages.'],
+            ['Colour-blind safe','Risk categories use both colour and text labels. Red/amber/green are not the sole indicators of risk level.'],
+          ].map(([k,v])=>(
+            <div key={k} className={`flex gap-4 py-1.5 border-b text-xs ${dark?'border-slate-800':'border-slate-100'} last:border-0`}>
+              <span className={`w-40 flex-shrink-0 font-semibold ${dark?'text-slate-400':'text-slate-500'}`}>{k}</span>
+              <span className={hc}>{v}</span>
+            </div>
+          ))}
+        </div>
+        <p className={`text-[11px] mt-3 ${dark?'text-slate-500':'text-slate-400'}`}>
+          To report an accessibility issue: <a href="mailto:muhdmohsin@gmail.com?subject=HaemCalc%20Accessibility" className="text-blue-500 hover:underline">muhdmohsin@gmail.com</a>
+        </p>
+      </Section>
+
+      {/* Version History */}
+      <Section icon={FileText} iconColor="text-slate-500" title="Version History">
+        <div className="space-y-3">
+          {[
+            {v:'v4.2',date:'April 2026',note:'Multi-reviewer governance panel. Session PDF Export. Search improvements (PMID/guideline/source matching, Most Used). Three diagnostic modules added (lymphadenopathy, splenomegaly, coag screen). This Compliance page. Three new calculators (DIPSS-Plus, MIPI, MYSEC-PM).'},
+            {v:'v4.1',date:'April 2026',note:'Session Result Log (ward round, session-only). Print/Save PDF per calculator. PWA install support. Three new clinical pathways (TTP/TMA, Myeloma Response, MGUS/SMM). IPSS, IPSS-M, CHRS, CHIP/CCUS calculators added. Keyboard shortcuts.'},
+            {v:'v4.0',date:'Mar 2025',note:'Governance & Evidence panel on all calculators. Evidence classification system. Per-calculator governance records. Diagnostic modules, acute haematology mode, dark mode, search, favourites.'},
+            {v:'v3.1',date:'Jan 2025',note:'Transplant, CAR-T, transfusion tools. GVHD, VOD, ICE, irAE, blood volume, iron overload, CCI added.'},
+            {v:'v3.0',date:'Nov 2024',note:'React/Vite SPA architecture. Clinical pathways launched. Evidence badge system.'},
+            {v:'v2.0',date:'Sep 2024',note:'Malignant haematology scoring, coagulation calculators, VTE tools, acute medicine support.'},
+            {v:'v1.0',date:'Jul 2024',note:'Initial release. Core haematology calculators.'},
+          ].map(({v,date,note})=>(
+            <div key={v} className="flex gap-3">
+              <div className="flex-shrink-0 w-14">
+                <span className={`text-[11px] font-extrabold ${dark?'text-blue-400':'text-blue-600'}`}>{v}</span>
+                <div className={`text-[9px] ${dark?'text-slate-600':'text-slate-400'}`}>{date}</div>
+              </div>
+              <p className={`text-[11px] leading-relaxed ${hc}`}>{note}</p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* Contact */}
+      <div className={`rounded-2xl border p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 ${dark?'bg-slate-900 border-slate-800':'bg-slate-50 border-slate-200'}`}>
+        <div className="flex-1">
+          <p className={`text-sm font-bold ${head}`}>Questions or concerns?</p>
+          <p className={`text-xs mt-0.5 ${hc}`}>For accessibility issues, data privacy queries, or clinical content concerns, contact the platform editor.</p>
+        </div>
+        <a href="mailto:muhdmohsin@gmail.com?subject=HaemCalc%20Pro%20Compliance%20Query"
+          className="flex-shrink-0 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl hover:bg-blue-700 transition-colors">
+          Contact Dr. Mohsin
+        </a>
       </div>
 
     </div>
