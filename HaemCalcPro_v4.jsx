@@ -1,10 +1,13 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Search, Moon, Sun, Star, Clock, ChevronRight, ChevronDown, ChevronLeft, AlertTriangle, BookOpen, Info, Activity, Clipboard, Check, Home, Grid3X3, Route, User, X, Menu, Heart, Zap, FlaskConical, Droplets, Calculator, ArrowRight, Shield, Brain, FileText, ExternalLink, RotateCcw, Copy, Printer, Stethoscope, TrendingUp, CircleDot, Microscope, Syringe, Pill, TestTube, Flame, Target, Scale, Gauge, Thermometer, Eye, Bone, Beaker, TreePine, BadgeCheck, ShieldAlert, ChevronUp, Layers, CircleAlert, TriangleAlert, Phone, ListChecks, GitBranch, Trash2, ShieldCheck, Lock, Globe, Accessibility } from "lucide-react";
+import { ADDITIONS } from "./src/calculators/additions.js";
 
 /* ============================================================================
-   HAEMCALC PRO v4.4 — GOLD-STANDARD CLINICAL DECISION PLATFORM
+   HAEMCALC PRO v4.5 — GOLD-STANDARD CLINICAL DECISION PLATFORM
    Consultant-grade · Evidence-based · Guideline-aligned
-   112 calculators · 11 clinical pathways · 7 diagnostic modules
+   v4.5 changelog: typography refresh (Inter + Source Serif), clinical-modern
+   palette tokens, Ganzoni iron deficit calculator added, modular calculator
+   loader introduced (src/calculators/), CI cache purge for edge sync.
    ============================================================================ */
 
 // ─── ICON MAPPING (replaces emojis with Lucide icons) ────────────────────────
@@ -2744,6 +2747,9 @@ mysecpm:{
   }
 },
 ironload:{id:'ironload',name:'Transfusion Iron Overload',purpose:'Estimate transfusional iron loading and assess chelation need.',cat:'benign',disease:'Transfusion',icon:'🩸',tags:['iron','overload','chelation','transfusion','ferritin','deferasirox','thalassaemia','mds'],evidence:{source:'Porter JB. Hematol Oncol Clin N Am. 2014;28(4):683.',guideline:'BSH / TIF',year:2014,pmid:'25064707'},whenUse:'Regularly transfused patients (thalassaemia, MDS, sickle cell, MF, AA).',whenNot:'Iron deficiency. Infrequent transfusion.',limits:'Ferritin is imperfect (acute phase). Liver MRI T2* is gold standard for LIC. Cardiac T2* for cardiac iron.',inputs:[{id:'units',label:'Lifetime RBC units transfused',type:'number',min:0,max:2000,step:1},{id:'ferr',label:'Current ferritin (µg/L)',type:'number',min:0,max:100000,step:1},{id:'cardiac',label:'Cardiac T2* MRI',type:'select',opts:[['Not measured',0],['>20 ms (normal)',1],['10-20 ms (mild)',2],['<10 ms (severe)',3]]}],calc:(v)=>{const iron=(v.units||0)*200;const f=v.ferr||0;let risk,label,interp,next;if(f>2500||(v.cardiac||0)>=2){risk='high';label='Iron Overload — Chelation Required';interp='Confirmed overload.'+(v.cardiac>=3?' ⚠ CARDIAC IRON — urgent.':'');next='Deferasirox 14-28 mg/kg/day first-line. Deferoxamine SC/IV for cardiac loading. Deferiprone for best cardiac T2* response. Monitor: ferritin q3mo, liver MRI yearly, cardiac T2* yearly.';}else if(f>1000||(v.units||0)>=20){risk='int';label='At Risk — Monitor';interp='Approaching chelation threshold.';next='Consider chelation if ferritin persistently >1000. Baseline: liver MRI, cardiac MRI, LFTs, renal function.';}else{risk='low';label='Low Iron Burden';interp='Below threshold.';next='Monitor ferritin q3-6mo if regularly transfused.';}return{score:f,max:null,risk,label,stats:[['Iron load',iron+' mg (~'+(iron/1000).toFixed(1)+' g)'],['Ferritin',f+' µg/L'],['Units',v.units||0]],interp,next};}},
+// ─── v4.5 additions (modular loader) ──────────────────────────────────────
+// Merged from src/calculators/additions.js. Future additions live there.
+...ADDITIONS,
 };
 
 // ─── CATEGORIES ──────────────────────────────────────────────────────────────
@@ -2787,7 +2793,7 @@ const SUBS={
     {id:'af_anticoag',label:'AF / Anticoagulation',icon:'❤️',calcs:['chads','hasbled']},
     {id:'vte_proph',label:'VTE Prophylaxis',icon:'🏥',calcs:['padua','caprini','improve','khorana']},
     {id:'fn',label:'Febrile Neutropenia',icon:'🌡️',calcs:['mascc']},
-    {id:'iron_ferr',label:'Iron / Ferritin',icon:'🔬',calcs:['ferritin','tsat']},
+    {id:'iron_ferr',label:'Iron / Ferritin',icon:'🔬',calcs:['ferritin','tsat','ganzoni']},
     {id:'cart',label:'CAR-T Toxicity',icon:'🧬',calcs:['crs']},
     {id:'transfusion',label:'Transfusion Medicine',icon:'🩸',calcs:['bloodvol','pltdose','ironload']},
   ],
@@ -3182,7 +3188,7 @@ export default function App(){
             <div className="leading-none">
               <span className="font-extrabold text-sm tracking-tight">HaemCalc</span>
               <span className="text-blue-600 font-extrabold text-sm">Pro</span>
-              <span className={`text-[10px] ml-1.5 font-medium ${dark?'text-slate-500':'text-slate-400'}`}>v4.4</span>
+              <span className={`text-[10px] ml-1.5 font-medium ${dark?'text-slate-500':'text-slate-400'}`}>v4.5</span>
             </div>
           </button>
           <button onClick={()=>setSearch(true)} title="Search (press /)" className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[12px] ${dark?'bg-slate-800 text-slate-400 hover:bg-slate-700':'bg-slate-100 text-slate-500 hover:bg-slate-200'} transition-colors`}>
@@ -3507,7 +3513,7 @@ const EVTYPE={
 // ─── GOVERNANCE & EVIDENCE METADATA ──────────────────────────────────────────
 // Supplements per-calculator evidence objects. Defaults applied for unlisted calcs.
 const REVIEWER='Dr. Muhammad Mohsin, Consultant Haematologist · FRCPath (Haematology) · FRCP (London)';
-const SITE_VERSION='4.2';
+const SITE_VERSION='4.5';
 const CONTENT_DATE='April 2026';
 
 const SITE_GOVERNANCE=`HaemCalc Pro applies a structured editorial process to all clinical content. Tools are included only where a PubMed-indexed derivation or validation study exists, or where an international guideline body has formally endorsed a scoring algorithm. Each calculator is classified by evidence tier (Validated / Guideline-Based / Derived / Educational), aligned to current ELN, BSH, NICE, ISTH, ASH, and WHO guidance, and assigned a named reviewer with a scheduled next-review date. Content is updated promptly following major guideline revisions and as a minimum annually. No commercial sponsorship, pharmaceutical funding, or advertising revenue is accepted; all editorial decisions are made solely on the basis of published evidence. The platform carries a clear educational-use disclaimer and does not replace specialist clinical judgement or local institutional protocols. Community peer review from NHS haematology consultants is actively invited to strengthen multi-site governance.`;
@@ -3896,7 +3902,7 @@ function HomePage({openCalc,openPathway,favs,toggleFav,recent,dark,setPage,setSe
             <div className="leading-none">
               <span className="font-extrabold text-xl tracking-tight">HaemCalc</span>
               <span className="text-blue-600 font-extrabold text-xl"> Pro</span>
-              <span className={`text-[11px] ml-2 font-medium ${hc}`}>v4.4</span>
+              <span className={`text-[11px] ml-2 font-medium ${hc}`}>v4.5</span>
             </div>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-3 leading-snug">
@@ -4739,6 +4745,7 @@ function AboutPage({dark}){
         </div>
         <div className="space-y-3">
           {[
+            {v:'v4.5',date:'April 2026', note:'Typography refresh: Inter (UI) and Source Serif 4 (headings/scores) with tabular numerals for clinical readouts. Clinical-modern palette tokens via CSS variables (light + dark). Modular calculator loader introduced (src/calculators/) — first migration target. New: Ganzoni Iron Deficit calculator (Schweiz Med Wochenschr 1970; PMID 5413918), referenced against the BSG 2021 IDA guideline (Snook et al., Gut 2021;70:2030–51; PMID 34497146). CI extended with Cloudflare cache purge for mohsinhaemacademy.com/haemcalc/* on each successful Pages deploy. Pre-existing duplicate-key issues in mipi/mysecpm flagged for follow-up.'},
             {v:'v4.4',date:'April 2026', note:'Micro-refinement pass. Syntax bugs fixed across 9 calculators (colon-assignment errors causing undefined outputs in Sokal, 4Ts, CHA₂DS₂-VASc, eGFR, BCR-ABL1, ITP, CFS, Neutropenia, RPI). Language sharpened in FLIPI, MIPI, DIPSS-Plus, MYSEC-PM, Khorana. PubMed source paper link added to every governance panel. Version display corrected.'},
             {v:'v4.3',date:'April 2026', note:'Decision-grade language across 23 calculators. Clinical Action panel above Interpretation. Guideline Version added to governance panel. Escalation guidance embedded per calculator. Explicit OS/mortality figures. Authoritative language replacing hedged phrasing. Dynamic stat badges.'},
             {v:'v4.2',date:'April 2026', note:'Multi-reviewer governance panel: Co-Reviewers row on all tools, SITE_GOVERNANCE statement, Join as Reviewer CTA. Session PDF Export: full patient encounter report from LogPage. Search improvements: author/PMID/purpose matching, category chips, Most Used section. Three new diagnostic modules: lymphadenopathy, splenomegaly, coag screen. Compliance page (DCB0129 lite, privacy, accessibility, version history). Three new calculators: DIPSS-Plus, MIPI, MYSEC-PM.'},
@@ -4880,6 +4887,7 @@ function CompliancePage({dark}){
       <Section icon={FileText} iconColor="text-slate-500" title="Version History">
         <div className="space-y-3">
           {[
+            {v:'v4.5',date:'April 2026',note:'Typography refresh (Inter + Source Serif 4), clinical-modern palette via CSS variables, modular calculator loader, Ganzoni iron deficit calculator added (PMID 5413918; BSG 2021 PMID 34497146), CI Cloudflare cache-purge for integrated deploy.'},
             {v:'v4.4',date:'April 2026',note:'Syntax bugs fixed in 9 calculators. Language sharpened in FLIPI, MIPI, DIPSS-Plus, MYSEC-PM, Khorana. PubMed source paper link added to every governance panel.'},
             {v:'v4.3',date:'April 2026',note:'Decision-grade language across 23 calculators. Clinical Action above Interpretation. Guideline Version in governance. Explicit OS/mortality in all outputs. Direct authoritative language throughout.'},
             {v:'v4.2',date:'April 2026',note:'Multi-reviewer governance panel. Session PDF Export. Search improvements (PMID/guideline/source matching, Most Used). Three diagnostic modules added (lymphadenopathy, splenomegaly, coag screen). This Compliance page. Three new calculators (DIPSS-Plus, MIPI, MYSEC-PM).'},
