@@ -3249,39 +3249,54 @@ export default function App(){
         </div>
       )}
 
-      {/* FOOTER */}
-      <footer className={`lg:ml-64 pb-20 lg:pb-0 border-t mt-8 ${dark?'border-slate-800 bg-slate-900/50':'border-slate-200 bg-slate-50/80'}`}>
-        <div className="max-w-[1400px] mx-auto px-6 py-8 grid grid-cols-1 sm:grid-cols-3 gap-8">
-          {/* Brand */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-white font-black text-[10px] ${dark?'bg-blue-600':'bg-slate-900'}`}>HC</div>
-              <span className={`font-extrabold text-sm tracking-tight ${dark?'text-slate-200':'text-slate-800'}`}>HaemCalc <span className="text-blue-600">Pro</span></span>
+      {/* FOOTER
+          NOTE: The footer is wrapped in the same max-w-[1400px] mx-auto
+          container as the main layout, with a sidebar-width spacer on the
+          left. Previous implementation used `lg:ml-64` which mis-aligned on
+          wide screens because the sidebar sits at the left edge of the
+          centered 1400px container (not at viewport x=0), so a viewport-
+          relative 256px margin on the footer did not match the sidebar's
+          actual position. */}
+      <footer className={`border-t mt-8 ${dark?'border-slate-800 bg-slate-900/50':'border-slate-200 bg-slate-50/80'} pb-20 lg:pb-0`}>
+        <div className="max-w-[1400px] mx-auto flex">
+          <div className="hidden lg:block w-64 shrink-0" aria-hidden="true"/>
+          <div className="flex-1 px-6 py-8 grid grid-cols-1 sm:grid-cols-3 gap-8">
+            {/* Brand */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-white font-black text-[10px] ${dark?'bg-blue-600':'bg-slate-900'}`}>HC</div>
+                <span className={`font-extrabold text-sm tracking-tight ${dark?'text-slate-200':'text-slate-800'}`}>HaemCalc <span className="text-blue-600">Pro</span></span>
+              </div>
+              <p className={`text-[11px] leading-relaxed ${dark?'text-slate-500':'text-slate-400'}`}>Evidence-based haematology calculators, clinical pathways, and diagnostic modules for specialist practice and education.</p>
+              <div className={`flex flex-wrap gap-2 mt-2`}>
+                <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border ${dark?'bg-slate-800 text-slate-500 border-slate-700':'bg-slate-100 text-slate-500 border-slate-200'}`}>v{SITE_VERSION}</span>
+                <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border ${dark?'bg-emerald-900/30 text-emerald-500 border-emerald-800/50':'bg-emerald-50 text-emerald-700 border-emerald-200'}`}><BadgeCheck size={8}/>Content reviewed {CONTENT_DATE}</span>
+              </div>
             </div>
-            <p className={`text-[11px] leading-relaxed ${dark?'text-slate-500':'text-slate-400'}`}>Evidence-based haematology calculators, clinical pathways, and diagnostic modules for specialist practice and education.</p>
-            <div className={`flex flex-wrap gap-2 mt-2`}>
-              <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border ${dark?'bg-slate-800 text-slate-500 border-slate-700':'bg-slate-100 text-slate-500 border-slate-200'}`}>v{SITE_VERSION}</span>
-              <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border ${dark?'bg-emerald-900/30 text-emerald-500 border-emerald-800/50':'bg-emerald-50 text-emerald-700 border-emerald-200'}`}><BadgeCheck size={8}/>Content reviewed {CONTENT_DATE}</span>
+            {/* Links */}
+            <div>
+              <div className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${dark?'text-slate-500':'text-slate-400'}`}>Platform</div>
+              <div className="space-y-2">
+                {[['Home',goHome],['Browse All',()=>navTo('browse')],['Clinical Pathways',()=>navTo('pathways_list')],['Diagnostic Modules',()=>navTo('diag:'+DIAGNOSTICS[0]?.id)],['About & Editorial',()=>navTo('about')],['Compliance & Privacy',()=>navTo('compliance')]].map(([label,fn])=>(
+                  <div key={label}><button onClick={fn} className={`text-[12px] ${dark?'text-slate-400 hover:text-slate-200':'text-slate-500 hover:text-slate-700'} transition-colors`}>{label}</button></div>
+                ))}
+              </div>
             </div>
-          </div>
-          {/* Links */}
-          <div>
-            <div className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${dark?'text-slate-500':'text-slate-400'}`}>Platform</div>
-            <div className="space-y-2">
-              {[['Home',goHome],['Browse All',()=>navTo('browse')],['Clinical Pathways',()=>navTo('pathways_list')],['Diagnostic Modules',()=>navTo('diag:'+DIAGNOSTICS[0]?.id)],['About & Editorial',()=>navTo('about')],['Compliance & Privacy',()=>navTo('compliance')]].map(([label,fn])=>(
-                <div key={label}><button onClick={fn} className={`text-[12px] ${dark?'text-slate-400 hover:text-slate-200':'text-slate-500 hover:text-slate-700'} transition-colors`}>{label}</button></div>
-              ))}
+            {/* Disclaimer */}
+            <div>
+              <div className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${dark?'text-slate-500':'text-slate-400'}`}>Disclaimer</div>
+              <p className={`text-[11px] leading-relaxed ${dark?'text-slate-500':'text-slate-400'}`}><strong className={dark?'text-slate-400':'text-slate-500'}>Educational &amp; Research Use Only.</strong> Does not replace clinical judgement, institutional guidelines, or specialist opinion. Always verify results against current local and national guidance.</p>
+              <p className={`text-[10px] mt-3 ${dark?'text-slate-600':'text-slate-400'}`}>Built by Dr. Muhammad Mohsin · Consultant Haematologist · FRCPath (Haem)</p>
             </div>
-          </div>
-          {/* Disclaimer */}
-          <div>
-            <div className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${dark?'text-slate-500':'text-slate-400'}`}>Disclaimer</div>
-            <p className={`text-[11px] leading-relaxed ${dark?'text-slate-500':'text-slate-400'}`}><strong className={dark?'text-slate-400':'text-slate-500'}>Educational &amp; Research Use Only.</strong> Does not replace clinical judgement, institutional guidelines, or specialist opinion. Always verify results against current local and national guidance.</p>
-            <p className={`text-[10px] mt-3 ${dark?'text-slate-600':'text-slate-400'}`}>Built by Dr. Muhammad Mohsin · Consultant Haematologist · FRCPath (Haem)</p>
           </div>
         </div>
-        <div className={`border-t px-6 py-3 text-center text-[10px] ${dark?'border-slate-800 text-slate-700':'border-slate-200 text-slate-400'}`}>
-          © 2025 HaemCalc Pro v{SITE_VERSION} · Educational and clinical decision-support use only · No liability accepted for clinical outcomes · Content reviewed {CONTENT_DATE}
+        <div className={`border-t ${dark?'border-slate-800':'border-slate-200'}`}>
+          <div className="max-w-[1400px] mx-auto flex">
+            <div className="hidden lg:block w-64 shrink-0" aria-hidden="true"/>
+            <div className={`flex-1 px-6 py-3 text-center text-[10px] ${dark?'text-slate-700':'text-slate-400'}`}>
+              © 2025 HaemCalc Pro v{SITE_VERSION} · Educational and clinical decision-support use only · No liability accepted for clinical outcomes · Content reviewed {CONTENT_DATE}
+            </div>
+          </div>
         </div>
       </footer>
 
