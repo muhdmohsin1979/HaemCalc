@@ -745,8 +745,8 @@ cllipi: {
     return{score:s,max:10,risk,label,stats:[['5yr OS',os],['TP53',v.tp53?'Disrupted (4pts)':'Wild-type'],['IGHV',v.ighv?'Unmutated (2pts)':'Mutated']],interp,next};
   }
 },
-mipi: {
-  id:'mipi', name:'MIPI (Simplified)', purpose:'Predict overall survival in mantle cell lymphoma using the simplified scoring system.',
+mipi_s: {
+  id:'mipi_s', name:'MIPI (Simplified)', purpose:'Predict overall survival in mantle cell lymphoma using the simplified scoring system (Hoster 2008, simplified form). For the continuous MIPI formula, see the MIPI calculator.',
   cat:'malignant', disease:'Mantle Cell Lymphoma', icon:'🟠',
   tags:['mcl','mantle cell','mipi','prognosis','lymphoma'],
   evidence:{source:'Hoster E et al. Blood. 2008;111(2):558-65.',guideline:'ESMO / NCCN',year:2008,pmid:'17962512'},
@@ -1243,30 +1243,13 @@ iwcll: {
       interp:'At least 1 iwCLL 2018 criterion is met — treatment may be indicated.',
       next:'CONFIRM TP53 and IGHV status before starting therapy. If del17p/TP53mut: BTKi or venetoclax-based (no chemoimmunotherapy). If IGHV unmutated: BTKi or venetoclax-obinutuzumab. If IGHV mutated + fit: FCR or venetoclax-obinutuzumab (fixed-duration). Discuss options at MDT.'};}
 },
-dipssplus: {
-  id:'dipssplus', name:'DIPSS-Plus', purpose:'Extended prognostic scoring for primary MF adding cytogenetic, transfusion, and platelet data to DIPSS.',
-  cat:'malignant', disease:'Myelofibrosis', icon:'🟣',
-  tags:['myelofibrosis','dipss','plus','cytogenetics','prognosis','mpn'],
-  evidence:{source:'Gangat N et al. J Clin Oncol. 2011;29(4):392-7.',guideline:'NCCN / ELN',year:2011,pmid:'21149668'},
-  whenUse:'Primary MF when cytogenetic data, transfusion status, and platelet count available.',
-  whenNot:'Post-PV/ET MF (use MYSEC-PM). When cytogenetics unavailable (use DIPSS alone).',
-  limits:'Superseded by MIPSS70+ v2 and GIPSS when molecular data available. Still widely used when NGS not performed.',
-  inputs:[
-    {id:'dipss',label:'DIPSS risk category',type:'select',opts:[['Low (DIPSS 0)',0],['Intermediate-1 (DIPSS 1-2)',1],['Intermediate-2 (DIPSS 3-4)',2],['High (DIPSS 5-6)',3]]},
-    {id:'rbc',label:'RBC transfusion dependent',type:'check'},
-    {id:'plt',label:'Platelets <100 ×10⁹/L',type:'check'},
-    {id:'kary',label:'Unfavourable karyotype (+8, -7/7q-, i(17q), -5/5q-, 12p-, inv(3), 11q23)',type:'check'},
-  ],
-  calc:(v)=>{const s=(v.dipss||0)+(v.rbc?1:0)+(v.plt?1:0)+(v.kary?1:0);
-    let risk,label,os;
-    if(s===0){risk='low';label='Low Risk';os='15.4 yrs';}
-    else if(s===1){risk='int';label='Intermediate-1';os='6.5 yrs';}
-    else if(s<=3){risk='high';label='Intermediate-2';os='2.9 yrs';}
-    else{risk='vhigh';label='High Risk';os='1.3 yrs';}
-    return{score:s,max:6,risk,label,stats:[['Median OS',os]],
-      interp:'DIPSS-Plus '+s+': '+label+'.',
-      next:s>=2?'Transplant assessment recommended. Ruxolitinib as bridge. GIPSS/MIPSS70+ v2 if molecular data available.':'Symptom-directed therapy. Ruxolitinib for splenomegaly/symptoms. Annual reassessment.'};}
-},
+// (v4.6) Duplicate DIPSS-Plus entry removed here — it required a pre-computed
+// DIPSS risk category as input, while the canonical entry below computes
+// DIPSS-Plus end-to-end from raw factors. The deleted entry also carried the
+// correct PMID 21149668, which has been propagated to the retained entry
+// (the retained one had erroneously been tagged with PMID 21149677, a pure
+// mathematics paper, not Gangat 2011). Canonical paper:
+// Gangat N et al. J Clin Oncol. 2011;29(4):392-7. doi:10.1200/JCO.2010.32.2446.
 hasford: {
   id:'hasford', name:'Hasford (Euro) Score', purpose:'Predict survival in CML — includes eosinophils and basophils not captured by Sokal.',
   cat:'malignant', disease:'CML', icon:'🟡',
@@ -1610,7 +1593,10 @@ mysecpm: {
     {id:'blasts',label:'Circulating blasts ≥3%',type:'check'},{id:'calr',label:'CALR mutation absent (JAK2 or MPL or triple-neg)',type:'check'},
     {id:'const',label:'Constitutional symptoms',type:'check'},{id:'age',label:'Age (years)',type:'number',min:18,max:100,step:1},
   ],
-  calc:(v)=>{const s=(v.hgb?2:0)+(v.plt?1:0)+(v.blasts?2:0)+(v.calr?2:0)+(v.const?1:0)+((v.age||60)*0.05);
+  calc:(v)=>{
+    // Passamonti F et al. Leukemia. 2017;31(12):2726-31. PMID 28561069. doi:10.1038/leu.2017.169
+    // Points: Hb<11 =2, Plt<150 =1, Blasts≥3% =2, CALR-unmutated =2, Constitutional sx =1, Age ×0.15/year.
+    const s=(v.hgb?2:0)+(v.plt?1:0)+(v.blasts?2:0)+(v.calr?2:0)+(v.const?1:0)+((v.age||60)*0.15);
     const sr=Math.round(s*10)/10;
     let risk,label,os;
     if(sr<11){risk='low';label='Low Risk';os='Not reached';}else if(sr<14){risk='int';label='Intermediate-1';os='~9.3 yrs';}
@@ -2647,7 +2633,7 @@ dipssplus:{
   id:'dipssplus', name:'DIPSS-Plus', purpose:'Refined prognostication in primary myelofibrosis incorporating DIPSS score plus cytogenetics, platelet count, and transfusion requirement.',
   cat:'malignant', disease:'Myelofibrosis',
   tags:['myelofibrosis','mpn','mf','dipss','prognosis','transplant','cytogenetics'],
-  evidence:{source:'Gangat N et al. J Clin Oncol. 2011;29(4):392-7.',guideline:'ELN / NCCN',year:2011,pmid:'21149677'},
+  evidence:{source:'Gangat N et al. J Clin Oncol. 2011;29(4):392-7. doi:10.1200/JCO.2010.32.2446.',guideline:'ELN / NCCN',year:2011,pmid:'21149668'},
   whenUse:'Primary myelofibrosis when cytogenetic data and transfusion history are available. Superior to DIPSS alone for risk stratification at diagnosis.',
   whenNot:'Post-PV/ET myelofibrosis (use MYSEC-PM). Pre-fibrotic MPN. When cytogenetic data unavailable (use DIPSS).',
   limits:'Does not incorporate molecular data (JAK2, CALR, MPL, high-risk mutations). MIPSS70+ v2 or GIPSS preferred when full molecular profiling available.',
@@ -2716,36 +2702,12 @@ mipi:{
       interp,next};
   }
 },
-mysecpm:{
-  id:'mysecpm', name:'MYSEC-PM', purpose:'Predict survival in secondary myelofibrosis developing after Polycythaemia Vera or Essential Thrombocythaemia.',
-  cat:'malignant', disease:'Post-PV/ET Myelofibrosis',
-  tags:['myelofibrosis','mpn','post-pv mf','post-et mf','prognosis','transplant','mysec','calr','jak2'],
-  evidence:{source:'Passamonti F et al. Blood. 2017;129(16):2246-52.',guideline:'ELN / NCCN',year:2017,pmid:'28154879'},
-  whenUse:'Myelofibrosis arising from prior PV or ET (secondary MF). Do NOT use for primary myelofibrosis (use DIPSS or DIPSS-Plus).',
-  whenNot:'Primary myelofibrosis (use DIPSS/DIPSS-Plus). Pre-fibrotic MPN. Essential thrombocythaemia or PV without fibrotic transformation.',
-  limits:'Does not incorporate all high-risk mutations. CALR mutational subtype required (type-1/like vs other). Molecular data (ASXL1, EZH2, IDH1/2, SRSF2) not included.',
-  inputs:[
-    {id:'age',label:'Age at MF diagnosis (years)',type:'number',min:18,max:100,step:1},
-    {id:'hgb',label:'Haemoglobin <11 g/dL',type:'check'},
-    {id:'blasts',label:'Circulating blasts ≥3%',type:'check'},
-    {id:'calr',label:'Non-type-1/like CALR mutation OR JAK2/MPL/triple-negative (i.e. not CALR type-1/like)',type:'check'},
-    {id:'symptoms',label:'Constitutional symptoms (weight loss >10%, night sweats, or fever)',type:'check'},
-  ],
-  calc:(v)=>{
-    if(!v.age) return{score:'-',max:null,risk:'info',label:'Enter age to calculate',stats:[],interp:'',next:''};
-    const score=(v.age*0.15)+(v.hgb?2:0)+(v.blasts?2:0)+(v.calr?3:0)+(v.symptoms?2:0);
-    const s=Math.round(score*10)/10;
-    let risk,label,os,interp,next;
-    if(s<11){risk='low';label='Low Risk';os='Not reached';interp='Favourable prognosis in post-PV/ET MF. Median OS not yet reached. Allogeneic SCT is not indicated at this risk level.';next='Ruxolitinib for symptom control and splenomegaly. Observation if minimal symptoms. Annual reassessment with molecular profiling for HMR mutation acquisition.';}
-    else if(s<14){risk='int';label='Intermediate-1';os='~9.3 yrs';interp='Intermediate prognosis. Median OS ~9.3 years. Co-existing high-molecular-risk mutations significantly worsen the outlook.';next='Ruxolitinib as standard therapy. Transplant referral is warranted if high-risk mutations are co-present (ASXL1, EZH2, IDH1/2, SRSF2). Full molecular profiling is essential for accurate risk stratification. Clinical trial enrolment is appropriate.';}
-    else if(s<16){risk='high';label='Intermediate-2';os='~4.4 yrs';interp='Poor prognosis. Median OS ~4.4 years. Allogeneic SCT is the only potentially curative option — transplant referral is indicated.';next='Ruxolitinib or fedratinib as initial therapy. REFER FOR ALLOGENEIC SCT ASSESSMENT. Obtain HCT-CI, initiate donor search. Full molecular profiling for risk refinement. Goals of care discussion.';}
-    else{risk='vhigh';label='High Risk';os='~2.1 yrs';interp='Very poor prognosis. Median OS ~2.1 years. This is the highest-risk MYSEC-PM group — transplant is the priority.';next='URGENT ALLOGENEIC SCT REFERRAL. Bridge with ruxolitinib, pacritinib, or fedratinib. Anaemia management: luspatercept, danazol, EPO-based therapy, or transfusion support. Goals of care discussion. Clinical trial is the preferred approach if transplant-ineligible.';}
-    const calrNote=v.calr?'Non-type-1/like CALR or JAK2/MPL/triple-neg':'CALR type-1/like';
-    return{score:s,max:null,risk,label,
-      stats:[['MYSEC-PM Score',s.toFixed(1)],['Age contribution',(v.age*0.15).toFixed(1)],['Molecular status',calrNote],['Median OS',os]],
-      interp,next};
-  }
-},
+// (v4.6) Duplicate MYSEC-PM entry removed here — it cited the wrong paper
+// (PMID 28154879 is an FDG PET/CT melanoma paper, not MYSEC-PM), was missing
+// the platelets input, and used incorrect coefficients (CALR=3 not 2,
+// symptoms=2 not 1). The canonical entry above (line ~1600) has been
+// corrected to the Passamonti formula (age × 0.15/year) per
+// Leukemia 2017;31(12):2726-31, PMID 28561069, doi:10.1038/leu.2017.169.
 ironload:{id:'ironload',name:'Transfusion Iron Overload',purpose:'Estimate transfusional iron loading and assess chelation need.',cat:'benign',disease:'Transfusion',icon:'🩸',tags:['iron','overload','chelation','transfusion','ferritin','deferasirox','thalassaemia','mds'],evidence:{source:'Porter JB. Hematol Oncol Clin N Am. 2014;28(4):683.',guideline:'BSH / TIF',year:2014,pmid:'25064707'},whenUse:'Regularly transfused patients (thalassaemia, MDS, sickle cell, MF, AA).',whenNot:'Iron deficiency. Infrequent transfusion.',limits:'Ferritin is imperfect (acute phase). Liver MRI T2* is gold standard for LIC. Cardiac T2* for cardiac iron.',inputs:[{id:'units',label:'Lifetime RBC units transfused',type:'number',min:0,max:2000,step:1},{id:'ferr',label:'Current ferritin (µg/L)',type:'number',min:0,max:100000,step:1},{id:'cardiac',label:'Cardiac T2* MRI',type:'select',opts:[['Not measured',0],['>20 ms (normal)',1],['10-20 ms (mild)',2],['<10 ms (severe)',3]]}],calc:(v)=>{const iron=(v.units||0)*200;const f=v.ferr||0;let risk,label,interp,next;if(f>2500||(v.cardiac||0)>=2){risk='high';label='Iron Overload — Chelation Required';interp='Confirmed overload.'+(v.cardiac>=3?' ⚠ CARDIAC IRON — urgent.':'');next='Deferasirox 14-28 mg/kg/day first-line. Deferoxamine SC/IV for cardiac loading. Deferiprone for best cardiac T2* response. Monitor: ferritin q3mo, liver MRI yearly, cardiac T2* yearly.';}else if(f>1000||(v.units||0)>=20){risk='int';label='At Risk — Monitor';interp='Approaching chelation threshold.';next='Consider chelation if ferritin persistently >1000. Baseline: liver MRI, cardiac MRI, LFTs, renal function.';}else{risk='low';label='Low Iron Burden';interp='Below threshold.';next='Monitor ferritin q3-6mo if regularly transfused.';}return{score:f,max:null,risk,label,stats:[['Iron load',iron+' mg (~'+(iron/1000).toFixed(1)+' g)'],['Ferritin',f+' µg/L'],['Units',v.units||0]],interp,next};}},
 // ─── v4.5 additions (modular loader) ──────────────────────────────────────
 // Merged from src/calculators/additions.js. Future additions live there.
@@ -2765,7 +2727,7 @@ const SUBS={
     {id:'dlbcl',label:'DLBCL',icon:'🔴',calcs:['ipi','ripi','nccnipi','cnsipi','dbl']},
     {id:'fl',label:'Follicular Lymphoma',icon:'🟢',calcs:['flipi','flipi2','primapi']},
     {id:'hl',label:'Hodgkin Lymphoma',icon:'💜',calcs:['ips','ghsg']},
-    {id:'mcl',label:'Mantle Cell Lymphoma',icon:'🟠',calcs:['mipi','mipib']},
+    {id:'mcl',label:'Mantle Cell Lymphoma',icon:'🟠',calcs:['mipi','mipi_s','mipib']},
     {id:'cll',label:'CLL / SLL',icon:'🔵',calcs:['rai','binet','cllipi','iwcll']},
     {id:'tcl',label:'T-Cell / NK-Cell Lymphoma',icon:'🟤',calcs:['pit','pinke']},
     {id:'mzl',label:'Marginal Zone Lymphoma',icon:'🟢',calcs:['maltipi','mzlipi']},
@@ -3556,7 +3518,8 @@ const GOV={
   binet:    {type:'validated',  population:'Adults with newly diagnosed CLL (European centres)'},
   iwcll:    {type:'guideline',  population:'Adults with CLL — iwCLL 2018 treatment indication criteria'},
   cllipi:   {type:'validated',  population:'Adults with newly diagnosed CLL (international consortium validation)'},
-  mipi:     {type:'validated',  population:'Adults with newly diagnosed mantle cell lymphoma'},
+  mipi:     {type:'validated',  population:'Adults with newly diagnosed mantle cell lymphoma (continuous MIPI formula)'},
+  mipi_s:   {type:'validated',  population:'Adults with newly diagnosed mantle cell lymphoma (simplified 4-variable MIPI)'},
   mipib:    {type:'validated',  population:'Adults with mantle cell lymphoma (Ki-67-integrated MIPI-b)'},
   isswm:    {type:'validated',  population:'Adults with newly diagnosed Waldenström macroglobulinaemia'},
   pit:      {type:'validated',  population:'Adults with newly diagnosed peripheral T-cell lymphoma NOS'},
