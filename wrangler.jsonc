@@ -1,0 +1,32 @@
+/**
+ * Cloudflare Workers config — HaemCalc Pro
+ * ----------------------------------------------------------------------------
+ * This Worker serves the Vite-built SPA via Workers Static Assets.
+ * It is the standalone mirror deployed at:
+ *     https://haemcalc.muhdmohsin.workers.dev/
+ *
+ * IMPORTANT — production site:
+ *   mohsinhaemacademy.com/haemcalc is NOT served by this Worker. It is served
+ *   by a different Worker bound to that route on the mohsinhaemacademy.com
+ *   zone. Do not assume changes here affect the live site.
+ *
+ * Required Cloudflare dashboard settings to match this file:
+ *   Workers & Pages → haemcalc → Settings → Build:
+ *     - Build command:     npm install && npm run build
+ *     - Deploy command:    npx wrangler deploy
+ *     - Version command:   npx wrangler versions upload
+ *     - Root directory:    /              (was /dist — MUST be changed)
+ *
+ * Assets directory is ./dist because Vite writes the build there. The SPA
+ * fallback serves dist/index.html on any path not found as a file, so
+ * client-side routing works on the workers.dev URL.
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "haemcalc",
+  "compatibility_date": "2024-10-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  }
+}
