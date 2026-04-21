@@ -25,9 +25,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
 
       - name: Build
         run: npm run build
@@ -47,3 +48,27 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+# --------------------------------------------------------------------------
+# Note on deploy topology (April 2026):
+#
+#   muhdmohsin1979.github.io/HaemCalc/  — this workflow's deploy target.
+#                                          Source of truth for the app.
+#
+#   mohsinhaemacademy.com/haemcalc      — served by the mohsin-haem-academy
+#                                          Cloudflare Pages project via an
+#                                          <iframe src="https://muhdmohsin1979.github.io/HaemCalc/">
+#                                          in its haemcalc.html. So any push to
+#                                          main here propagates to production
+#                                          automatically once GitHub Pages builds.
+#                                          No Cloudflare cache purge is needed
+#                                          because the iframe loads github.io
+#                                          directly, bypassing the main-site zone.
+#
+#   haemcalc.muhdmohsin.workers.dev     — standalone mirror, built by the
+#                                          haemcalc Cloudflare Worker on every
+#                                          push using wrangler.jsonc at the
+#                                          repo root. Separate deploy pipeline,
+#                                          owned by Cloudflare's Git integration
+#                                          (not this workflow).
+# --------------------------------------------------------------------------
