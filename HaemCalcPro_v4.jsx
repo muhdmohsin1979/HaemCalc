@@ -4470,7 +4470,11 @@ function PathwayView({pathId,openCalc,dark}){
       {/* Current Step */}
       <div className={`rounded-2xl border-2 ${step===p.steps.length-1?'border-emerald-400':'border-blue-400'} p-5 space-y-3`}>
         <h2 className="text-lg font-bold">{s.title}</h2>
-        <p className={`text-sm leading-relaxed ${dark?'text-slate-300':'text-slate-600'}`}>{s.text}</p>
+        {/* whitespace-pre-wrap preserves \n and \n\n in pathway step text so
+            section headers, bullet lists and numbered lists render as written.
+            Before this fix, all newlines collapsed into single spaces and the
+            text read as one dense block. */}
+        <p className={`text-sm leading-relaxed whitespace-pre-wrap ${dark?'text-slate-300':'text-slate-600'}`}>{s.text}</p>
         {s.calcId&&(
           <button onClick={()=>openCalc(s.calcId)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors">
             <Calculator size={15}/>Open {C[s.calcId]?.name||'Calculator'}<ArrowRight size={14}/>
