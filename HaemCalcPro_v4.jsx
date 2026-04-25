@@ -3345,7 +3345,7 @@ export default function App(){
           <div className="max-w-[1400px] mx-auto flex">
             <div className="hidden lg:block w-64 shrink-0" aria-hidden="true"/>
             <div className={`flex-1 px-6 py-3 text-center text-[10px] ${dark?'text-slate-700':'text-slate-400'}`}>
-              © 2025 HaemCalc Pro v{SITE_VERSION} · Educational and clinical decision-support use only · No liability accepted for clinical outcomes · Content reviewed {CONTENT_DATE}
+              © 2025–2026 HaemCalc Pro v{SITE_VERSION} · Educational and clinical decision-support use only · No liability accepted for clinical outcomes · Content reviewed {CONTENT_DATE}
             </div>
           </div>
         </div>
