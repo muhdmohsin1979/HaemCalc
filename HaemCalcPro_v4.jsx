@@ -3505,8 +3505,8 @@ function SideNav({openCalc,openPathway,goHome,favs,toggleFav,dark,calcId,setPage
         <button onClick={()=>setPage('about')} className={`${rowBase} ${dark?'text-slate-500 hover:bg-slate-800 hover:text-slate-300':'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>
           <User size={13} className="flex-shrink-0"/><span>About</span>
         </button>
-        <button onClick={()=>setPage('compliance')} className={`${rowBase} ${dark?'text-slate-500 hover:bg-slate-800 hover:text-slate-300':'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>
-          <ShieldCheck size={13} className="flex-shrink-0"/><span>Compliance & Privacy</span>
+        <button onClick={()=>window.open('legal/ip-notice.html','_blank')} className={`${rowBase} ${dark?'text-slate-500 hover:bg-slate-800 hover:text-slate-300':'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>
+          <ShieldCheck size={13} className="flex-shrink-0"/><span>IP & Copyright</span>        </button>        <button onClick={()=>window.open('legal/terms.html','_blank')} className={`${rowBase} ${dark?'text-slate-500 hover:bg-slate-800 hover:text-slate-300':'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>          <ShieldCheck size={13} className="flex-shrink-0"/><span>Terms</span>        </button>        <button onClick={()=>window.open('legal/disclaimer.html','_blank')} className={`${rowBase} ${dark?'text-slate-500 hover:bg-slate-800 hover:text-slate-300':'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>          <ShieldCheck size={13} className="flex-shrink-0"/><span>Disclaimer</span>        </button>        <button onClick={()=>window.open('legal/privacy.html','_blank')} className={`${rowBase} ${dark?'text-slate-500 hover:bg-slate-800 hover:text-slate-300':'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>          <ShieldCheck size={13} className="flex-shrink-0"/><span>Privacy</span>
         </button>
       </div>
     </div>
