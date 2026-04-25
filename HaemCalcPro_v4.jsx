@@ -3328,7 +3328,7 @@ export default function App(){
             <div>
               <div className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${dark?'text-slate-500':'text-slate-400'}`}>Platform</div>
               <div className="space-y-2">
-                {[['Home',goHome],['Browse All',()=>navTo('browse')],['Clinical Pathways',()=>navTo('pathways_list')],['Diagnostic Modules',()=>navTo('diag:'+DIAGNOSTICS[0]?.id)],['About & Editorial',()=>navTo('about')],['Compliance & Privacy',()=>navTo('compliance')]].map(([label,fn])=>(
+                {[['Home',goHome],['Browse All',()=>navTo('browse')],['Clinical Pathways',()=>navTo('pathways_list')],['Diagnostic Modules',()=>navTo('diag:'+DIAGNOSTICS[0]?.id)],['About & Editorial',()=>navTo('about')],['IP & Copyright',()=>window.open('legal/ip-notice.html','_blank')],['Terms',()=>window.open('legal/terms.html','_blank')],['Disclaimer',()=>window.open('legal/disclaimer.html','_blank')],['Privacy',()=>window.open('legal/privacy.html','_blank')]].map(([label,fn])=>(
                   <div key={label}><button onClick={fn} className={`text-[12px] ${dark?'text-slate-400 hover:text-slate-200':'text-slate-500 hover:text-slate-700'} transition-colors`}>{label}</button></div>
                 ))}
               </div>
