@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, Fragment } from "react";
 import { Search, Moon, Sun, Star, Clock, ChevronRight, ChevronDown, ChevronLeft, AlertTriangle, BookOpen, Info, Activity, Clipboard, Check, Home, Grid3X3, Route, User, X, Menu, Heart, Zap, FlaskConical, Droplets, Calculator, ArrowRight, Shield, Brain, FileText, ExternalLink, RotateCcw, Copy, Printer, Stethoscope, TrendingUp, CircleDot, Microscope, Syringe, Pill, TestTube, Flame, Target, Scale, Gauge, Thermometer, Eye, Bone, Beaker, TreePine, BadgeCheck, ShieldAlert, ChevronUp, Layers, CircleAlert, TriangleAlert, Phone, ListChecks, GitBranch, Trash2, ShieldCheck, Lock, Globe, Accessibility } from "lucide-react";
 import { ADDITIONS } from "./src/calculators/additions.js";
 
@@ -3473,7 +3473,8 @@ function SideNav({openCalc,openPathway,goHome,favs,toggleFav,dark,calcId,setPage
         // Check if any calc in this category is active
         const catActive=subs.some(s=>s.calcs.includes(calcId));
         return(
-          <div key={cat.id} className={`pt-3 ${divider}`}>
+          <Fragment key={cat.id}>
+          <div className={`pt-3 ${divider}`}>
             {/* Category header */}
             <button onClick={()=>toggleCat(cat.id)}
               className={`w-full flex items-center justify-between px-3 py-1 mb-1 rounded-lg transition-colors ${dark?'hover:bg-slate-800':'hover:bg-slate-100'}`}>
@@ -3507,6 +3508,18 @@ function SideNav({openCalc,openPathway,goHome,favs,toggleFav,dark,calcId,setPage
               );
             })}
           </div>
+          {/* Anticoagulant Reversal Calculator — sits between Benign Haematology and General Medicine */}
+          {cat.id==='benign'&&(
+            <div className={`pt-3 ${divider}`}>
+              <button onClick={()=>window.open('reversal.html','_blank','noopener')}
+                className={`w-full flex items-center justify-between px-3 py-1 mb-1 rounded-lg transition-colors ${dark?'hover:bg-slate-800':'hover:bg-slate-100'}`}
+                title="Open Anticoagulant Reversal Calculator">
+                <span className="text-[10px] font-semibold uppercase tracking-widest" style={{color:'#0f766e'}}>Anticoagulant Reversal Calculator</span>
+                <ExternalLink size={11} className="flex-shrink-0" style={{color:'#0f766e',opacity:0.6}}/>
+              </button>
+            </div>
+          )}
+          </Fragment>
         );
       })}
 
