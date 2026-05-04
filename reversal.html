@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anticoagulant Reversal Calculator</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 20px 16px;
+    color: #1a1a1a;
+    line-height: 1.5;
+    background: #ffffff;
+  }
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+  .subtitle {
+    font-size: 14px; color: #555; font-style: italic;
+    margin: 0 0 20px; padding-bottom: 16px;
+    border-bottom: 1px solid #ccc;
+  }
+  h2 { font-size: 16px; font-weight: 600; margin: 24px 0 12px; }
+  h3 { font-size: 14px; font-weight: 600; margin: 0 0 8px; }
+  .anticoag-selector {
+    background: #f0f5fb;
+    padding: 16px;
+    border-radius: 6px;
+    margin-bottom: 18px;
+    border: 1px solid #c5d8ed;
+  }
+  .anticoag-selector label {
+    font-size: 13px;
+    color: #1a3a6c;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .anticoag-selector select {
+    font-size: 16px;
+    padding: 10px 12px;
+    width: 100%;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .form-grid-full { grid-column: 1 / -1; }
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; gap: 12px; }
+    body { padding: 16px 12px; }
+    h1 { font-size: 19px; }
+    .output-box .dose { font-size: 22px; }
+  }
+  label {
+    display: block; font-size: 13px; color: #555;
+    margin-bottom: 4px; font-weight: 500;
+  }
+  select, input[type="text"], input[type="number"], textarea {
+    width: 100%; padding: 9px 10px; font-size: 14px;
+    border: 1px solid #bbb; border-radius: 4px;
+    font-family: inherit; background: #fff;
+  }
+  select:focus, input:focus, textarea:focus {
+    outline: 2px solid #0066cc; outline-offset: -1px;
+    border-color: #0066cc;
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  .output-box {
+    background: #f5f5f5; border-left: 4px solid #1a3a6c;
+    padding: 16px 20px; margin: 20px 0; border-radius: 4px;
+  }
+  .output-box .label {
+    font-size: 12px; color: #555; margin-bottom: 2px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .output-box .cell-name {
+    font-size: 15px; font-weight: 600; margin-bottom: 12px; color: #1a3a6c;
+  }
+  .output-box .dose {
+    font-size: 26px; font-weight: 600; margin-bottom: 4px; line-height: 1.25;
+  }
+  .output-box .total {
+    font-size: 14px; color: #444; margin-bottom: 12px;
+  }
+  .output-box ul { margin: 8px 0 0; padding-left: 20px; font-size: 13px; }
+  .output-box li { margin-bottom: 4px; }
+  .alert-blue {
+    margin-top: 14px; padding: 12px 14px;
+    background: #e8f1fb; border-left: 3px solid #0066cc;
+    border-radius: 4px;
+  }
+  .alert-blue .alert-title {
+    font-size: 12px; color: #0066cc; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+  }
+  .alert-amber {
+    margin-top: 14px; padding: 12px 14px;
+    background: #fef3c7; border-left: 3px solid #c69500;
+    border-radius: 4px;
+  }
+  .alert-amber .alert-title {
+    font-size: 12px; color: #5a4a00; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+  }
+  .alert-red {
+    margin-top: 14px; padding: 12px 14px;
+    background: #fee2e2; border-left: 3px solid #b91c1c;
+    border-radius: 4px;
+  }
+  .alert-red .alert-title {
+    font-size: 12px; color: #b91c1c; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+  }
+  .alert-body { font-size: 13px; line-height: 1.6; }
+  .alert-body a { color: #0066cc; text-decoration: none; }
+  .alert-body a:hover { text-decoration: underline; }
+  .dose-table {
+    width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px;
+  }
+  .dose-table th, .dose-table td {
+    border: 1px solid #b8d4ed; padding: 6px 10px; text-align: left;
+  }
+  .dose-table th {
+    background: #d6e6f4; font-weight: 600; color: #1a3a6c;
+  }
+  .dose-table tr.recommended td {
+    background: #fff3b0; font-weight: 500;
+  }
+  .refs { font-size: 13px; line-height: 1.6; margin-top: 16px; }
+  .refs a { color: #0066cc; text-decoration: none; }
+  .refs a:hover { text-decoration: underline; }
+  .refs .ref-item { margin-bottom: 6px; }
+  .refs .ref-meta { color: #666; font-size: 12px; }
+  .button-row {
+    margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;
+    padding-top: 16px; border-top: 1px solid #ccc;
+  }
+  button {
+    padding: 10px 18px; font-size: 14px; font-weight: 500;
+    border: 1px solid #1a3a6c; background: #1a3a6c; color: #fff;
+    border-radius: 4px; cursor: pointer; font-family: inherit;
+  }
+  button:hover { background: #14305a; }
+  button.secondary { background: #fff; color: #1a3a6c; }
+  button.secondary:hover { background: #f0f0f0; }
+  .disclaimer {
+    margin-top: 20px; padding: 12px 14px;
+    background: #fffbeb; border-left: 3px solid #c69500;
+    font-size: 12px; color: #5a4a00; border-radius: 4px;
+  }
+  .meta-fields {
+    background: #fafafa; padding: 16px; border-radius: 4px;
+    border: 1px solid #e0e0e0; margin-bottom: 16px;
+  }
+  .timestamp {
+    font-size: 12px; color: #888; text-align: right; margin-top: 8px;
+  }
+  .input-group { display: none; }
+  .input-group.active { display: block; }
+
+  @media print {
+    body { padding: 12px; max-width: 100%; }
+    .no-print { display: none !important; }
+    .output-box { background: #fff; border: 1px solid #888; border-left: 4px solid #000; page-break-inside: avoid; }
+    .meta-fields { background: #fff; border: 1px solid #888; }
+    .anticoag-selector { background: #fff; border: 1px solid #888; }
+    select, input, textarea { border: 1px solid #888; background: #fff; }
+    h1 { font-size: 18px; }
+    .subtitle { font-size: 12px; }
+    .refs { font-size: 11px; }
+    button { display: none; }
+    .signature-block { display: block !important; margin-top: 30px; page-break-inside: avoid; }
+    .alert-blue, .alert-amber, .alert-red { background: #fff !important; border: 1px solid #000; }
+    .dose-table tr.recommended td { background: #ddd !important; }
+  }
+  .signature-block { display: none; }
+  .signature-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 30px; margin-top: 20px;
+  }
+  .sig-line { border-bottom: 1px solid #000; height: 32px; margin-bottom: 4px; }
+  .sig-label { font-size: 11px; color: #555; }
+</style>
+</head>
+<body>
+
+<h1>Anticoagulant Reversal Calculator</h1>
+<p class="subtitle">Unified calculator for DOACs, vitamin K antagonists, heparins, and fondaparinux. Working draft companion to the proposed Trust algorithm.</p>
+
+<div class="meta-fields no-print">
+  <h2 style="margin-top:0;">Patient (optional, for printable record)</h2>
+  <div class="form-grid">
+    <div>
+      <label for="patient_name">Name or sticker reference</label>
+      <input type="text" id="patient_name" placeholder="e.g. Smith, John or sticker">
+    </div>
+    <div>
+      <label for="patient_id">Hospital number</label>
+      <input type="text" id="patient_id">
+    </div>
+  </div>
+</div>
+
+<!-- ANTICOAGULANT SELECTOR -->
+<div class="anticoag-selector">
+  <label for="anticoag">Step 1. Which anticoagulant?</label>
+  <select id="anticoag">
+    <optgroup label="Direct Oral Anticoagulants">
+      <option value="apixaban">Apixaban (Eliquis)</option>
+      <option value="rivaroxaban">Rivaroxaban (Xarelto)</option>
+      <option value="edoxaban">Edoxaban (Lixiana)</option>
+      <option value="dabigatran">Dabigatran (Pradaxa)</option>
+    </optgroup>
+    <optgroup label="Vitamin K Antagonists">
+      <option value="warfarin">Warfarin</option>
+      <option value="acenocoumarol">Acenocoumarol (Sinthrome)</option>
+      <option value="phenindione">Phenindione</option>
+    </optgroup>
+    <optgroup label="Heparins">
+      <option value="ufh">Unfractionated heparin (UFH)</option>
+      <option value="enoxaparin">Enoxaparin (Clexane / Inhixa)</option>
+      <option value="dalteparin">Dalteparin (Fragmin)</option>
+      <option value="tinzaparin">Tinzaparin (Innohep)</option>
+    </optgroup>
+    <optgroup label="Other parenteral anticoagulants">
+      <option value="fondaparinux">Fondaparinux (Arixtra)</option>
+      <option value="argatroban">Argatroban</option>
+      <option value="bivalirudin">Bivalirudin</option>
+    </optgroup>
+  </select>
+</div>
+
+<!-- DOAC INPUTS -->
+<div class="input-group" id="inputs-doac">
+  <h2>Step 2. Clinical inputs</h2>
+  <div class="form-grid">
+    <div class="form-grid-full">
+      <label for="bleed">Bleeding scenario</label>
+      <select id="bleed">
+        <option value="ich_critical">Life-threatening ICH, retroperitoneal, or pericardial bleed</option>
+        <option value="gi_bleed_major">Major GI bleed (upper or lower)</option>
+        <option value="major_haemo">Major bleed with haemodynamic compromise</option>
+        <option value="ich_only">Life-threatening ICH (no haemodynamic compromise stated)</option>
+        <option value="major_non_ich">Major non-ICH bleed (haemodynamically stable)</option>
+        <option value="major_any">Major bleed, any site</option>
+      </select>
+    </div>
+    <div>
+      <label for="timing">Time since last dose</label>
+      <select id="timing">
+        <option value="lt8">Within 8 hours, or unknown</option>
+        <option value="8to15">8 to 15 hours</option>
+        <option value="15to24">15 to 24 hours</option>
+        <option value="gt24">More than 24 hours</option>
+      </select>
+    </div>
+    <div>
+      <label for="last_dose_strength">Last dose strength (for andexanet)</label>
+      <select id="last_dose_strength">
+        <option value="standard">Standard (apixaban ≤5 mg, rivaroxaban ≤10 mg)</option>
+        <option value="high">High (apixaban &gt;5 mg, rivaroxaban &gt;10 mg)</option>
+        <option value="unknown">Unknown</option>
+      </select>
+    </div>
+    <div>
+      <label for="crcl">CrCl (mL/min)</label>
+      <select id="crcl">
+        <option value="normal">Above 30 (normal)</option>
+        <option value="low">Below 30</option>
+      </select>
+    </div>
+    <div>
+      <label for="weight">Weight (kg)</label>
+      <input type="number" id="weight" value="70" min="30" max="200" step="1">
+    </div>
+    <div class="form-grid-full">
+      <label for="risk">High thrombosis risk?</label>
+      <select id="risk">
+        <option value="no">No</option>
+        <option value="yes">Yes (mechanical valve, recent PCI, recent VTE, APS)</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- WARFARIN INPUTS -->
+<div class="input-group" id="inputs-warfarin">
+  <h2>Step 2. Clinical inputs</h2>
+  <div class="form-grid">
+    <div class="form-grid-full">
+      <label for="w_scenario">Clinical scenario</label>
+      <select id="w_scenario">
+        <option value="major_bleed">Major or life-threatening bleeding</option>
+        <option value="head_injury_normalct">Head injury, normal initial CT</option>
+        <option value="elevated_inr_no_bleed">Elevated INR, no bleeding (or minor)</option>
+        <option value="elective_reversal">Elective surgical reversal</option>
+      </select>
+    </div>
+    <div>
+      <label for="w_inr">INR</label>
+      <input type="number" id="w_inr" value="3.5" min="1.0" max="15" step="0.1">
+    </div>
+    <div>
+      <label for="w_weight">Weight (kg)</label>
+      <input type="number" id="w_weight" value="70" min="30" max="200" step="1">
+    </div>
+    <div>
+      <label for="w_dose_method">Dose method</label>
+      <select id="w_dose_method">
+        <option value="weight">Weight-based (BSH 2011)</option>
+        <option value="fixed">Fixed-dose alternative</option>
+      </select>
+    </div>
+    <div>
+      <label for="w_inr_known">INR available?</label>
+      <select id="w_inr_known">
+        <option value="yes">Yes</option>
+        <option value="no">No, treat empirically</option>
+      </select>
+    </div>
+    <div class="form-grid-full">
+      <label for="w_target_inr">Target INR</label>
+      <select id="w_target_inr">
+        <option value="2.5">2.5 (standard)</option>
+        <option value="3.5">3.5 (mechanical valve, recurrent VTE)</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- UFH INPUTS -->
+<div class="input-group" id="inputs-ufh">
+  <h2>Step 2. Clinical inputs</h2>
+  <div class="form-grid">
+    <div class="form-grid-full">
+      <label for="ufh_dose_total">Total UFH dose given (units)</label>
+      <input type="number" id="ufh_dose_total" value="5000" min="0" max="100000" step="100">
+    </div>
+    <div class="form-grid-full">
+      <label for="ufh_timing">Time since UFH stopped</label>
+      <select id="ufh_timing">
+        <option value="lt30">Less than 30 minutes</option>
+        <option value="30to60">30 to 60 minutes</option>
+        <option value="60to120">60 to 120 minutes</option>
+        <option value="gt120">More than 2 hours</option>
+        <option value="gt4h">More than 4 hours (effect minimal)</option>
+      </select>
+    </div>
+    <div class="form-grid-full">
+      <label for="ufh_route">UFH route</label>
+      <select id="ufh_route">
+        <option value="iv">IV infusion or bolus</option>
+        <option value="sc">Deep subcutaneous</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- LMWH INPUTS -->
+<div class="input-group" id="inputs-lmwh">
+  <h2>Step 2. Clinical inputs</h2>
+  <div class="form-grid">
+    <div class="form-grid-full">
+      <label for="lmwh_dose">Last dose (mg for enoxaparin; anti-Xa IU for dalteparin/tinzaparin)</label>
+      <input type="number" id="lmwh_dose" value="80" min="0" max="50000" step="10">
+    </div>
+    <div class="form-grid-full">
+      <label for="lmwh_timing">Time since last LMWH dose</label>
+      <select id="lmwh_timing">
+        <option value="lt8">Within 8 hours</option>
+        <option value="8to12">8 to 12 hours</option>
+        <option value="gt12">More than 12 hours</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- FONDAPARINUX / DTI / ACENOCOUMAROL INPUTS -->
+<div class="input-group" id="inputs-other">
+  <h2>Step 2. Clinical inputs</h2>
+  <div class="form-grid">
+    <div class="form-grid-full">
+      <label for="other_scenario">Bleeding severity</label>
+      <select id="other_scenario">
+        <option value="life_threatening">Life-threatening bleeding</option>
+        <option value="major">Major bleeding</option>
+        <option value="minor">Minor bleeding</option>
+      </select>
+    </div>
+    <div>
+      <label for="other_weight">Weight (kg)</label>
+      <input type="number" id="other_weight" value="70" min="30" max="200" step="1">
+    </div>
+    <div>
+      <label for="other_crcl">CrCl (mL/min)</label>
+      <select id="other_crcl">
+        <option value="normal">Above 30 (normal)</option>
+        <option value="low">Below 30</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="output-box" id="output"></div>
+
+<div class="form-grid no-print">
+  <div class="form-grid-full">
+    <label for="rationale">Clinical rationale (one line)</label>
+    <textarea id="rationale" placeholder="e.g. enoxaparin 80 mg BD, last dose 4 h ago, retroperitoneal bleed on CT, weight 70 kg"></textarea>
+  </div>
+</div>
+
+<div class="refs">
+  <h3>Supporting references</h3>
+  <div id="refs"></div>
+</div>
+
+<div class="signature-block">
+  <h2>Authorisation</h2>
+  <div class="signature-grid">
+    <div><div class="sig-line"></div><div class="sig-label">Prescribing doctor (name, grade, signature)</div></div>
+    <div><div class="sig-line"></div><div class="sig-label">Advising Consultant Haematologist (verbal authorisation accepted)</div></div>
+    <div><div class="sig-line"></div><div class="sig-label">Date and time</div></div>
+    <div><div class="sig-line"></div><div class="sig-label">Blood Bank / Pharmacy on issue</div></div>
+  </div>
+</div>
+
+<div class="timestamp" id="timestamp"></div>
+
+<div class="disclaimer">
+  This tool is a working draft companion to the proposed Trust algorithm and does not replace clinical judgement, the SmPC, or the Consultant Haematologist on-call. PCC use for factor Xa inhibitor reversal is off-label in the UK. Andexanet alfa is licensed for life-threatening or uncontrolled bleeding on apixaban or rivaroxaban (NICE TA697; GI bleed only since the January 2025 termination of TA1029 for ICH). Each application is an individual clinical decision by the responsible Consultant.
+</div>
+
+<div class="button-row no-print">
+  <button onclick="window.print()">Print or save as PDF</button>
+  <button class="secondary" onclick="resetForm()">Reset inputs</button>
+</div>
+
+<script>
+const REFS = {
+  annexa1:  { id: 'Connolly 2024 (ANNEXA-I)', url: 'https://pubmed.ncbi.nlm.nih.gov/38749032/', label: 'NEJM 2024;390:1745-55. PMID 38749032' },
+  annexa4:  { id: 'Connolly 2016 (ANNEXA-4)', url: 'https://pubmed.ncbi.nlm.nih.gov/27573206/', label: 'NEJM 2016;375:1131-41. PMID 27573206' },
+  reverse:  { id: 'Pollack 2017 (RE-VERSE AD)', url: 'https://pubmed.ncbi.nlm.nih.gov/28693366/', label: 'NEJM 2017;377:431-41. PMID 28693366' },
+  isth:     { id: 'Levy 2024 (ISTH SSC)', url: 'https://pubmed.ncbi.nlm.nih.gov/39029742/', label: 'J Thromb Haemost 2024;22:2889-99. PMID 39029742' },
+  acc:      { id: 'Tomaselli 2020 (ACC)', url: 'https://pubmed.ncbi.nlm.nih.gov/32680646/', label: 'JACC 2020;76:594-622. PMID 32680646' },
+  ehra:     { id: 'Steffel 2021 (EHRA)', url: 'https://pubmed.ncbi.nlm.nih.gov/33895845/', label: 'Europace 2021. PMID 33895845' },
+  thanz:    { id: 'Tran 2025 (THANZ)', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC12240022/', label: 'Intern Med J 2025. PMC12240022' },
+  mith:     { id: 'Mithoowani / Siegal 2024 (ASH Education)', url: 'https://pubmed.ncbi.nlm.nih.gov/39643984/', label: 'Hematology ASH Educ Program 2024. PMID 39643984' },
+  chia:     { id: 'Chiasakul 2023 meta-analysis', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC10099316/', label: 'Res Pract Thromb Haemost 2023. PMID 37063756' },
+  berger:   { id: 'Berger 2019 (low-dose 4F-PCC)', url: 'https://pubmed.ncbi.nlm.nih.gov/30983472/', label: 'J Intensive Care Med 2019. PMID 30983472' },
+  cascone:  { id: 'Cascone 2021 (low- vs standard-dose)', url: 'https://pubmed.ncbi.nlm.nih.gov/33866591/', label: 'Pharmacotherapy 2021;41:501-7. PMID 33866591' },
+  shaw:     { id: 'Shaw 2024 (Ottawa cohort)', url: 'https://pubmed.ncbi.nlm.nih.gov/39362177/', label: 'Thromb Res 2024. PMID 39362177' },
+  nice697:  { id: 'NICE TA697 (andexanet alfa, GI bleed)', url: 'https://www.nice.org.uk/guidance/ta697', label: 'NICE TA697' },
+  nice1029: { id: 'NICE TA1029 (andexanet alfa ICH, terminated)', url: 'https://www.nice.org.uk/guidance/ta1029', label: 'NICE TA1029' },
+  ondexxya_smpc: { id: 'Ondexxya (andexanet alfa) SmPC, EMC', url: 'https://www.medicines.org.uk/emc/product/10933/smpc', label: 'medicines.org.uk SmPC' },
+  keeling:  { id: 'Keeling 2011 (BSH warfarin, 4th edition)', url: 'https://pubmed.ncbi.nlm.nih.gov/21671894/', label: 'Br J Haematol 2011;154:311-24. PMID 21671894' },
+  stanworth: { id: 'Stanworth 2022 (BSH major haemorrhage)', url: 'https://b-s-h.org.uk/guidelines/', label: 'Br J Haematol 2022;198:654-67' },
+  lester:   { id: 'Lester 2024 (BSH pre-procedural)', url: 'https://pubmed.ncbi.nlm.nih.gov/38517351/', label: 'Br J Haematol 2024;204:1697-713. PMID 38517351' },
+  pccwar:   { id: 'Dietrich 2021 (PCCWaR fixed dose)', url: 'https://pubmed.ncbi.nlm.nih.gov/33305592/', label: 'Ann Pharmacother 2021;55:980-7. PMID 33305592' },
+  khorsand: { id: 'Khorsand 2015 (fixed vs weight-based)', url: 'https://pubmed.ncbi.nlm.nih.gov/25480313/', label: 'Thromb Res 2015;135:9-19. PMID 25480313' },
+  endres:   { id: 'Endres 2020 (4F-PCC fixed warfarin)', url: 'https://www.tandfonline.com/journals/yhem20', label: 'Hematology 2020' },
+  crash2:   { id: 'CRASH-2 (tranexamic acid, trauma)', url: 'https://pubmed.ncbi.nlm.nih.gov/20554319/', label: 'Lancet 2010;376:23-32. PMID 20554319' },
+  crash3:   { id: 'CRASH-3 (tranexamic acid, TBI)', url: 'https://pubmed.ncbi.nlm.nih.gov/31623894/', label: 'Lancet 2019;394:1713-23. PMID 31623894' },
+  protamine_smpc: { id: 'Protamine sulphate SmPC (EMC)', url: 'https://www.medicines.org.uk/emc/search?q=protamine', label: 'medicines.org.uk SmPC' },
+  schulman:  { id: 'Schulman 2008 (CHEST 8th, antithrombotic management)', url: 'https://pubmed.ncbi.nlm.nih.gov/18574272/', label: 'Chest 2008;133(6 Suppl):S257-S298' },
+  bnf_proat: { id: 'BNF: protamine sulfate', url: 'https://bnf.nice.org.uk/drugs/protamine-sulfate/', label: 'BNF (NICE)' },
+  bnf_fonda: { id: 'BNF: fondaparinux', url: 'https://bnf.nice.org.uk/drugs/fondaparinux-sodium/', label: 'BNF (NICE)' },
+  arixtra_smpc: { id: 'Arixtra (fondaparinux) SmPC', url: 'https://www.medicines.org.uk/emc/search?q=fondaparinux', label: 'medicines.org.uk SmPC' },
+  garcia: { id: 'Garcia 2018 (Fondaparinux reversal options)', url: 'https://pubmed.ncbi.nlm.nih.gov/29574429/', label: 'Hematology Am Soc Hematol Educ Program 2018' },
+  greinacher: { id: 'Greinacher 2017 (HIT management, BSH)', url: 'https://pubmed.ncbi.nlm.nih.gov/29240222/', label: 'Br J Haematol 2017' }
+};
+
+// =====================================================================
+// ANDEXANET ALFA SmPC LOGIC
+// =====================================================================
+function andexanetDose(doac, strength, timing) {
+  if (doac !== 'apixaban' && doac !== 'rivaroxaban') return null;
+  if (strength === 'unknown' && timing === 'lt8') {
+    return { dose: 'high', reason: 'Last dose strength unknown but within 8 hours: high-dose regimen.' };
+  }
+  if (strength === 'unknown' && timing !== 'lt8') {
+    return { dose: 'low', reason: 'Last dose strength unknown but more than 8 hours ago: low-dose regimen.' };
+  }
+  if (timing === 'lt8') {
+    return { dose: 'high', reason: 'Last dose within 8 hours: high-dose regimen per SmPC.' };
+  }
+  if (strength === 'high') {
+    return { dose: 'low', reason: 'High-strength dose more than 8 hours ago: low-dose regimen.' };
+  }
+  return { dose: 'low', reason: 'Standard-strength dose more than 8 hours ago: low-dose regimen per SmPC.' };
+}
+
+function buildAndexanetTable(rec) {
+  let html = '<table class="dose-table">';
+  html += '<thead><tr><th>Regimen</th><th>Initial IV bolus</th><th>Continuous infusion</th><th>Total dose</th></tr></thead><tbody>';
+  html += '<tr' + (rec.dose === 'low' ? ' class="recommended"' : '') + '>';
+  html += '<td><strong>Low dose</strong></td><td>400 mg at ~30 mg/min over 15 min</td><td>4 mg/min IV for 120 min (480 mg)</td><td>880 mg</td></tr>';
+  html += '<tr' + (rec.dose === 'high' ? ' class="recommended"' : '') + '>';
+  html += '<td><strong>High dose</strong></td><td>800 mg at ~30 mg/min over 30 min</td><td>8 mg/min IV for 120 min (960 mg)</td><td>1760 mg</td></tr>';
+  html += '</tbody></table>';
+  return html;
+}
+
+// =====================================================================
+// MAIN CALCULATION DISPATCHER
+// =====================================================================
+function calc() {
+  const ag = document.getElementById('anticoag').value;
+  
+  // Show only the relevant input group
+  document.querySelectorAll('.input-group').forEach(function(g) { g.classList.remove('active'); });
+  const doacAgents = ['apixaban','rivaroxaban','edoxaban','dabigatran'];
+  const vkaAgents = ['warfarin','acenocoumarol','phenindione'];
+  const lmwhAgents = ['enoxaparin','dalteparin','tinzaparin'];
+  const otherAgents = ['fondaparinux','argatroban','bivalirudin'];
+  
+  let result;
+  if (doacAgents.indexOf(ag) >= 0) {
+    document.getElementById('inputs-doac').classList.add('active');
+    result = calcDoac(ag);
+  } else if (vkaAgents.indexOf(ag) >= 0) {
+    document.getElementById('inputs-warfarin').classList.add('active');
+    result = calcWarfarin(ag);
+  } else if (ag === 'ufh') {
+    document.getElementById('inputs-ufh').classList.add('active');
+    result = calcUFH();
+  } else if (lmwhAgents.indexOf(ag) >= 0) {
+    document.getElementById('inputs-lmwh').classList.add('active');
+    result = calcLMWH(ag);
+  } else if (otherAgents.indexOf(ag) >= 0) {
+    document.getElementById('inputs-other').classList.add('active');
+    result = calcOther(ag);
+  }
+  
+  renderOutput(result);
+  updateTimestamp();
+}
+
+// =====================================================================
+// DOAC CALCULATION
+// =====================================================================
+function calcDoac(doac) {
+  const bleed   = document.getElementById('bleed').value;
+  const timing  = document.getElementById('timing').value;
+  const crcl    = document.getElementById('crcl').value;
+  const wRaw    = parseFloat(document.getElementById('weight').value) || 70;
+  const w       = Math.max(30, Math.min(200, Math.round(wRaw)));
+  const risk    = document.getElementById('risk').value === 'yes';
+  const strength = document.getElementById('last_dose_strength').value;
+
+  let cell = '', dose = '', total = '', notes = [], refs = [];
+  let extraAlerts = [];
+
+  if (doac === 'dabigatran') {
+    cell  = 'Dabigatran pathway';
+    dose  = 'Idarucizumab 5 g IV (two 2.5 g boluses)';
+    total = 'PCC is NOT first-line for dabigatran';
+    notes = [
+      'Idarucizumab is the licensed specific reversal agent. Two 2.5 g IV boluses given within 15 minutes of each other.',
+      'A normal thrombin time on the Trust analyser reliably excludes a clinically meaningful dabigatran level. If TT is normal and bleeding source is not anticoagulant-related, idarucizumab is unlikely to add benefit.',
+      'A second 5 g dose of idarucizumab may be considered if dilute thrombin time or ecarin clotting time remains prolonged after the first dose and bleeding continues.',
+      'Haemodialysis is an option for dabigatran (approximately 80 percent renally cleared) when idarucizumab is unavailable or has not produced adequate clinical response, especially with concurrent acute kidney injury.',
+      'PCC has been used as a fallback (50 IU/kg) when idarucizumab is not available, but this is off-label and less effective than idarucizumab.',
+      'Resumption of dabigatran after major bleeding requires multidisciplinary discussion. Switch to a different DOAC may be appropriate.'
+    ];
+    refs = ['reverse', 'isth', 'ehra'];
+  } else if (timing === 'gt24' && crcl === 'normal') {
+    cell  = 'Cell F: PCC not indicated';
+    dose  = 'PCC reversal not indicated';
+    total = 'Supportive care, source control';
+    notes = [
+      'More than 24 hours since last dose with normal renal function: residual drug level likely below the 30 to 50 ng/mL threshold below which reversal is unlikely to provide clinical benefit.',
+      'Treat with supportive measures, mechanical haemostasis, and source control. Consider drug-calibrated anti-Xa if rapidly available before deciding.'
+    ];
+    refs = ['isth', 'mith'];
+  } else if (crcl === 'low') {
+    cell  = 'Cell G: renal impairment, treat as if within 15 hours';
+    const totalIu = Math.min(5000, Math.round(50 * w / 100) * 100);
+    dose  = '4F-PCC 35 to 50 IU/kg';
+    total = 'e.g. 50 IU/kg \u00D7 ' + w + ' kg = ' + totalIu + ' IU (cap 5000 IU)';
+    notes = [
+      'CrCl below 30 mL/min prolongs DOAC exposure substantially, especially for edoxaban (~50% renal clearance) and rivaroxaban.',
+      'EHRA 2021 recommends treating as if within the early time window regardless of nominal last dose timing.'
+    ];
+    refs = ['ehra', 'isth'];
+  } else if ((bleed === 'ich_critical') && (timing === 'lt8')) {
+    cell  = 'Cell A: life-threatening ICH/retroperitoneal/pericardial, within 8h';
+    const totalIu = Math.min(5000, Math.round(50 * w / 100) * 100);
+    dose  = '4F-PCC 50 IU/kg';
+    total = totalIu + ' IU (50 \u00D7 ' + w + ', cap 5000 IU)';
+    notes = [
+      'Highest-stakes scenario: critical bleed site with likely peak residual drug.',
+      'ANNEXA-I usual care arm (mostly PCC) achieved hemostatic efficacy of 53.1% in DOAC-related ICH.'
+    ];
+    refs = ['annexa1', 'acc', 'isth'];
+  } else if ((bleed === 'major_haemo' || bleed === 'gi_bleed_major') && (timing === 'lt8')) {
+    cell  = 'Cell B: major bleed within 8h';
+    const totalIu = Math.round(35 * w / 100) * 100;
+    dose  = '4F-PCC 35 IU/kg (range 25 to 50 acceptable)';
+    total = totalIu + ' IU (35 \u00D7 ' + w + ')';
+    notes = [
+      'Mid-range dose anchored to the published 25 to 50 IU/kg band.',
+      'Chiasakul 2023 meta-analysis: mean variable dose actually used in literature was 38 IU/kg.'
+    ];
+    refs = ['chia', 'shaw', 'isth'];
+  } else if ((bleed === 'ich_only' || bleed === 'ich_critical') && (timing === '8to15')) {
+    cell  = 'Cell C: life-threatening ICH, 8 to 15h';
+    dose  = '4F-PCC 35 to 50 IU/kg, guided by CrCl and DOAC level if available';
+    total = 'individualised within range';
+    notes = [
+      'Use the upper end of the range if a drug-calibrated anti-Xa level is high or unavailable.',
+      'Use the lower end if a drug level is low, or if thrombosis risk factors are present.'
+    ];
+    refs = ['isth', 'ehra'];
+  } else if ((bleed === 'major_non_ich' || bleed === 'major_haemo' || bleed === 'gi_bleed_major' || bleed === 'major_any') && (timing === '8to15')) {
+    cell  = 'Cell D: major non-ICH bleed, 8 to 15h';
+    const totalIu = Math.round(25 * w / 100) * 100;
+    dose  = '4F-PCC 25 IU/kg, or fixed 2000 IU';
+    total = totalIu + ' IU (25 \u00D7 ' + w + ') or 2000 IU flat';
+    notes = ['Lower end of the range, supported by Shaw 2024 cohort and Chiasakul 2023 meta-analysis.'];
+    refs = ['shaw', 'chia'];
+  } else if (timing === '15to24') {
+    cell  = 'Cell E: any major bleed, 15 to 24h, normal renal function';
+    const totalIu = Math.round(25 * w / 100) * 100;
+    dose  = '4F-PCC 25 IU/kg';
+    total = totalIu + ' IU (25 \u00D7 ' + w + ')';
+    notes = [
+      'Berger 2019: 25 IU/kg protocol achieved 94.7% hemostasis in evaluable patients.',
+      'Cascone 2021: low-dose 4F-PCC non-inferior to standard dose for hemostatic efficacy.'
+    ];
+    refs = ['berger', 'cascone'];
+  } else {
+    cell  = 'Cell B (default): treat as 35 IU/kg';
+    const totalIu = Math.round(35 * w / 100) * 100;
+    dose  = '4F-PCC 35 IU/kg';
+    total = totalIu + ' IU (35 \u00D7 ' + w + ')';
+    notes = ['Default guidance: anchor to the midpoint of the 25 to 50 IU/kg ISTH/THANZ range.'];
+    refs = ['isth', 'thanz'];
+  }
+
+  if (risk && doac !== 'dabigatran' && cell.indexOf('Cell F') === -1) {
+    cell  = 'Cell H: very high thrombosis risk modifies the above';
+    const totalIu = Math.round(25 * w / 100) * 100;
+    dose  = 'Minimum effective 4F-PCC dose 25 IU/kg';
+    total = totalIu + ' IU (25 \u00D7 ' + w + '). Document Consultant decision.';
+    notes = [
+      'Mechanical valve, PCI within 1 month, active VTE within 1 month, antiphospholipid syndrome, or prior HIT all favour the lowest effective dose.',
+      'ANNEXA-I usual care arm 30-day thrombotic event rate was 5.6%; higher PCC doses are not protective and may add risk.',
+      'Consultant Haematologist discussion required; rationale must be documented.'
+    ];
+    refs = ['annexa1', 'isth'];
+  }
+
+  // Andexanet alfa eligibility for GI bleed on apixaban/rivaroxaban
+  if ((doac === 'apixaban' || doac === 'rivaroxaban') && bleed === 'gi_bleed_major' && timing !== 'gt24') {
+    const rec = andexanetDose(doac, strength, timing);
+    let smpcDose = '';
+    if (rec) {
+      smpcDose = '<div style="margin-top: 8px;"><strong>SmPC dosing:</strong> ' + rec.reason + '</div>';
+      smpcDose += buildAndexanetTable(rec);
+    }
+    extraAlerts.push({
+      type: 'blue',
+      title: 'Andexanet alfa eligibility flag',
+      body: 'Under <strong>NICE TA697</strong>, andexanet alfa is an alternative reversal agent for life-threatening or uncontrolled GI bleeding on apixaban or rivaroxaban. If andexanet is locally available and the bleed is genuinely life-threatening, discuss this option with the Consultant Haematologist on-call and contact Pharmacy and Blood Bank to confirm stock before committing to PCC.'
+        + smpcDose
+        + '<div style="margin-top: 8px; font-size: 12px;"><a href="https://www.medicines.org.uk/emc/product/10933/smpc" target="_blank">Open the Ondexxya SmPC (medicines.org.uk)</a> for full dosing tables, reconstitution, and administration. Note: PCC must not be given within 7 days of andexanet alfa.</div>'
+    });
+    if (refs.indexOf('nice697') === -1) refs.push('nice697');
+    if (refs.indexOf('ondexxya_smpc') === -1) refs.push('ondexxya_smpc');
+    if (refs.indexOf('annexa4') === -1) refs.push('annexa4');
+  }
+
+  // ICH note re NICE TA1029 termination
+  if ((doac === 'apixaban' || doac === 'rivaroxaban' || doac === 'edoxaban')
+      && (bleed === 'ich_critical' || bleed === 'ich_only')) {
+    extraAlerts.push({
+      type: 'amber',
+      title: 'Note on andexanet alfa for ICH',
+      body: 'Andexanet alfa is <strong>not NICE-recommended for intracranial haemorrhage</strong> following the January 2025 termination of NICE TA1029. PCC remains the off-label reversal option for factor Xa inhibitor-related ICH. The ANNEXA-I trial (NEJM 2024) showed higher haemostatic efficacy with andexanet but also higher thrombotic events (10.3% vs 5.6%) with no mortality difference.'
+    });
+    if (refs.indexOf('nice1029') === -1) refs.push('nice1029');
+    if (refs.indexOf('annexa1') === -1) refs.push('annexa1');
+  }
+
+  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts };
+}
+
+// =====================================================================
+// WARFARIN / VKA CALCULATION
+// =====================================================================
+function calcWarfarin(agent) {
+  const scenario = document.getElementById('w_scenario').value;
+  const inrRaw   = parseFloat(document.getElementById('w_inr').value) || 0;
+  const inr      = Math.max(1, Math.min(15, inrRaw));
+  const wRaw     = parseFloat(document.getElementById('w_weight').value) || 70;
+  const w        = Math.max(30, Math.min(200, Math.round(wRaw)));
+  const method   = document.getElementById('w_dose_method').value;
+  const inrKnown = document.getElementById('w_inr_known').value === 'yes';
+  const targetInr = parseFloat(document.getElementById('w_target_inr').value);
+
+  let cell = '', dose = '', total = '', notes = [], refs = [];
+  let extraAlerts = [];
+
+  // Note for non-warfarin VKAs
+  if (agent !== 'warfarin') {
+    const agentName = agent === 'acenocoumarol' ? 'Acenocoumarol (Sinthrome)' : 'Phenindione';
+    extraAlerts.push({
+      type: 'amber',
+      title: agentName + ': use warfarin reversal pathway',
+      body: agent === 'acenocoumarol'
+        ? 'Acenocoumarol is a vitamin K antagonist with a shorter half-life than warfarin (~8 to 14 h vs ~36 to 42 h). The reversal approach is the same: stop the drug, give IV vitamin K, and 4F-PCC for major bleeding. Recovery of the INR after vitamin K alone is typically faster than warfarin.'
+        : 'Phenindione is a non-coumarin vitamin K antagonist used very rarely in 2026. The reversal approach mirrors warfarin: stop the drug, give IV vitamin K, and 4F-PCC for major bleeding. Hypersensitivity reactions are more common with phenindione than warfarin.'
+    });
+  }
+
+  if (scenario === 'major_bleed') {
+    if (!inrKnown) {
+      cell  = 'Major bleed, INR unavailable';
+      dose  = '4F-PCC 30 IU/kg empirical (or 2000 IU flat) PLUS Vitamin K 5 mg IV';
+      const totalIu = Math.min(5000, Math.round(30 * w / 100) * 100);
+      total = totalIu + ' IU (30 \u00D7 ' + w + ', cap 5000 IU)';
+      notes = [
+        'Use only when INR cannot be obtained in a clinically reasonable timeframe AND bleed is life-threatening.',
+        'Send pre-dose INR sample to lab to inform any subsequent dose.',
+        'Consultant Haematologist approval required.',
+        'Repeat INR at 30 minutes post-dose is mandatory.'
+      ];
+      refs = ['keeling', 'stanworth'];
+    } else if (method === 'fixed') {
+      cell  = 'Major bleed, INR ' + inr.toFixed(1) + ', fixed-dose alternative';
+      let fixedDose = inr < 4.0 ? 1500 : 2000;
+      dose  = '4F-PCC ' + fixedDose + ' IU flat PLUS Vitamin K 5 mg IV';
+      total = fixedDose + ' IU';
+      notes = [
+        'Fixed-dose 4F-PCC is non-inferior to weight-based dosing for warfarin reversal in selected studies.',
+        'Particularly useful for patients above 100 kg where weight-based dosing approaches the cap.',
+        'Repeat INR at 30 minutes post-dose. A further weight-based dose may be needed if INR remains above 1.5 and bleeding continues.',
+        'Failure to recheck INR will trigger a clinical investigation per Trust governance.'
+      ];
+      refs = ['pccwar', 'endres', 'khorsand', 'keeling'];
+    } else {
+      // Weight-based
+      if (inr < 2.0) {
+        cell = 'Major bleed, INR ' + inr.toFixed(1) + ' below 2.0';
+        dose = 'Source control + Vitamin K. PCC unlikely to be required.';
+        total = 'Investigate bleed source urgently.';
+        notes = [
+          'INR below 2.0 with active bleeding suggests bleeding is not primarily warfarin-related.',
+          'Vitamin K 5 mg IV may still be appropriate if the patient is to remain off warfarin.',
+          'Source control is the priority. Discuss with Consultant Haematologist if PCC is being considered.'
+        ];
+        refs = ['keeling', 'stanworth'];
+      } else {
+        let iuPerKg, cap;
+        if (inr < 4.0) { iuPerKg = 25; cap = 2500; }
+        else if (inr <= 6.0) { iuPerKg = 35; cap = 3500; }
+        else { iuPerKg = 50; cap = 5000; }
+        const calculated = Math.round(iuPerKg * w / 100) * 100;
+        const finalDose = Math.min(calculated, cap);
+        cell  = 'Major bleed, INR ' + inr.toFixed(1) + ', weight-based (BSH 2011)';
+        dose  = '4F-PCC ' + iuPerKg + ' IU/kg PLUS Vitamin K 5 mg IV';
+        total = finalDose + ' IU (' + iuPerKg + ' \u00D7 ' + w + ', cap ' + cap + ' IU)';
+        notes = [
+          'Aligned with BSH 2011 fourth-edition warfarin guideline (25 to 50 U/kg, grade 1B).',
+          'Weight-based capped at ' + cap + ' IU for body weight above 100 kg in this INR band.',
+          'Vitamin K 5 mg IV concurrently because of short factor VII half-life (~6 hours).',
+          'Repeat INR at 30 minutes post-dose is mandatory and audited.',
+          'For trauma patients including TBI, add tranexamic acid 1 g IV over 10 min, then 1 g IV over 8 h within 1 hour of injury.'
+        ];
+        refs = ['keeling', 'stanworth', 'crash2', 'crash3'];
+      }
+    }
+  } else if (scenario === 'head_injury_normalct') {
+    cell  = 'Head injury, INR ' + inr.toFixed(1) + ', initial CT normal';
+    if (inr > targetInr) {
+      dose = 'Vitamin K 2 to 5 mg ORALLY';
+      total = 'Maintain INR close to 2.0 for 4 weeks post-injury.';
+    } else {
+      dose = 'No reversal at this point';
+      total = 'Reassess clinically; repeat CT if symptoms develop.';
+    }
+    notes = [
+      'BSH 2011: patients on warfarin with significant head injury have a recognised risk of delayed intracranial bleeding even with a normal initial CT.',
+      'If supra-therapeutic, correct the INR into the therapeutic range with oral vitamin K.',
+      'Repeat CT head if any new neurological symptoms develop.',
+      'Do not give PCC unless intracranial bleed is confirmed or clinically suspected.',
+      'Discuss with Consultant Haematologist if INR significantly elevated or anticoagulation indication is high-risk (mechanical valve).'
+    ];
+    refs = ['keeling'];
+  } else if (scenario === 'elevated_inr_no_bleed') {
+    cell  = 'Elevated INR, no bleeding, target ' + targetInr;
+    if (targetInr === 2.5) {
+      if (inr < 3.0) { dose = 'Continue warfarin at current dose'; total = 'INR within range. No action needed.'; notes = ['INR within target therapeutic range (2.0 to 3.0).']; }
+      else if (inr < 4.5) { dose = 'Reduce warfarin or skip a dose'; total = 'No vitamin K. Recheck INR within 2 to 7 days.'; notes = ['Mildly supra-therapeutic. Investigate precipitating cause (new drug, illness, alcohol, dietary change).']; }
+      else if (inr < 6.0) { dose = 'Withhold warfarin until INR below 5.0'; total = 'No vitamin K if no bleeding.'; notes = ['INR 4.5 to 6.0 without bleeding: hold warfarin until INR falls below 5.0. Recheck at 24 to 48 hours.']; }
+      else if (inr < 8.0) { dose = 'Stop warfarin. Vitamin K 1 to 5 mg PO if minor bleeding'; total = 'Restart when INR below 5.0.'; notes = ['INR 6.0 to 8.0 without bleeding: stop warfarin. Vitamin K 1 to 5 mg PO if minor bleeding present. Recheck at 24 hours.']; }
+      else { dose = 'Stop warfarin. Vitamin K 1 to 5 mg ORALLY'; total = 'Restart when INR below 5.0. Recheck at 24 hours.'; notes = ['INR above 8.0 without bleeding: significantly increased haemorrhage risk.', 'Discuss with Consultant Haematologist if mechanical valve, recent thrombosis, or other high thrombotic risk factor.']; }
+    } else {
+      // Target 3.5
+      if (inr < 4.0) { dose = 'Continue warfarin at current dose'; total = 'INR within range (3.0 to 4.0).'; notes = ['Within target range for high-INR indication.']; }
+      else if (inr < 5.5) { dose = 'Reduce warfarin or skip a dose'; total = 'Recheck within 2 to 7 days. No vitamin K.'; notes = ['Mildly supra-therapeutic for high-target indication.']; }
+      else if (inr < 7.0) { dose = 'Withhold warfarin'; total = 'No vitamin K if no bleeding.'; notes = ['Hold warfarin and recheck at 24 to 48 hours.']; }
+      else { dose = 'Stop warfarin. Vitamin K 1 to 5 mg PO. Discuss with Consultant'; total = 'Restart when INR back to target range.'; notes = ['Risk-benefit of vitamin K must balance bleeding risk against re-thrombosis risk.', 'Consultant Haematologist discussion strongly recommended for mechanical valve patients.']; }
+    }
+    refs = ['keeling'];
+  } else if (scenario === 'elective_reversal') {
+    cell  = 'Elective surgical reversal of warfarin';
+    dose  = 'Stop warfarin 5 days pre-procedure. Vitamin K 1 to 5 mg PO if INR remains above 1.5 the day before.';
+    total = 'PCC not indicated for elective reversal.';
+    notes = [
+      'For genuinely elective procedures, refer to the peri-operative anticoagulation pathway.',
+      'BSH 2011: where the procedure can be delayed by 6 to 12 hours, IV vitamin K alone is usually sufficient.',
+      'Where the procedure cannot be delayed, PCC and IV vitamin K together provide rapid reversal.',
+      'Bridging anticoagulation decisions depend on the indication and the procedural bleeding risk.',
+      'Refer to BSH 2024 (Lester et al.) for pre-procedural antithrombotic management.'
+    ];
+    refs = ['keeling', 'lester'];
+  }
+
+  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts };
+}
+
+// =====================================================================
+// UFH (UNFRACTIONATED HEPARIN) CALCULATION
+// =====================================================================
+function calcUFH() {
+  const dose_units = parseFloat(document.getElementById('ufh_dose_total').value) || 0;
+  const timing = document.getElementById('ufh_timing').value;
+  const route = document.getElementById('ufh_route').value;
+
+  let timeFactor, timeLabel;
+  if (timing === 'lt30') { timeFactor = 1.0; timeLabel = 'less than 30 min'; }
+  else if (timing === '30to60') { timeFactor = 0.5; timeLabel = '30 to 60 min'; }
+  else if (timing === '60to120') { timeFactor = 0.375; timeLabel = '60 to 120 min'; }
+  else if (timing === 'gt120') { timeFactor = 0.25; timeLabel = 'more than 2 hours'; }
+  else { timeFactor = 0; timeLabel = 'more than 4 hours'; }
+
+  let calculated, capApplied, finalDose;
+  if (route === 'sc') {
+    calculated = dose_units / 100;
+    timeFactor = 1.25;
+    timeLabel = 'subcutaneous';
+  } else {
+    calculated = (dose_units / 100) * timeFactor;
+  }
+  capApplied = calculated > 50;
+  finalDose = Math.min(50, Math.round(calculated * 10) / 10);
+
+  let cell = 'UFH reversal: protamine sulphate';
+  let dose, total, notes;
+
+  if (timeFactor === 0) {
+    dose = 'Protamine NOT typically required';
+    total = 'UFH effect is essentially gone (half-life 60 to 90 min). Supportive care, repeat APTT.';
+    notes = [
+      'After 4 hours since UFH stopped, the anticoagulant effect of standard IV UFH is largely dissipated.',
+      'Protamine is unlikely to be useful and carries a risk of anaphylaxis and rebound bleeding.',
+      'If APTT remains significantly prolonged, investigate for other causes (DIC, liver disease, lupus anticoagulant).',
+      'Discuss with Consultant Haematologist if reversal is being considered despite the time interval.'
+    ];
+  } else if (route === 'sc') {
+    const scLow = Math.min(50, Math.round((dose_units / 100) * 1.0 * 10) / 10);
+    const scHigh = Math.min(50, Math.round((dose_units / 100) * 1.5 * 10) / 10);
+    dose = 'Protamine ' + scLow + ' to ' + scHigh + ' mg SLOW IV (over 10 min)';
+    total = 'For ' + dose_units + ' units of subcutaneous UFH. Max single dose 50 mg.';
+    notes = [
+      'Subcutaneous UFH releases over hours, so a portion of the protamine should be given as a slow infusion (8 to 16 hours) rather than a single bolus.',
+      'Protamine 1 to 1.5 mg per 100 units of UFH given subcutaneously, ideally split: part bolus, part continuous infusion.',
+      'Maximum 50 mg per single dose. Slow IV over 10 min, rate not exceeding 5 mg/min.',
+      'Major adverse effects: hypotension, bradycardia, anaphylaxis (especially with prior protamine exposure, fish allergy, NPH insulin use, or prior vasectomy).',
+      'Repeat APTT 10 to 15 min after to assess response.',
+      'Resuscitation equipment must be available before administration.'
+    ];
+  } else {
+    dose = 'Protamine ' + finalDose + ' mg SLOW IV (over 10 min)';
+    if (capApplied) {
+      total = '50 mg cap applied (calculated dose ' + Math.round(calculated * 10) / 10 + ' mg). Rate not exceeding 5 mg/min.';
+    } else {
+      total = '(' + (route === 'iv' ? '1 mg per 100 units \u00D7 ' + timeFactor + ' for ' + timeLabel : '') + ')';
+    }
+    notes = [
+      'Protamine 1 mg neutralises approximately 100 units of UFH given in the last 30 minutes. The dose is reduced as the time since UFH stopped increases (heparin half-life 60 to 90 min).',
+      'Maximum 50 mg per single dose. Slow IV over 10 min, rate not exceeding 5 mg/min.',
+      'Major adverse effects: hypotension, bradycardia, anaphylaxis (especially with prior protamine exposure, fish allergy, NPH insulin use, or prior vasectomy).',
+      'Repeat APTT 10 to 15 min after administration to assess response.',
+      'Resuscitation equipment must be available before administration. Protamine itself has anticoagulant properties at high dose.'
+    ];
+  }
+
+  let extraAlerts = [];
+  if (route === 'sc' || timing === 'lt30' || timing === '30to60') {
+    extraAlerts.push({
+      type: 'red',
+      title: 'Protamine safety warning',
+      body: 'Protamine carries a significant risk of <strong>anaphylaxis, hypotension, and bradycardia</strong>. Risk factors include prior protamine exposure, fish allergy, NPH insulin use, and prior vasectomy. Resuscitation equipment must be at the bedside. Test dose should be considered for high-risk patients. The infusion must be slow (over 10 min, rate not exceeding 5 mg/min). Refer to the <a href="https://bnf.nice.org.uk/drugs/protamine-sulfate/" target="_blank">BNF protamine entry</a> and the <a href="https://www.medicines.org.uk/emc/search?q=protamine" target="_blank">protamine SmPC</a> for full prescribing details.'
+    });
+  }
+
+  return {
+    cell: cell, dose: dose, total: total, notes: notes,
+    refs: ['protamine_smpc', 'bnf_proat', 'schulman'],
+    extraAlerts: extraAlerts
+  };
+}
+
+// =====================================================================
+// LMWH CALCULATION
+// =====================================================================
+function calcLMWH(agent) {
+  const lastDose = parseFloat(document.getElementById('lmwh_dose').value) || 0;
+  const timing = document.getElementById('lmwh_timing').value;
+
+  let cell, dose, total, notes, extraAlerts = [];
+  const refs = ['protamine_smpc', 'bnf_proat', 'schulman'];
+
+  if (timing === 'gt12') {
+    cell = agent.charAt(0).toUpperCase() + agent.slice(1) + ': partial reversal only';
+    dose = 'Protamine has limited utility beyond 12 hours';
+    total = 'Discuss with Consultant Haematologist. Supportive care.';
+    notes = [
+      'Beyond 12 hours from the last LMWH dose, residual anticoagulant effect is usually limited.',
+      'Protamine reverses only ~60% of LMWH anti-Xa activity even within the optimal window.',
+      'Anti-Xa level (drug-calibrated for the specific LMWH) is the only reliable measure; APTT does not reflect LMWH activity.',
+      'Consider source control, mechanical haemostasis, and supportive transfusion.',
+      'In life-threatening bleeding, off-label rFVIIa has been used but evidence is very limited.'
+    ];
+    return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts };
+  }
+
+  let protamineDose1, protamineDose2 = null;
+  if (agent === 'enoxaparin') {
+    if (timing === 'lt8') {
+      protamineDose1 = lastDose; // 1 mg per 1 mg enoxaparin
+      cell = 'Enoxaparin reversal, within 8 hours';
+    } else {
+      protamineDose1 = lastDose * 0.5; // 0.5 mg per 1 mg if 8-12 hours
+      cell = 'Enoxaparin reversal, 8 to 12 hours';
+    }
+    protamineDose2 = lastDose * 0.5;
+  } else {
+    // dalteparin or tinzaparin: 1 mg per 100 anti-Xa IU
+    if (timing === 'lt8') {
+      protamineDose1 = lastDose / 100;
+      cell = (agent === 'dalteparin' ? 'Dalteparin' : 'Tinzaparin') + ' reversal, within 8 hours';
+    } else {
+      protamineDose1 = (lastDose / 100) * 0.5;
+      cell = (agent === 'dalteparin' ? 'Dalteparin' : 'Tinzaparin') + ' reversal, 8 to 12 hours';
+    }
+    protamineDose2 = (lastDose / 100) * 0.5;
+  }
+
+  protamineDose1 = Math.min(50, Math.round(protamineDose1 * 10) / 10);
+  protamineDose2 = Math.min(50, Math.round(protamineDose2 * 10) / 10);
+
+  dose = 'Protamine ' + protamineDose1 + ' mg SLOW IV (over 10 min)';
+  total = 'Maximum 50 mg per single dose. If bleeding continues at 4 hours, give second dose ' + protamineDose2 + ' mg.';
+  
+  notes = [
+    agent === 'enoxaparin' 
+      ? 'Enoxaparin: 1 mg protamine per 1 mg enoxaparin within 8 hours; 0.5 mg per mg if 8 to 12 hours.'
+      : 'Dalteparin and tinzaparin: 1 mg protamine per 100 anti-Xa IU within 8 hours; 0.5 mg per 100 IU if 8 to 12 hours.',
+    'Protamine reverses only approximately 60 percent of LMWH anti-Xa activity (poor binding to short heparin chains).',
+    'Anti-Xa level (drug-calibrated for the specific LMWH) is the only reliable measure of residual effect; APTT does not reflect LMWH activity.',
+    'Maximum 50 mg per single dose. Slow IV over 10 min, rate not exceeding 5 mg/min.',
+    'A second dose (0.5 mg per mg or per 100 IU) may be given at 4 hours if bleeding continues.',
+    'Major adverse effects: hypotension, bradycardia, anaphylaxis. Resuscitation equipment must be available.'
+  ];
+
+  extraAlerts.push({
+    type: 'amber',
+    title: 'Important: protamine reverses LMWH only partially',
+    body: 'Protamine binding to LMWH is incomplete (approximately 60 percent of anti-Xa activity reversed). Even with full protamine dosing, residual anti-Xa activity may persist. <strong>Consider this when planning urgent surgery or invasive procedures</strong>. Drug-calibrated anti-Xa level (specific to the LMWH being reversed) is the only reliable post-administration assessment.'
+  });
+  extraAlerts.push({
+    type: 'red',
+    title: 'Protamine safety warning',
+    body: 'Protamine carries a significant risk of <strong>anaphylaxis, hypotension, and bradycardia</strong>. Risk factors include prior protamine exposure, fish allergy, NPH insulin use, and prior vasectomy. Resuscitation equipment must be at the bedside. Refer to the <a href="https://bnf.nice.org.uk/drugs/protamine-sulfate/" target="_blank">BNF protamine entry</a> and the <a href="https://www.medicines.org.uk/emc/search?q=protamine" target="_blank">protamine SmPC</a> for full prescribing details.'
+  });
+
+  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts };
+}
+
+// =====================================================================
+// FONDAPARINUX / DTI / OTHER CALCULATION
+// =====================================================================
+function calcOther(agent) {
+  const scenario = document.getElementById('other_scenario').value;
+  const wRaw = parseFloat(document.getElementById('other_weight').value) || 70;
+  const w = Math.max(30, Math.min(200, Math.round(wRaw)));
+  const crcl = document.getElementById('other_crcl').value;
+
+  let cell, dose, total, notes, refs = [], extraAlerts = [];
+
+  if (agent === 'fondaparinux') {
+    cell = 'Fondaparinux reversal: no specific antidote';
+    if (scenario === 'minor') {
+      dose = 'Discontinue. Supportive care.';
+      total = 'No specific reversal usually required.';
+      notes = [
+        'Fondaparinux has no specific antidote.',
+        'Half-life 17 to 21 hours, longer in renal impairment (up to 72 h with CrCl below 30 mL/min).',
+        'For minor bleeding, discontinuation and supportive care are usually sufficient.',
+        'Investigate the bleeding source.'
+      ];
+      refs = ['arixtra_smpc', 'bnf_fonda', 'garcia'];
+    } else {
+      const pccDose = Math.min(5000, Math.round(50 * w / 100) * 100);
+      const rfviiaDose = Math.round(90 * w / 1000 * 1000) / 1000;
+      dose = 'Off-label reversal options';
+      total = 'No licensed antidote; supportive care is the priority.';
+      notes = [
+        'Fondaparinux has NO licensed reversal agent. Andexanet alfa is NOT licensed for fondaparinux despite mechanism similarity (it does not bind fondaparinux effectively).',
+        'Half-life 17 to 21 hours; renal clearance dominant.',
+        'Off-label option 1: 4F-PCC 50 IU/kg (~' + pccDose + ' IU for ' + w + ' kg). Limited evidence; rationale based on global haemostatic support.',
+        'Off-label option 2: Recombinant factor VIIa (NovoSeven) 90 mcg/kg (~' + rfviiaDose + ' mg for ' + w + ' kg). Carries thrombotic risk.',
+        'In CrCl below 30 mL/min, drug exposure is significantly prolonged; supportive measures alone may be insufficient.',
+        'Consultant Haematologist discussion mandatory before either off-label option.',
+        'Source control, mechanical haemostasis, transfusion support, and tranexamic acid (where appropriate to bleed site) are first-line.'
+      ];
+      refs = ['arixtra_smpc', 'bnf_fonda', 'garcia', 'crash2'];
+      extraAlerts.push({
+        type: 'red',
+        title: 'No licensed antidote',
+        body: 'Fondaparinux does <strong>not have a licensed reversal agent in the UK</strong>. Both 4F-PCC and rFVIIa have been used off-label in case reports and small series, with limited and conflicting evidence. The risk-benefit balance must be assessed by the Consultant Haematologist on-call. Andexanet alfa does not work for fondaparinux despite the shared factor Xa target.'
+      });
+    }
+  } else if (agent === 'argatroban' || agent === 'bivalirudin') {
+    const drugName = agent.charAt(0).toUpperCase() + agent.slice(1);
+    cell = drugName + ' reversal: no specific antidote';
+    if (scenario === 'minor') {
+      dose = 'Discontinue. Supportive care.';
+      total = 'Half-life is short (~45 min argatroban, ~25 min bivalirudin).';
+      notes = [
+        drugName + ' has no specific antidote.',
+        agent === 'argatroban' 
+          ? 'Argatroban half-life ~45 min in normal hepatic function; up to 4 hours in hepatic impairment.'
+          : 'Bivalirudin half-life ~25 min in normal renal function; up to several hours in renal failure (renal clearance ~20%).',
+        'Discontinuation usually sufficient for non-life-threatening bleeding.',
+        'Discuss with Consultant Haematologist if patient is on the drug for HIT, as alternative anticoagulation may be required.'
+      ];
+    } else {
+      dose = 'Discontinue. Supportive care. Off-label haemostatic agents discussed with Consultant.';
+      total = 'No licensed reversal agent.';
+      notes = [
+        drugName + ' has NO licensed reversal agent.',
+        agent === 'argatroban' 
+          ? 'Half-life ~45 min normal hepatic, up to 4 h in hepatic impairment.'
+          : 'Half-life ~25 min normal renal, longer in renal impairment.',
+        'For life-threatening bleeding: off-label 4F-PCC, rFVIIa, or aPCC (FEIBA) have been used in case reports.',
+        'Haemodialysis can remove ' + (agent === 'bivalirudin' ? 'bivalirudin partially' : 'argatroban poorly') + '.',
+        'These agents are commonly used in HIT, where re-anticoagulation choices must consider the underlying diagnosis.',
+        'Consultant Haematologist discussion mandatory.'
+      ];
+      extraAlerts.push({
+        type: 'red',
+        title: 'No licensed antidote, HIT context',
+        body: drugName + ' is most often used in <strong>heparin-induced thrombocytopenia (HIT)</strong>. Reversal in this context requires very careful Consultant input, because re-thrombosis risk is high and alternative anticoagulants (heparin) are contraindicated. In life-threatening bleeding, hold the drug; off-label haemostatic support is a Consultant decision.'
+      });
+    }
+    refs = ['greinacher'];
+  }
+
+  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts };
+}
+
+// =====================================================================
+// OUTPUT RENDERING
+// =====================================================================
+function renderOutput(result) {
+  if (!result) return;
+  let html = '<div class="label">Clinical scenario</div>';
+  html += '<div class="cell-name">' + result.cell + '</div>';
+  html += '<div class="label">Recommended action</div>';
+  html += '<div class="dose">' + result.dose + '</div>';
+  html += '<div class="total">' + result.total + '</div>';
+  if (result.notes && result.notes.length) {
+    html += '<div class="label" style="margin-top: 12px;">Clinical notes</div>';
+    html += '<ul>';
+    result.notes.forEach(function(n) { html += '<li>' + n + '</li>'; });
+    html += '</ul>';
+  }
+  if (result.extraAlerts && result.extraAlerts.length) {
+    result.extraAlerts.forEach(function(a) {
+      const cls = 'alert-' + a.type;
+      html += '<div class="' + cls + '">';
+      html += '<div class="alert-title">' + a.title + '</div>';
+      html += '<div class="alert-body">' + a.body + '</div>';
+      html += '</div>';
+    });
+  }
+  document.getElementById('output').innerHTML = html;
+
+  let rhtml = '';
+  if (result.refs && result.refs.length) {
+    result.refs.forEach(function(rk) {
+      const r = REFS[rk];
+      if (r) {
+        rhtml += '<div class="ref-item"><a href="' + r.url + '" target="_blank">' + r.id + '</a> &mdash; <span class="ref-meta">' + r.label + '</span></div>';
+      }
+    });
+  }
+  if (!rhtml) rhtml = '<div class="ref-meta">Select inputs above.</div>';
+  document.getElementById('refs').innerHTML = rhtml;
+}
+
+function updateTimestamp() {
+  const now = new Date();
+  const ts = now.toLocaleDateString('en-GB') + ' ' + now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('timestamp').textContent = 'Calculation generated: ' + ts;
+}
+
+function resetForm() {
+  document.getElementById('anticoag').value = 'apixaban';
+  ['doac','warfarin','ufh','lmwh','other'].forEach(function(g) {
+    document.getElementById('inputs-' + g).classList.remove('active');
+  });
+  document.getElementById('inputs-doac').classList.add('active');
+  document.getElementById('bleed').value = 'ich_critical';
+  document.getElementById('timing').value = 'lt8';
+  document.getElementById('crcl').value = 'normal';
+  document.getElementById('weight').value = '70';
+  document.getElementById('risk').value = 'no';
+  document.getElementById('last_dose_strength').value = 'standard';
+  document.getElementById('w_scenario').value = 'major_bleed';
+  document.getElementById('w_inr').value = '3.5';
+  document.getElementById('w_weight').value = '70';
+  document.getElementById('w_dose_method').value = 'weight';
+  document.getElementById('w_inr_known').value = 'yes';
+  document.getElementById('w_target_inr').value = '2.5';
+  document.getElementById('ufh_dose_total').value = '5000';
+  document.getElementById('ufh_timing').value = 'lt30';
+  document.getElementById('ufh_route').value = 'iv';
+  document.getElementById('lmwh_dose').value = '80';
+  document.getElementById('lmwh_timing').value = 'lt8';
+  document.getElementById('other_scenario').value = 'life_threatening';
+  document.getElementById('other_weight').value = '70';
+  document.getElementById('other_crcl').value = 'normal';
+  document.getElementById('patient_name').value = '';
+  document.getElementById('patient_id').value = '';
+  document.getElementById('rationale').value = '';
+  calc();
+}
+
+// Wire up all inputs to recalculate on change
+const allInputs = ['anticoag','bleed','timing','crcl','weight','risk','last_dose_strength',
+                   'w_scenario','w_inr','w_weight','w_dose_method','w_inr_known','w_target_inr',
+                   'ufh_dose_total','ufh_timing','ufh_route',
+                   'lmwh_dose','lmwh_timing',
+                   'other_scenario','other_weight','other_crcl'];
+allInputs.forEach(function(id) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.addEventListener('change', calc);
+    el.addEventListener('input', calc);
+  }
+});
+
+calc();
+</script>
+
+</body>
+</html>
