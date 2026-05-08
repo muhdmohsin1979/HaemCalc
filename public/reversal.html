@@ -188,8 +188,13 @@
 </head>
 <body>
 
+<div class="draft-banner no-print" style="background: #fff3cd; border-left: 4px solid #ff8f00; padding: 12px 16px; margin-bottom: 16px; border-radius: 4px;">
+  <div style="font-size: 13px; font-weight: 600; color: #7c2d12; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Draft — pending Trust ratification</div>
+  <div style="font-size: 12px; color: #5c3010; line-height: 1.5;">This page is a clinical decision support draft. The accompanying Trust SOP, decision-engine specification, evidence table, validation framework, and governance pack are under review and have not yet been ratified. Use clinical judgement, follow local policy, and discuss life-threatening reversal decisions with the Consultant Haematologist on-call.</div>
+</div>
+
 <h1>Anticoagulant Reversal Calculator</h1>
-<p class="subtitle">Unified calculator for DOACs, vitamin K antagonists, heparins, and fondaparinux. Working draft companion to the proposed Trust algorithm.</p>
+<p class="subtitle">Unified calculator for DOACs, vitamin K antagonists, heparins, and fondaparinux. Working draft companion to the proposed Trust algorithm. Andexanet alfa SmPC dose-selection logic verified against the Ondexxya SmPC (medicines.org.uk, last updated 5 March 2026) on 6 May 2026.</p>
 
 <div class="meta-fields no-print">
   <h2 style="margin-top:0;">Patient (optional, for printable record)</h2>
@@ -432,7 +437,7 @@
 <div class="timestamp" id="timestamp"></div>
 
 <div class="disclaimer">
-  This tool is a working draft companion to the proposed Trust algorithm and does not replace clinical judgement, the SmPC, or the Consultant Haematologist on-call. PCC use for factor Xa inhibitor reversal is off-label in the UK. Andexanet alfa is licensed for life-threatening or uncontrolled bleeding on apixaban or rivaroxaban (NICE TA697; GI bleed only since the January 2025 termination of TA1029 for ICH). Each application is an individual clinical decision by the responsible Consultant.
+  This tool is a working draft companion to the proposed Trust algorithm and does not replace clinical judgement, the SmPC, or the Consultant Haematologist on-call. PCC use for factor Xa inhibitor reversal is off-label in the UK. Andexanet alfa is licensed in adults for life-threatening or uncontrolled bleeding on apixaban or rivaroxaban (Ondexxya SmPC, EMC, last updated 5 March 2026). NICE TA697 (last updated 15 January 2025) restricts NHS-funded use in England, Wales, and Northern Ireland to gastrointestinal bleeds; NHS Scotland reimburses for bleeding at any site (BSH position statement, 25 April 2026). NICE TA1029 (15 January 2025) is a terminated appraisal — no NICE recommendation for andexanet alfa in intracranial haemorrhage. Each application is an individual clinical decision by the responsible Consultant. Andexanet alfa SmPC dose-selection logic and idarucizumab regimen verified against primary sources on 6 May 2026.
 </div>
 
 <div class="button-row no-print">
@@ -477,30 +482,45 @@ const REFS = {
 // =====================================================================
 // ANDEXANET ALFA SmPC LOGIC
 // =====================================================================
+// Verified against Ondexxya SmPC §4.2 Tables 2 and 3 on 2026-05-06
+// (medicines.org.uk/emc/product/10933/smpc, last updated on emc 5 March 2026).
+//
+// Apixaban dose selection (SmPC Table 2):
+//   ≤5 mg last dose: low dose, regardless of timing
+//   >5 mg last dose, <8 h since dose: high dose
+//   >5 mg last dose, ≥8 h since dose: low dose
+//
+// Rivaroxaban dose selection (SmPC Table 3):
+//   ≤10 mg last dose: low dose, regardless of timing
+//   >10 mg last dose, <8 h since dose: high dose
+//   >10 mg last dose, ≥8 h since dose: low dose
+//
+// SmPC: "If the strength of the last dose of anticoagulant or the interval between the
+// last dosage and the bleeding episode are unknown, no dose recommendation is available."
 function andexanetDose(doac, strength, timing) {
   if (doac !== 'apixaban' && doac !== 'rivaroxaban') return null;
-  if (strength === 'unknown' && timing === 'lt8') {
-    return { dose: 'high', reason: 'Last dose strength unknown but within 8 hours: high-dose regimen.' };
+  if (strength === 'unknown' || timing === 'unknown') {
+    return { dose: null, reason: 'Per Ondexxya SmPC: if last-dose strength OR time since last dose is unknown, no dose recommendation is available. Use 4F-PCC off-label after Consultant Haematologist discussion. A baseline anti-FXa level may support the decision if available in a clinically useful timeframe.' };
   }
-  if (strength === 'unknown' && timing !== 'lt8') {
-    return { dose: 'low', reason: 'Last dose strength unknown but more than 8 hours ago: low-dose regimen.' };
+  if (strength === 'standard') {
+    return { dose: 'low', reason: 'Standard-strength last dose (apixaban ≤5 mg or rivaroxaban ≤10 mg): low-dose regimen regardless of timing, per Ondexxya SmPC §4.2 Tables 2 and 3.' };
   }
+  // strength === 'high' (apixaban >5 mg or rivaroxaban >10 mg)
   if (timing === 'lt8') {
-    return { dose: 'high', reason: 'Last dose within 8 hours: high-dose regimen per SmPC.' };
+    return { dose: 'high', reason: 'High-strength last dose (apixaban >5 mg or rivaroxaban >10 mg) within 8 hours: high-dose regimen per Ondexxya SmPC §4.2 Tables 2 and 3.' };
   }
-  if (strength === 'high') {
-    return { dose: 'low', reason: 'High-strength dose more than 8 hours ago: low-dose regimen.' };
-  }
-  return { dose: 'low', reason: 'Standard-strength dose more than 8 hours ago: low-dose regimen per SmPC.' };
+  return { dose: 'low', reason: 'High-strength last dose more than 8 hours ago: low-dose regimen per Ondexxya SmPC §4.2 Tables 2 and 3.' };
 }
 
 function buildAndexanetTable(rec) {
+  // If rec.dose is null (unknown last dose / unknown timing), the SmPC gives no recommendation —
+  // show the table for reference but do not highlight a row.
   let html = '<table class="dose-table">';
-  html += '<thead><tr><th>Regimen</th><th>Initial IV bolus</th><th>Continuous infusion</th><th>Total dose</th></tr></thead><tbody>';
+  html += '<thead><tr><th>Regimen</th><th>Initial IV bolus</th><th>Continuous infusion</th><th>Total dose</th><th>200 mg vials</th></tr></thead><tbody>';
   html += '<tr' + (rec.dose === 'low' ? ' class="recommended"' : '') + '>';
-  html += '<td><strong>Low dose</strong></td><td>400 mg at ~30 mg/min over 15 min</td><td>4 mg/min IV for 120 min (480 mg)</td><td>880 mg</td></tr>';
+  html += '<td><strong>Low dose</strong></td><td>400 mg at ~30 mg/min over 15 min</td><td>4 mg/min IV for 120 min (480 mg)</td><td>880 mg</td><td>5</td></tr>';
   html += '<tr' + (rec.dose === 'high' ? ' class="recommended"' : '') + '>';
-  html += '<td><strong>High dose</strong></td><td>800 mg at ~30 mg/min over 30 min</td><td>8 mg/min IV for 120 min (960 mg)</td><td>1760 mg</td></tr>';
+  html += '<td><strong>High dose</strong></td><td>800 mg at ~30 mg/min over 30 min</td><td>8 mg/min IV for 120 min (960 mg)</td><td>1760 mg</td><td>9</td></tr>';
   html += '</tbody></table>';
   return html;
 }
@@ -557,12 +577,13 @@ function calcDoac(doac) {
 
   if (doac === 'dabigatran') {
     cell  = 'Dabigatran pathway';
-    dose  = 'Idarucizumab 5 g IV (two 2.5 g boluses)';
+    dose  = 'Idarucizumab 5 g IV (two vials of 2.5 g / 50 mL)';
     total = 'PCC is NOT first-line for dabigatran';
     notes = [
-      'Idarucizumab is the licensed specific reversal agent. Two 2.5 g IV boluses given within 15 minutes of each other.',
+      'Idarucizumab (Praxbind) is the licensed specific reversal agent for dabigatran in life-threatening or uncontrolled bleeding and for emergency surgery / urgent procedures (Praxbind SmPC §4.1, EMC, last updated 17 January 2025).',
+      'Dose: 5 g (two vials of 2.5 g / 50 mL) given intravenously as two consecutive 5 to 10 minute infusions, or as a bolus injection (Praxbind SmPC §4.2 method of administration).',
       'A normal thrombin time on the Trust analyser reliably excludes a clinically meaningful dabigatran level. If TT is normal and bleeding source is not anticoagulant-related, idarucizumab is unlikely to add benefit.',
-      'A second 5 g dose of idarucizumab may be considered if dilute thrombin time or ecarin clotting time remains prolonged after the first dose and bleeding continues.',
+      'A second 5 g dose of idarucizumab may be considered if there is recurrence of clinically relevant bleeding with prolonged clotting times, life-threatening rebleed risk with prolonged clotting times, or a second emergency procedure (Praxbind SmPC §4.2). Recurrence of unbound dabigatran has been observed up to 24 hours after dosing in some patients.',
       'Haemodialysis is an option for dabigatran (approximately 80 percent renally cleared) when idarucizumab is unavailable or has not produced adequate clinical response, especially with concurrent acute kidney injury.',
       'PCC has been used as a fallback (50 IU/kg) when idarucizumab is not available, but this is off-label and less effective than idarucizumab.',
       'Resumption of dabigatran after major bleeding requires multidisciplinary discussion. Switch to a different DOAC may be appropriate.'
@@ -666,8 +687,9 @@ function calcDoac(doac) {
     extraAlerts.push({
       type: 'blue',
       title: 'Andexanet alfa eligibility flag',
-      body: 'Under <strong>NICE TA697</strong>, andexanet alfa is an alternative reversal agent for life-threatening or uncontrolled GI bleeding on apixaban or rivaroxaban. If andexanet is locally available and the bleed is genuinely life-threatening, discuss this option with the Consultant Haematologist on-call and contact Pharmacy and Blood Bank to confirm stock before committing to PCC.'
+      body: 'Under <strong>NICE TA697</strong> (last updated 15 January 2025), andexanet alfa is recommended for life-threatening or uncontrolled bleeding on apixaban or rivaroxaban <strong>only if the bleed is in the gastrointestinal tract</strong> and the company provides per the commercial arrangement (England, Wales, NI). <strong>NHS Scotland</strong> reimburses andexanet alfa for bleeding at any site (BSH andexanet position statement, 25 April 2026). If andexanet is locally available and the bleed is genuinely life-threatening, discuss this option with the Consultant Haematologist on-call and contact Pharmacy and Blood Bank to confirm stock before committing to PCC.'
         + smpcDose
+        + '<div style="margin-top: 8px; padding: 8px; background: #fff8e1; border-left: 3px solid #ff8f00; font-size: 12px;"><strong>Safety signal:</strong> the Ondexxya SmPC and the BSH position statement (25 April 2026) note serious arterial and venous thromboembolic events have been reported following andexanet alfa, including early manifestation within 72 hours. The US FDA withdrew andexanet alfa from the US market on 22 December 2025 citing thromboembolic risk; the EMA CHMP confirmed a positive benefit–risk balance in April 2025 and recommended renewal of the conditional marketing authorisation for Ondexxya. Counsel the patient or family on this risk profile and document the discussion. Restart anticoagulation when bleeding is controlled.</div>'
         + '<div style="margin-top: 8px; font-size: 12px;"><a href="https://www.medicines.org.uk/emc/product/10933/smpc" target="_blank">Open the Ondexxya SmPC (medicines.org.uk)</a> for full dosing tables, reconstitution, and administration. Note: PCC must not be given within 7 days of andexanet alfa.</div>'
     });
     if (refs.indexOf('nice697') === -1) refs.push('nice697');
