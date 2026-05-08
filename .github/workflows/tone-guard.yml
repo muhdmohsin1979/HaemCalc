@@ -1,0 +1,27 @@
+name: tone-guard
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run tone-guard
+        run: |
+          if [ -f scripts/tone_guard.py ]; then
+            python scripts/tone_guard.py public/ outputs/ CONTRIBUTING.md README.md 2>&1
+          else
+            echo "scripts/tone_guard.py not present yet — skipping (will be enforced once merged)."
+          fi
