@@ -210,6 +210,19 @@
   </div>
 </div>
 
+<!-- PRACTICE REGION SELECTOR -->
+<div class="anticoag-selector no-print" style="background:#f5f5f5; border-color:#bbb;">
+  <label for="region">Practice region (optional — tailors UK commissioning guidance)</label>
+  <select id="region" onchange="onRegionChange()">
+    <option value="any">United Kingdom — show all four-nation positions (default)</option>
+    <option value="england">England (NICE TA697 + TA1029)</option>
+    <option value="wales">Wales (AWMSG/AWTTC defers to NICE TA697)</option>
+    <option value="ni">Northern Ireland (DoH NI endorses NICE TA697)</option>
+    <option value="scotland">Scotland (SMC advice 2273)</option>
+  </select>
+  <div style="font-size:11px; color:#555; margin-top:6px;">Saved on this device only. The page stores no patient data.</div>
+</div>
+
 <!-- ANTICOAGULANT SELECTOR -->
 <div class="anticoag-selector">
   <label for="anticoag">Step 1. Which anticoagulant?</label>
@@ -437,7 +450,7 @@
 <div class="timestamp" id="timestamp"></div>
 
 <div class="disclaimer">
-  This tool is a working draft companion to the proposed Trust algorithm and does not replace clinical judgement, the SmPC, or the Consultant Haematologist on-call. PCC use for factor Xa inhibitor reversal is off-label in the UK. Andexanet alfa is licensed in adults for life-threatening or uncontrolled bleeding on apixaban or rivaroxaban (Ondexxya SmPC, EMC, last updated 5 March 2026). NICE TA697 (last updated 15 January 2025) restricts NHS-funded use in England, Wales, and Northern Ireland to gastrointestinal bleeds; NHS Scotland reimburses for bleeding at any site (BSH position statement, 25 April 2026). NICE TA1029 (15 January 2025) is a terminated appraisal — no NICE recommendation for andexanet alfa in intracranial haemorrhage. Each application is an individual clinical decision by the responsible Consultant. Andexanet alfa SmPC dose-selection logic and idarucizumab regimen verified against primary sources on 6 May 2026.
+  This tool is a working draft companion to the proposed Trust algorithm and does not replace clinical judgement, the SmPC, or the Consultant Haematologist on-call. PCC use for factor Xa inhibitor reversal is off-label in the UK. Andexanet alfa is licensed in adults for life-threatening or uncontrolled bleeding on apixaban or rivaroxaban (Ondexxya SmPC, EMC, last updated 5 March 2026). UK commissioning is divided by nation, verified live on 8 May 2026: <strong>England</strong> follows NICE TA697 (15 January 2025) — GI bleed only; <strong>Wales</strong> defers to NICE TA697 via AWMSG/AWTTC reference 2409 (06 June 2019, excluded from appraisal under criterion 10) — GI bleed only; <strong>Northern Ireland</strong> per Department of Health NI endorsement of NICE TA697 (June 2021) — GI bleed only; <strong>Scotland</strong> per SMC advice 2273 (07 September 2020) — accepted for the full licensed indication on an interim basis (any site). NICE TA1029 (15 January 2025) is a terminated appraisal — no NICE recommendation for andexanet alfa in intracranial haemorrhage in E/W/NI. Each application is an individual clinical decision by the responsible Consultant. Andexanet alfa SmPC dose-selection logic and idarucizumab regimen verified against primary sources on 6 May 2026; four-nation commissioning verified 8 May 2026.
 </div>
 
 <div class="button-row no-print">
@@ -464,6 +477,9 @@ const REFS = {
   ondexxya_smpc: { id: 'Ondexxya (andexanet alfa) SmPC, EMC', url: 'https://www.medicines.org.uk/emc/product/10933/smpc', label: 'medicines.org.uk SmPC (last updated 5 Mar 2026)' },
   praxbind_smpc: { id: 'Praxbind (idarucizumab) SmPC, EMC', url: 'https://www.medicines.org.uk/emc/product/5073/smpc', label: 'medicines.org.uk SmPC (last updated 17 Jan 2025)' },
   bsh_andex: { id: 'BSH andexanet alfa position statement (25 Apr 2026)', url: 'https://b-s-h.org.uk/guidelines/guidelines/use-of-andexanet-alfa-a-british-society-for-haematology-position-statement', label: 'British Society for Haematology' },
+  smc2273: { id: 'SMC advice 2273 — andexanet alfa (07 Sep 2020)', url: 'https://scottishmedicines.org.uk/medicines-advice/andexanet-alfa-ondexxya-full-smc2273/', label: 'Scottish Medicines Consortium' },
+  awttc_andex: { id: 'AWTTC / AWMSG: andexanet alfa (excluded from appraisal, ref 2409, 06 Jun 2019)', url: 'https://awttc.nhs.wales/accessing-medicines/medicine-recommendations/andexanet-alfa-ondexxya/', label: 'AWTTC' },
+  doh_ni_ta697: { id: 'NI Department of Health: NICE TA697 endorsed (June 2021)', url: 'https://www.health-ni.gov.uk/articles/nice-endorsed-technology-appraisals-20212022', label: 'health-ni.gov.uk' },
   beriplex_smpc: { id: 'Beriplex P/N 1000 IU SmPC, EMC', url: 'https://www.medicines.org.uk/emc/product/3031/smpc', label: 'medicines.org.uk SmPC' },
   makris2013: { id: 'Makris 2013 (BSH bleeding on antithrombotic agents)', url: 'https://b-s-h.org.uk/guidelines/guidelines/guideline-on-the-management-of-bleeding-in-patients-on-antithrombotic-agents', label: 'BSH 2012 + 2019 addendum (Br J Haematol 2013;160:35-46)' },
   keeling:  { id: 'Keeling 2011 (BSH warfarin, 4th edition)', url: 'https://pubmed.ncbi.nlm.nih.gov/21671894/', label: 'Br J Haematol 2011;154:311-24. PMID 21671894' },
@@ -688,10 +704,21 @@ function calcDoac(doac) {
       smpcDose = '<div style="margin-top: 8px;"><strong>SmPC dosing:</strong> ' + rec.reason + '</div>';
       smpcDose += buildAndexanetTable(rec);
     }
+    const region = (document.getElementById('region') || {}).value || 'any';
+    let bodyText;
+    if (region === 'scotland') {
+      bodyText = '<strong>Scotland:</strong> SMC advice 2273 (07 September 2020) accepts andexanet alfa for use within NHSScotland on an interim basis subject to ongoing evaluation, for the full licensed indication on apixaban or rivaroxaban (life-threatening or uncontrolled bleeding, any site). The current GI-bleed scenario is therefore in-scope. Discuss with the Consultant Haematologist on-call and contact Pharmacy and Blood Bank to confirm stock before committing to PCC.';
+    } else if (region === 'england' || region === 'wales' || region === 'ni') {
+      const nation = region === 'england' ? 'England' : (region === 'wales' ? 'Wales' : 'Northern Ireland');
+      const nationDetail = region === 'england' ? 'NICE TA697 (last updated 15 January 2025)' : (region === 'wales' ? 'AWMSG/AWTTC reference 2409 (06 June 2019, excluded from appraisal under criterion 10) — Wales defers to NICE TA697' : 'Department of Health NI endorsed NICE TA697 in June 2021');
+      bodyText = '<strong>' + nation + ':</strong> ' + nationDetail + ' — andexanet alfa is recommended for life-threatening or uncontrolled bleeding on apixaban or rivaroxaban <strong>only if the bleed is in the gastrointestinal tract</strong>, plus the company commercial arrangement. The current GI-bleed scenario is therefore in-scope. Discuss with the Consultant Haematologist on-call and contact Pharmacy and Blood Bank to confirm stock before committing to PCC.';
+    } else {
+      bodyText = 'UK commissioning is divided by nation. <strong>England</strong>: NICE TA697 (last updated 15 January 2025) — andexanet alfa for life-threatening or uncontrolled bleeding on apixaban or rivaroxaban <strong>only if the bleed is in the gastrointestinal tract</strong>, plus the company commercial arrangement. <strong>Wales</strong>: AWMSG/AWTTC reference 2409 (06 June 2019) — excluded from AWMSG appraisal under criterion 10; Wales defers to NICE TA697 (GI bleed only). <strong>Northern Ireland</strong>: Department of Health NI endorsed NICE TA697 in June 2021 (GI bleed only). <strong>Scotland</strong>: SMC advice 2273 (07 September 2020) — accepted for use within NHSScotland on an interim basis subject to ongoing evaluation, for the full licensed indication (apixaban or rivaroxaban, life-threatening or uncontrolled bleeding, <strong>any site</strong>). If andexanet is locally available and the bleed is genuinely life-threatening, discuss with the Consultant Haematologist on-call and contact Pharmacy and Blood Bank to confirm stock before committing to PCC.';
+    }
     extraAlerts.push({
       type: 'blue',
       title: 'Andexanet alfa eligibility flag',
-      body: 'Under <strong>NICE TA697</strong> (last updated 15 January 2025), andexanet alfa is recommended for life-threatening or uncontrolled bleeding on apixaban or rivaroxaban <strong>only if the bleed is in the gastrointestinal tract</strong> and the company provides per the commercial arrangement (England, Wales, NI). <strong>NHS Scotland</strong> reimburses andexanet alfa for bleeding at any site (BSH andexanet position statement, 25 April 2026). If andexanet is locally available and the bleed is genuinely life-threatening, discuss this option with the Consultant Haematologist on-call and contact Pharmacy and Blood Bank to confirm stock before committing to PCC.'
+      body: bodyText
         + smpcDose
         + '<div style="margin-top: 8px; padding: 8px; background: #fff8e1; border-left: 3px solid #ff8f00; font-size: 12px;"><strong>Safety signal:</strong> the Ondexxya SmPC and the BSH position statement (25 April 2026) note serious arterial and venous thromboembolic events have been reported following andexanet alfa, including early manifestation within 72 hours. The US FDA withdrew andexanet alfa from the US market on 22 December 2025 citing thromboembolic risk; the EMA CHMP confirmed a positive benefit–risk balance in April 2025 and recommended renewal of the conditional marketing authorisation for Ondexxya. Counsel the patient or family on this risk profile and document the discussion. Restart anticoagulation when bleeding is controlled.</div>'
         + '<div style="margin-top: 8px; font-size: 12px;"><a href="https://www.medicines.org.uk/emc/product/10933/smpc" target="_blank">Open the Ondexxya SmPC (medicines.org.uk)</a> for full dosing tables, reconstitution, and administration. Note: PCC must not be given within 7 days of andexanet alfa.</div>'
@@ -700,18 +727,33 @@ function calcDoac(doac) {
     if (refs.indexOf('ondexxya_smpc') === -1) refs.push('ondexxya_smpc');
     if (refs.indexOf('annexa4') === -1) refs.push('annexa4');
     if (refs.indexOf('bsh_andex') === -1) refs.push('bsh_andex');
+    if (refs.indexOf('smc2273') === -1) refs.push('smc2273');
+    if (refs.indexOf('awttc_andex') === -1) refs.push('awttc_andex');
+    if (refs.indexOf('doh_ni_ta697') === -1) refs.push('doh_ni_ta697');
   }
 
   // ICH note re NICE TA1029 termination
   if ((doac === 'apixaban' || doac === 'rivaroxaban' || doac === 'edoxaban')
       && (bleed === 'ich_critical' || bleed === 'ich_only')) {
+    const region = (document.getElementById('region') || {}).value || 'any';
+    let ichBody;
+    if (region === 'scotland') {
+      ichBody = '<strong>Scotland:</strong> SMC advice 2273 accepted andexanet alfa for the full licensed indication on apixaban or rivaroxaban (life-threatening or uncontrolled bleeding, any site) on an interim basis. Andexanet alfa may therefore be considered for ICH on apixaban or rivaroxaban per local SMC-aligned policy (note: edoxaban is not in the licensed indication, so andexanet does not apply for edoxaban-related ICH). The ANNEXA-I trial (NEJM 2024) showed higher haemostatic efficacy with andexanet but also higher thrombotic events (10.3% vs 5.6%) with no mortality difference. Consultant Haematologist on-call discussion required.';
+    } else if (region === 'england' || region === 'wales' || region === 'ni') {
+      const nation = region === 'england' ? 'England' : (region === 'wales' ? 'Wales' : 'Northern Ireland');
+      ichBody = '<strong>' + nation + ':</strong> andexanet alfa is <strong>not NICE-funded for intracranial haemorrhage</strong> — NICE TA1029 (15 January 2025) is a terminated appraisal. PCC remains the off-label reversal option for factor Xa inhibitor-related ICH in your nation. The ANNEXA-I trial (NEJM 2024) showed higher haemostatic efficacy with andexanet but also higher thrombotic events (10.3% vs 5.6%) with no mortality difference. Consultant Haematologist on-call discussion required before any specific reversal agent.';
+    } else {
+      ichBody = 'In <strong>England</strong>, <strong>Wales</strong> and <strong>Northern Ireland</strong>, andexanet alfa is <strong>not NICE-funded for intracranial haemorrhage</strong> — NICE TA1029 (15 January 2025) is a terminated appraisal. PCC remains the off-label reversal option for factor Xa inhibitor-related ICH in those nations. In <strong>NHS Scotland</strong>, SMC advice 2273 accepted andexanet alfa for the full licensed indication (apixaban or rivaroxaban, life-threatening or uncontrolled bleeding, any site) on an interim basis — Scottish clinicians with ICH on apixaban or rivaroxaban may consider andexanet alfa per local SMC-aligned policy. The ANNEXA-I trial (NEJM 2024) showed higher haemostatic efficacy with andexanet but also higher thrombotic events (10.3% vs 5.6%) with no mortality difference. Either pathway warrants Consultant Haematologist on-call discussion.';
+    }
     extraAlerts.push({
       type: 'amber',
       title: 'Note on andexanet alfa for ICH',
-      body: 'Andexanet alfa is <strong>not NICE-recommended for intracranial haemorrhage</strong> following the January 2025 termination of NICE TA1029. PCC remains the off-label reversal option for factor Xa inhibitor-related ICH. The ANNEXA-I trial (NEJM 2024) showed higher haemostatic efficacy with andexanet but also higher thrombotic events (10.3% vs 5.6%) with no mortality difference.'
+      body: ichBody
     });
     if (refs.indexOf('nice1029') === -1) refs.push('nice1029');
     if (refs.indexOf('annexa1') === -1) refs.push('annexa1');
+    if (refs.indexOf('smc2273') === -1) refs.push('smc2273');
+    if (refs.indexOf('doh_ni_ta697') === -1) refs.push('doh_ni_ta697');
   }
 
   return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts };
@@ -1173,8 +1215,34 @@ function resetForm() {
   calc();
 }
 
+// Practice-region selector — persists in localStorage on this device only.
+// Storage key: 'haemcalc.reversal.region'. Allowed values: any|england|wales|ni|scotland.
+function onRegionChange() {
+  const sel = document.getElementById('region');
+  if (!sel) return;
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('haemcalc.reversal.region', sel.value);
+    }
+  } catch (e) { /* localStorage may be disabled — fall through silently */ }
+  calc();
+}
+function restoreRegion() {
+  try {
+    if (typeof localStorage === 'undefined') return;
+    const saved = localStorage.getItem('haemcalc.reversal.region');
+    if (!saved) return;
+    const sel = document.getElementById('region');
+    if (sel && ['any','england','wales','ni','scotland'].indexOf(saved) >= 0) {
+      sel.value = saved;
+    }
+  } catch (e) { /* localStorage may be disabled */ }
+}
+restoreRegion();
+
 // Wire up all inputs to recalculate on change
-const allInputs = ['anticoag','bleed','timing','crcl','weight','risk','last_dose_strength',
+const allInputs = ['region',
+                   'anticoag','bleed','timing','crcl','weight','risk','last_dose_strength',
                    'w_scenario','w_inr','w_weight','w_dose_method','w_inr_known','w_target_inr',
                    'ufh_dose_total','ufh_timing','ufh_route',
                    'lmwh_dose','lmwh_timing',
