@@ -461,7 +461,11 @@ const REFS = {
   shaw:     { id: 'Shaw 2024 (Ottawa cohort)', url: 'https://pubmed.ncbi.nlm.nih.gov/39362177/', label: 'Thromb Res 2024. PMID 39362177' },
   nice697:  { id: 'NICE TA697 (andexanet alfa, GI bleed)', url: 'https://www.nice.org.uk/guidance/ta697', label: 'NICE TA697' },
   nice1029: { id: 'NICE TA1029 (andexanet alfa ICH, terminated)', url: 'https://www.nice.org.uk/guidance/ta1029', label: 'NICE TA1029' },
-  ondexxya_smpc: { id: 'Ondexxya (andexanet alfa) SmPC, EMC', url: 'https://www.medicines.org.uk/emc/product/10933/smpc', label: 'medicines.org.uk SmPC' },
+  ondexxya_smpc: { id: 'Ondexxya (andexanet alfa) SmPC, EMC', url: 'https://www.medicines.org.uk/emc/product/10933/smpc', label: 'medicines.org.uk SmPC (last updated 5 Mar 2026)' },
+  praxbind_smpc: { id: 'Praxbind (idarucizumab) SmPC, EMC', url: 'https://www.medicines.org.uk/emc/product/5073/smpc', label: 'medicines.org.uk SmPC (last updated 17 Jan 2025)' },
+  bsh_andex: { id: 'BSH andexanet alfa position statement (25 Apr 2026)', url: 'https://b-s-h.org.uk/guidelines/guidelines/use-of-andexanet-alfa-a-british-society-for-haematology-position-statement', label: 'British Society for Haematology' },
+  beriplex_smpc: { id: 'Beriplex P/N 1000 IU SmPC, EMC', url: 'https://www.medicines.org.uk/emc/product/3031/smpc', label: 'medicines.org.uk SmPC' },
+  makris2013: { id: 'Makris 2013 (BSH bleeding on antithrombotic agents)', url: 'https://b-s-h.org.uk/guidelines/guidelines/guideline-on-the-management-of-bleeding-in-patients-on-antithrombotic-agents', label: 'BSH 2012 + 2019 addendum (Br J Haematol 2013;160:35-46)' },
   keeling:  { id: 'Keeling 2011 (BSH warfarin, 4th edition)', url: 'https://pubmed.ncbi.nlm.nih.gov/21671894/', label: 'Br J Haematol 2011;154:311-24. PMID 21671894' },
   stanworth: { id: 'Stanworth 2022 (BSH major haemorrhage)', url: 'https://b-s-h.org.uk/guidelines/', label: 'Br J Haematol 2022;198:654-67' },
   lester:   { id: 'Lester 2024 (BSH pre-procedural)', url: 'https://pubmed.ncbi.nlm.nih.gov/38517351/', label: 'Br J Haematol 2024;204:1697-713. PMID 38517351' },
@@ -470,11 +474,11 @@ const REFS = {
   endres:   { id: 'Endres 2020 (4F-PCC fixed warfarin)', url: 'https://www.tandfonline.com/journals/yhem20', label: 'Hematology 2020' },
   crash2:   { id: 'CRASH-2 (tranexamic acid, trauma)', url: 'https://pubmed.ncbi.nlm.nih.gov/20554319/', label: 'Lancet 2010;376:23-32. PMID 20554319' },
   crash3:   { id: 'CRASH-3 (tranexamic acid, TBI)', url: 'https://pubmed.ncbi.nlm.nih.gov/31623894/', label: 'Lancet 2019;394:1713-23. PMID 31623894' },
-  protamine_smpc: { id: 'Protamine sulphate SmPC (EMC)', url: 'https://www.medicines.org.uk/emc/search?q=protamine', label: 'medicines.org.uk SmPC' },
+  protamine_smpc: { id: 'Prosulf (protamine sulphate) 10 mg/mL SmPC, EMC', url: 'https://www.medicines.org.uk/emc/product/8/smpc', label: 'medicines.org.uk SmPC' },
   schulman:  { id: 'Schulman 2008 (CHEST 8th, antithrombotic management)', url: 'https://pubmed.ncbi.nlm.nih.gov/18574272/', label: 'Chest 2008;133(6 Suppl):S257-S298' },
   bnf_proat: { id: 'BNF: protamine sulfate', url: 'https://bnf.nice.org.uk/drugs/protamine-sulfate/', label: 'BNF (NICE)' },
   bnf_fonda: { id: 'BNF: fondaparinux', url: 'https://bnf.nice.org.uk/drugs/fondaparinux-sodium/', label: 'BNF (NICE)' },
-  arixtra_smpc: { id: 'Arixtra (fondaparinux) SmPC', url: 'https://www.medicines.org.uk/emc/search?q=fondaparinux', label: 'medicines.org.uk SmPC' },
+  arixtra_smpc: { id: 'Arixtra (fondaparinux) SmPC, EMC', url: 'https://www.medicines.org.uk/emc/product/3335/smpc', label: 'medicines.org.uk SmPC' },
   garcia: { id: 'Garcia 2018 (Fondaparinux reversal options)', url: 'https://pubmed.ncbi.nlm.nih.gov/29574429/', label: 'Hematology Am Soc Hematol Educ Program 2018' },
   greinacher: { id: 'Greinacher 2017 (HIT management, BSH)', url: 'https://pubmed.ncbi.nlm.nih.gov/29240222/', label: 'Br J Haematol 2017' }
 };
@@ -588,7 +592,7 @@ function calcDoac(doac) {
       'PCC has been used as a fallback (50 IU/kg) when idarucizumab is not available, but this is off-label and less effective than idarucizumab.',
       'Resumption of dabigatran after major bleeding requires multidisciplinary discussion. Switch to a different DOAC may be appropriate.'
     ];
-    refs = ['reverse', 'isth', 'ehra'];
+    refs = ['reverse', 'praxbind_smpc', 'isth', 'ehra'];
   } else if (timing === 'gt24' && crcl === 'normal') {
     cell  = 'Cell F: PCC not indicated';
     dose  = 'PCC reversal not indicated';
@@ -695,6 +699,7 @@ function calcDoac(doac) {
     if (refs.indexOf('nice697') === -1) refs.push('nice697');
     if (refs.indexOf('ondexxya_smpc') === -1) refs.push('ondexxya_smpc');
     if (refs.indexOf('annexa4') === -1) refs.push('annexa4');
+    if (refs.indexOf('bsh_andex') === -1) refs.push('bsh_andex');
   }
 
   // ICH note re NICE TA1029 termination
@@ -752,7 +757,7 @@ function calcWarfarin(agent) {
         'Consultant Haematologist approval required.',
         'Repeat INR at 30 minutes post-dose is mandatory.'
       ];
-      refs = ['keeling', 'stanworth'];
+      refs = ['keeling', 'beriplex_smpc', 'stanworth'];
     } else if (method === 'fixed') {
       cell  = 'Major bleed, INR ' + inr.toFixed(1) + ', fixed-dose alternative';
       let fixedDose = inr < 4.0 ? 1500 : 2000;
@@ -776,7 +781,7 @@ function calcWarfarin(agent) {
           'Vitamin K 5 mg IV may still be appropriate if the patient is to remain off warfarin.',
           'Source control is the priority. Discuss with Consultant Haematologist if PCC is being considered.'
         ];
-        refs = ['keeling', 'stanworth'];
+        refs = ['keeling', 'beriplex_smpc', 'stanworth'];
       } else {
         let iuPerKg, cap;
         if (inr < 4.0) { iuPerKg = 25; cap = 2500; }
@@ -807,7 +812,7 @@ function calcWarfarin(agent) {
       total = 'Reassess clinically; repeat CT if symptoms develop.';
     }
     notes = [
-      'BSH 2011: patients on warfarin with significant head injury have a recognised risk of delayed intracranial bleeding even with a normal initial CT.',
+      'BSH 2011: patients on warfarin with material head injury have a recognised risk of delayed intracranial bleeding even with a normal initial CT.',
       'If supra-therapeutic, correct the INR into the therapeutic range with oral vitamin K.',
       'Repeat CT head if any new neurological symptoms develop.',
       'Do not give PCC unless intracranial bleed is confirmed or clinically suspected.',
@@ -919,7 +924,7 @@ function calcUFH() {
     extraAlerts.push({
       type: 'red',
       title: 'Protamine safety warning',
-      body: 'Protamine carries a significant risk of <strong>anaphylaxis, hypotension, and bradycardia</strong>. Risk factors include prior protamine exposure, fish allergy, NPH insulin use, and prior vasectomy. Resuscitation equipment must be at the bedside. Test dose should be considered for high-risk patients. The infusion must be slow (over 10 min, rate not exceeding 5 mg/min). Refer to the <a href="https://bnf.nice.org.uk/drugs/protamine-sulfate/" target="_blank">BNF protamine entry</a> and the <a href="https://www.medicines.org.uk/emc/search?q=protamine" target="_blank">protamine SmPC</a> for full prescribing details.'
+      body: 'Protamine carries a marked risk of <strong>anaphylaxis, hypotension, and bradycardia</strong>. Risk factors include prior protamine exposure, fish allergy, NPH insulin use, and prior vasectomy. Resuscitation equipment must be at the bedside. Test dose should be considered for high-risk patients. The infusion must be slow (over 10 min, rate not exceeding 5 mg/min). Refer to the <a href="https://bnf.nice.org.uk/drugs/protamine-sulfate/" target="_blank">BNF protamine entry</a> and the <a href="https://www.medicines.org.uk/emc/search?q=protamine" target="_blank">protamine SmPC</a> for full prescribing details.'
     });
   }
 
@@ -1001,7 +1006,7 @@ function calcLMWH(agent) {
   extraAlerts.push({
     type: 'red',
     title: 'Protamine safety warning',
-    body: 'Protamine carries a significant risk of <strong>anaphylaxis, hypotension, and bradycardia</strong>. Risk factors include prior protamine exposure, fish allergy, NPH insulin use, and prior vasectomy. Resuscitation equipment must be at the bedside. Refer to the <a href="https://bnf.nice.org.uk/drugs/protamine-sulfate/" target="_blank">BNF protamine entry</a> and the <a href="https://www.medicines.org.uk/emc/search?q=protamine" target="_blank">protamine SmPC</a> for full prescribing details.'
+    body: 'Protamine carries a marked risk of <strong>anaphylaxis, hypotension, and bradycardia</strong>. Risk factors include prior protamine exposure, fish allergy, NPH insulin use, and prior vasectomy. Resuscitation equipment must be at the bedside. Refer to the <a href="https://bnf.nice.org.uk/drugs/protamine-sulfate/" target="_blank">BNF protamine entry</a> and the <a href="https://www.medicines.org.uk/emc/search?q=protamine" target="_blank">protamine SmPC</a> for full prescribing details.'
   });
 
   return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts };
