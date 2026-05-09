@@ -1346,33 +1346,36 @@ r2iss: {
       next:risk==='high'?'Ultra-high risk. Consider intensified therapy, tandem ASCT, clinical trial. VRd preferred induction. Discuss maintenance intensification.':'Risk-adapted therapy per local protocol. VRd induction standard. ASCT if eligible.'};}
 },
 myeloma_frailty: {
-  id:'myeloma_frailty', name:'IMWG Myeloma Frailty Score', purpose:'Stratify newly diagnosed myeloma patients into fit / intermediate-fit / frail to guide first-line regimen intensity, dose modification, and supportive care.',
+  id:'myeloma_frailty', name:'IMWG Myeloma Frailty Score', purpose:'Stratify newly diagnosed myeloma patients into fit / intermediate-fit / frail to guide first-line regimen intensity, dose modification, and supportive care. Frailty classification is multidimensional and should not be inferred from chronological age alone.',
   cat:'malignant', disease:'Multiple Myeloma', icon:'⚪',
   tags:['myeloma','frailty','imwg','geriatric','adl','iadl','charlson','tie','transplant ineligible'],
-  evidence:{source:'Palumbo A et al. Blood 2015;125(13):2068-74.',guideline:'IMWG / BSH',year:2015,pmid:'25628469'},
+  evidence:{source:'Palumbo A et al. Blood 2015;125(13):2068-74.',guideline:'Widely used in IMWG-aligned and UK myeloma practice',year:2015,pmid:'25628469'},
   whenUse:'Newly diagnosed myeloma — particularly transplant-ineligible adults — to inform first-line regimen choice and dose intensity.',
   whenNot:'Active emergency presentations requiring immediate cytoreduction. Pre-transplant fitness assessment uses separate JACIE / transplant-centre criteria.',
-  limits:'Derived in pooled analysis of 869 newly diagnosed elderly patients across three trials. Not formally re-validated in the daratumumab/isatuximab era; clinical judgement remains essential.',
+  limits:'Derived in pooled analysis of 869 newly diagnosed elderly patients across three trials. Not formally re-validated in the daratumumab / isatuximab era; clinical judgement remains essential. Absolute survival estimates from the derivation cohort should not be interpreted as contemporary outcome expectations in the anti-CD38 era. Frailty classification is multidimensional and should not be inferred from chronological age alone.',
   inputs:[
     {id:'age',label:'Age (years)',type:'number',min:18,max:110,step:1},
-    {id:'adl',label:'ADL (Katz score, 0–6 — number of activities patient can perform independently)',type:'number',min:0,max:6,step:1},
-    {id:'iadl',label:'IADL (Lawton score, 0–8 — number of instrumental activities patient can perform independently)',type:'number',min:0,max:8,step:1},
+    {id:'adl',label:'ADL (Katz Activities of Daily Living; higher score = greater independence)',type:'number',min:0,max:6,step:1},
+    {id:'iadl',label:'IADL (Lawton Instrumental Activities of Daily Living; higher score = greater independence)',type:'number',min:0,max:8,step:1},
     {id:'charlson',label:'Charlson Comorbidity Index (age-unadjusted)',type:'number',min:0,max:30,step:1},
   ],
   calc:(v)=>{if(v.age==null||v.adl==null||v.iadl==null||v.charlson==null) return{score:'-',max:5,risk:'info',label:'Enter age, ADL, IADL and Charlson values',stats:[],interp:'',next:''};
     const age=Number(v.age), adl=Number(v.adl), iadl=Number(v.iadl), ch=Number(v.charlson);
+    if(!Number.isFinite(age)||!Number.isFinite(adl)||!Number.isFinite(iadl)||!Number.isFinite(ch)) return{score:'-',max:5,risk:'info',label:'Invalid input',stats:[],interp:'Please enter numeric values.',next:''};
+    if(age<0||adl<0||iadl<0||ch<0||adl>6||iadl>8) return{score:'-',max:5,risk:'info',label:'Out-of-range input',stats:[],interp:'Inputs must be: age ≥0; ADL 0–6; IADL 0–8; Charlson ≥0.',next:''};
     const ageScore = age<=75 ? 0 : (age<=80 ? 1 : 2);
     const adlScore = adl>=5 ? 0 : 1;
     const iadlScore = iadl>=6 ? 0 : 1;
     const chScore = ch<=1 ? 0 : 1;
     const s = ageScore + adlScore + iadlScore + chScore;
+    const mdtNote = ' Regimen choice should integrate frailty category, disease biology, organ dysfunction, patient preference, funding status, and MDT judgement.';
     let risk,label,os3y;
     if(s===0){risk='low';label='Fit';os3y='~84%';}
     else if(s===1){risk='int';label='Intermediate-fit';os3y='~76%';}
     else{risk='high';label='Frail';os3y='~57%';}
     return{score:s,max:5,risk,label:'IMWG Frailty: '+label,
-      stats:[['Age points',ageScore],['ADL points',adlScore],['IADL points',iadlScore],['Charlson points',chScore],['3-yr OS (Palumbo 2015)',os3y]],
-      interp:s===0?'Fit. Standard-intensity first-line therapy is generally appropriate (e.g. DRd or Isa-VRd in TIE; full-intensity quadruplet in TE).':s===1?'Intermediate-fit. Consider dose-adjusted first-line therapy. Higher risk of toxicity and treatment discontinuation than fit patients.':'Frail. Markedly higher mortality and toxicity risk. Start with reduced-intensity therapy and escalate with tolerance. TA587-restricted Rd (thalidomide contraindicated/intolerant) or careful dose-modified DRd may be appropriate per MDT decision.',
+      stats:[['Age points',ageScore],['ADL points',adlScore],['IADL points',iadlScore],['Charlson points',chScore],['3-yr OS (Palumbo 2015 derivation cohort; pre-anti-CD38 era)',os3y]],
+      interp:(s===0?'Fit. Standard-intensity first-line therapy is generally appropriate (e.g. DRd or Isa-VRd in TIE; full-intensity quadruplet in TE).':s===1?'Intermediate-fit. Consider dose-adjusted first-line therapy. Higher risk of toxicity and treatment discontinuation than fit patients.':'Frail. Markedly higher mortality and toxicity risk. Start with reduced-intensity therapy and escalate with tolerance. TA587-restricted Rd (thalidomide contraindicated/intolerant) or careful dose-modified DRd may be appropriate per MDT decision.') + mdtNote,
       next:s===0?'Proceed with NICE-supported first-line at full intensity. See Myeloma First-Line Decision Pathway.':s===1?'Consider dose-modification of standard first-line. Closer monitoring for toxicity. See Myeloma First-Line Decision Pathway Step 5.':'MDT discussion. Consider lower-intensity Rd (within TA587 restricted indication) or dose-modified DRd. Aggressive supportive care: VTE prophylaxis, infection prophylaxis, bone-modifying therapy. See Myeloma First-Line Decision Pathway Step 5.'};}
 },
 mgus: {
