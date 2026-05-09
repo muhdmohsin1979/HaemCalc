@@ -118,6 +118,77 @@
   .alert-body { font-size: 13px; line-height: 1.6; }
   .alert-body a { color: #0066cc; text-decoration: none; }
   .alert-body a:hover { text-decoration: underline; }
+  /* Consultant reasoning panel — supplementary, visually subordinate to primary recommendation.
+     Collapsed by default. Neutral palette. Mobile-stacked. Print-hidden. */
+  .consultant-reasoning {
+    margin-top: 16px;
+    border: 1px solid #d8dde4;
+    border-radius: 4px;
+    background: #fafbfc;
+    font-size: 12px;
+  }
+  .consultant-reasoning summary {
+    padding: 8px 12px 8px 28px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #4a5566;
+    font-size: 12px;
+    user-select: none;
+    list-style: none;
+    position: relative;
+  }
+  .consultant-reasoning summary::-webkit-details-marker { display: none; }
+  .consultant-reasoning summary::marker { display: none; }
+  .consultant-reasoning summary::before {
+    content: '\25B8';
+    position: absolute;
+    left: 12px;
+    top: 8px;
+    font-size: 10px;
+    color: #8a93a0;
+  }
+  .consultant-reasoning[open] summary::before { content: '\25BE'; }
+  .consultant-reasoning .cr-body {
+    padding: 4px 16px 16px 28px;
+    border-top: 1px solid #e5e9ed;
+    background: #ffffff;
+    color: #2c3540;
+    line-height: 1.6;
+  }
+  .consultant-reasoning .cr-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 12px;
+  }
+  @media (max-width: 600px) {
+    .consultant-reasoning .cr-grid { grid-template-columns: 1fr; gap: 8px; }
+  }
+  .consultant-reasoning h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #4a5566;
+    font-weight: 600;
+    margin: 12px 0 6px;
+  }
+  .consultant-reasoning ul { margin: 0; padding-left: 18px; }
+  .consultant-reasoning li { margin-bottom: 4px; font-size: 12px; }
+  .consultant-reasoning blockquote {
+    margin: 0;
+    padding: 8px 12px;
+    background: #f5f5f5;
+    border-left: 2px solid #c5cdd5;
+    font-style: italic;
+    color: #3a4350;
+    font-size: 12px;
+  }
+  .consultant-reasoning .cr-section { margin-top: 8px; }
+  .consultant-reasoning.cr-overlay {
+    border-left: 3px solid #b88a00;
+    background: #fffbf0;
+  }
+  .consultant-reasoning.cr-overlay summary { color: #5c4a00; }
   .dose-table {
     width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px;
   }
@@ -175,6 +246,9 @@
     button { display: none; }
     .signature-block { display: block !important; margin-top: 30px; page-break-inside: avoid; }
     .alert-blue, .alert-amber, .alert-red { background: #fff !important; border: 1px solid #000; }
+    /* Hide consultant reasoning panel from print by default — clinicians who want it printed
+       can expand it first. Per Rendering safety rule in PR γ Part 1 README. */
+    .consultant-reasoning { display: none !important; }
     .dose-table tr.recommended td { background: #ddd !important; }
   }
   .signature-block { display: none; }
@@ -500,6 +574,230 @@ const REFS = {
 };
 
 // =====================================================================
+// CONSULTANT REASONING PANELS
+// =====================================================================
+// Content sourced verbatim from PR γ Part 1 v0.3 markdown drafts
+// (outputs/haemcalc-cdss/content/01_consultant_reasoning_panels.md), which were
+// drafted, reviewed in three rounds (v0.1 → v0.2 → v0.3), and approved for
+// rendering. Do not edit clinical content here without re-running the v0.3
+// reviewer process. Rendering is supplementary and visually subordinate to
+// the primary recommendation per the Rendering safety rule.
+const REASONING_PANELS = {
+  doac_ich: {
+    escalation: [
+      'Expanding haematoma on serial CT, a major predictor of poor outcome.',
+      'Deteriorating GCS or new focal deficit.',
+      'Posterior fossa or brainstem location, mass effect, midline shift.',
+      'Recent therapeutic or supra-therapeutic dosing.',
+      'Severe renal impairment (CrCl &lt;30) prolonging drug exposure.',
+      'Imminent neurosurgical intervention requiring corrected coagulation.'
+    ],
+    conservative: [
+      'Stable haematoma on repeat CT and stable GCS.',
+      'Time since last dose &gt;24 hours with normal renal function — residual drug level may be below commonly used clinically relevant thresholds.',
+      'Mechanical heart valve, recent (&lt;30 day) PCI, recent (&lt;30 day) VTE, antiphospholipid syndrome, or known prothrombotic state — rebound thrombosis risk is real and non-trivial.',
+      'Patient ceiling-of-care decision excludes neurosurgery and the bleed is small.',
+      'ANNEXA-I reported higher thrombotic event rates with andexanet alfa than usual care without a demonstrated mortality benefit.'
+    ],
+    commissioning: '<strong>England, Wales, NI:</strong> NICE has not made a recommendation for NHS use of andexanet alfa in ICH following the terminated appraisal TA1029 (15 January 2025). In practice, many UK centres use 4F-PCC off-label after consultant haematology discussion. <strong>Scotland:</strong> SMC advice 2273 accepts andexanet alfa for the full licensed indication on apixaban or rivaroxaban (any-site life-threatening or uncontrolled bleeding) on an interim basis.',
+    pitfalls: [
+      'Do not rely on commercial anti-Xa assay results after andexanet alfa to judge reversal response. Ondexxya SmPC §4.4 states these assays substantially underestimate reversal activity. Monitor by clinical haemostasis, serial imaging, and adverse-event surveillance.'
+    ],
+    documentation: 'ICH on [drug] [last dose] mg [hours] hours ago; CrCl X; haematoma volume Y mL with/without expansion on repeat CT at Z hours; reversal: [agent and dose] discussed with on-call consultant haematologist [name]; rationale recorded; thrombosis risk explicitly weighed.',
+    evidence: 'ANNEXA-I (Connolly 2024, NEJM) showed higher haemostatic efficacy with andexanet alfa than usual care (mostly PCC) but higher thrombotic event rates without a demonstrated mortality benefit. Comparative evidence between agents in ICH remains observational outside that trial.'
+  },
+  doac_gi: {
+    escalation: [
+      'Haemodynamic instability despite resuscitation.',
+      'Active bleeding visible at endoscopy not amenable to local control.',
+      'Recent therapeutic or supra-therapeutic dosing, or severe renal impairment.',
+      'Falling haemoglobin despite transfusion.',
+      'Failed first attempt at endoscopic or interventional radiology control.'
+    ],
+    conservative: [
+      'Source identified and controlled at endoscopy (clip, banding, adrenaline, thermocoagulation).',
+      'Haemodynamically stable after fluid resuscitation.',
+      'Time since last dose &gt;24 hours with normal renal function.',
+      'High background thrombosis risk where rebound is the bigger danger.',
+      'Bleeding self-limiting and patient otherwise improving.'
+    ],
+    commissioning: '<strong>England, Wales, NI:</strong> NICE TA697 supports andexanet alfa for life-threatening or uncontrolled GI bleeding on apixaban or rivaroxaban, subject to local implementation. <strong>Scotland:</strong> SMC2273 supports the licensed indication for life-threatening or uncontrolled bleeding at any site on an interim basis. This is the scenario most likely to attract NHS funding for andexanet alfa across all four nations.',
+    pitfalls: [
+      'Avoid sequential or combined use of andexanet alfa with PCC, activated PCC, recombinant factor VIIa, fresh frozen plasma, or whole blood unless absolutely required (Ondexxya SmPC §4.4 — lack of safety data in combination).',
+      'Do not rely on commercial anti-Xa assay results after andexanet alfa to judge reversal response (Ondexxya SmPC §4.4).'
+    ],
+    documentation: 'Major GI bleed on [drug] [last dose] mg [hours] hours ago; CrCl X; endoscopic findings [Forrest classification or equivalent]; transfusion requirement; reversal: [agent and dose]; tranexamic acid [given/avoided — rationale]; consultant haematologist [name] consulted.',
+    evidence: 'HALT-IT (Lancet 2020) showed tranexamic acid did not reduce death from GI bleeding and was associated with increased venous thromboembolism. ANNEXA-4 (Connolly 2016, NEJM) registry data support haemostatic efficacy of andexanet for FXa-inhibitor-related GI bleed but did not include a comparator arm.'
+  },
+  dabi_ich: {
+    escalation: [
+      'Confirmed prolonged dilute thrombin time or ecarin clotting time.',
+      'Recent therapeutic or supra-therapeutic dosing.',
+      'Severe renal impairment (dabigatran is ~80% renally cleared; t½ rises sharply with reduced CrCl).',
+      'Expanding haematoma, deteriorating GCS, mass effect.',
+      'Imminent neurosurgical intervention.'
+    ],
+    conservative: [
+      'A normal thrombin time on a locally validated sensitive assay generally argues against clinically meaningful dabigatran activity — confirm assay sensitivity with the laboratory before relying on this. If the local TT is not dabigatran-sensitive, dilute thrombin time (dTT) or ECT is needed.',
+      'Stable small bleed, stable GCS.',
+      'Patient ceiling-of-care excludes neurosurgery.',
+      'Rebound anticoagulant activity may occur in selected patients up to 24 hours after idarucizumab dosing (Praxbind SmPC §5.1).'
+    ],
+    commissioning: 'Idarucizumab is licensed across all four UK nations for dabigatran reversal (Praxbind SmPC, EMC, last updated 17 January 2025). No four-nation commissioning split for this drug.',
+    pitfalls: [],
+    documentation: 'ICH on dabigatran [last dose] mg [hours] hours ago; CrCl X; thrombin time/dTT/ECT [result]; idarucizumab 5 g IV (2 × 2.5 g/50 mL) given as [bolus / two consecutive 5–10 min infusions]; on-call consultant haematologist [name]; second dose considered if rebound clotting prolongation.',
+    evidence: 'RE-VERSE AD (Pollack 2017, NEJM) showed rapid reversal of dabigatran-induced anticoagulation by idarucizumab but was a single-arm cohort study, not a randomised comparison.'
+  },
+  dabi_extracranial: {
+    escalation: [
+      'Major bleeding meeting ISTH criteria with prolonged thrombin time, dTT, or ECT.',
+      'Severe renal impairment.',
+      'Failed mechanical / endoscopic / surgical control.',
+      'Pre-procedural urgent reversal for emergency surgery (this is a separately licensed Praxbind indication).'
+    ],
+    conservative: [
+      'Normal thrombin time on a locally validated sensitive assay generally argues against clinically meaningful drug effect.',
+      'Bleeding controlled by local measures.',
+      'Patient stable, time since last dose remote.'
+    ],
+    commissioning: 'Idarucizumab licensed in all four nations. If idarucizumab is unavailable, haemodialysis is an option (dabigatran is ~80% renally cleared) — engage renal team early. 4F-PCC (~50 IU/kg) is an off-label fallback but less effective than idarucizumab.',
+    pitfalls: [],
+    documentation: 'Major [site] bleed on dabigatran; CrCl X; TT [result]; idarucizumab 5 g IV given; haemostatic response assessed at 30 min and 4 hours; second dose considered.',
+    evidence: 'Praxbind has not been compared head-to-head against haemodialysis or 4F-PCC. The single-arm RE-VERSE AD evidence is sufficient for SmPC licensing but not for cross-strategy comparison.'
+  },
+  warfarin_major: {
+    escalation: [
+      'Major bleeding meeting ISTH criteria with elevated INR.',
+      'Haemodynamic instability or transfusion requirement.',
+      'Imminent surgical or interventional bleeding control.',
+      'For ICH specifically: confirmed bleed on imaging, mass effect, or imminent neurosurgical intervention.'
+    ],
+    conservative: [
+      'Bleeding source identified and controlled (e.g. nosebleed, dental socket).',
+      'Sub-therapeutic INR (&lt;1.5) — bleeding may not be primarily warfarin-related; investigate alternative cause before committing to PCC.',
+      'Mechanical heart valve — rebound thrombosis after PCC is a real risk; balance reversal against the re-anticoagulation strategy with on-call cardiology and haematology.'
+    ],
+    commissioning: '4F-PCC is licensed across the UK for VKA reversal in major bleeding (Beriplex P/N 1000 IU SmPC). No four-nation split. Vitamin K 5 mg IV concurrently because of short factor VII half-life (~6 h) — PCC alone gives only transient correction.',
+    pitfalls: [],
+    documentation: 'Major [site] bleed on warfarin INR [value]; weight [kg]; 4F-PCC [25/35/50] IU/kg = [total IU] (capped at [2500/3500/5000]) plus vitamin K 5 mg IV slow infusion; INR rechecked at 30 min and 6 hours; restart anticoagulation discussion documented.',
+    evidence: 'BSH 2011 (Keeling) and Beriplex P/N SmPC §4.2 INR-banded weight-based dosing are the foundational sources. Tranexamic acid should be considered only where supported by the bleeding context and local protocol; avoid routine use in GI bleeding after HALT-IT.'
+  },
+  ufh_major: {
+    escalation: [
+      'Active major bleeding while on therapeutic UFH (recent dose within last 30 min).',
+      'Emergency surgery within 30–60 min of last UFH dose.',
+      'Confirmed elevated APTT ratio attributable to UFH.'
+    ],
+    conservative: [
+      'Time since last UFH dose &gt;4 hours (anticoagulant effect largely dissipated; UFH t½ 60–90 min).',
+      'Continuous infusion stopped; consider stopping infusion alone before reaching for protamine.',
+      'Increased risk of protamine reaction (anaphylaxis, hypotension, bradycardia) particularly with previous protamine exposure, NPH insulin exposure, vasectomy history, or prior reaction — test dose may be appropriate in higher-risk patients.'
+    ],
+    commissioning: 'Prosulf (protamine sulphate) licensed UK-wide. Maximum single dose 50 mg, slow IV over 10 minutes, rate not exceeding 5 mg/min.',
+    pitfalls: [],
+    documentation: 'Major [site] bleed on IV UFH [units] given [time] ago; APTT ratio [value]; protamine [dose] mg slow IV over 10 min (rate ≤5 mg/min); APTT rechecked at 5–15 min; resuscitation equipment confirmed at bedside before administration.',
+    evidence: 'Prosulf SmPC ranges (1 mg/100 IU at &lt;15 min, 0.5–0.75 mg/100 IU at 30–60 min, 0.25–0.375 mg/100 IU at ≥2 h) are the foundational dose source. UK practice typically sits at the conservative end to avoid protamine\'s own anticoagulant effect at high cumulative dose.'
+  },
+  lmwh_major: {
+    escalation: [
+      'Major bleeding within 8 hours of last LMWH dose.',
+      'Confirmed elevated drug-calibrated anti-Xa level (the preferred laboratory measure of LMWH activity; APTT does not reflect it).',
+      'Active bleeding requiring urgent surgical or IR control.'
+    ],
+    conservative: [
+      'Time since last LMWH dose &gt;12 hours (limited residual effect; protamine has limited utility).',
+      'Bleeding self-limiting or controlled by mechanical means.',
+      'High thrombosis risk.'
+    ],
+    commissioning: 'Prosulf (protamine) licensed UK-wide. Protamine reverses only ~60% of LMWH anti-Xa activity even within the optimal window (poor binding to short heparin chains) — counsel the team that residual anti-Xa activity may persist.',
+    pitfalls: [],
+    documentation: 'Major [site] bleed on [LMWH] [last dose] [hours] ago; anti-Xa level [if available]; protamine [dose] mg slow IV (calculated as [1 mg/1 mg enoxaparin OR 1 mg/100 anti-Xa IU dalteparin/tinzaparin] within 8 h, halved at 8–12 h); second dose considered at 4 hours if bleeding continues.',
+    evidence: 'Partial reversal (~60% anti-Xa restoration) is the consensus from Prosulf SmPC, Garcia 2018, and Schulman 2008 ACCP. No randomised data demonstrate clinical benefit of protamine in LMWH-related major bleeding.'
+  },
+  thrombosis_overlay: {
+    isOverlay: true,
+    escalation: [
+      'These conditions independently raise post-reversal thrombotic event risk: mechanical heart valve, coronary stent within 30 days, active VTE within 30 days, antiphospholipid syndrome, prior HIT, prior recurrent thrombosis on therapeutic anticoagulation.',
+      'Despite this, full reversal remains mandated for life-threatening bleeding into a critical site (intracranial, intraspinal, pericardial), or imminent emergency surgery that cannot proceed without reversal.'
+    ],
+    conservative: [
+      'Use the minimum effective reversal dose required to achieve haemostasis — going beyond that adds thrombotic risk without haemostatic benefit.',
+      'Plan re-anticoagulation BEFORE reversal is given — when, with what agent, at what intensity. Failure to plan re-anticoagulation is the commonest source of post-reversal thrombosis.'
+    ],
+    commissioning: 'Choice of reversal agent should be discussed explicitly with the team that prescribed the original anticoagulant (cardiology for mechanical valves, vascular for arterial stents, haematology for VTE/APS/HIT).',
+    pitfalls: [],
+    documentation: '[Reversal agent and dose, minimum effective] given for [bleed]; high thrombosis-risk profile [reason]; re-anticoagulation plan: [agent, dose, restart time, monitoring]; multidisciplinary discussion documented with [cardiology/vascular/haematology] consultant [name].',
+    evidence: 'ANNEXA-I trial population was not enriched for the very high-risk groups listed above, so the true post-reversal thrombosis rate in mechanical-valve / antiphospholipid / recent-PCI patients is likely higher than the trial averages suggest. Reversal is justified for the bleed; the re-anticoagulation plan is what limits the rebound.'
+  }
+};
+
+// Panels deferred to a future UI revision because the current bleed-scenario inputs
+// don't carry enough granularity to trigger them cleanly: Panel 3 (DOAC + critical-site
+// non-ICH); Panel 4 (DOAC + traumatic haemorrhage); Panel 7 (warfarin ICH split from
+// non-ICH); Panel 11 (recent DOAC ingestion without major bleed). These remain in
+// outputs/haemcalc-cdss/content/01_consultant_reasoning_panels.md for future use.
+
+function selectReasoningPanels(ctx) {
+  // ctx: { agent, scenario, riskHigh }
+  // Returns array of panel IDs in REASONING_PANELS to render under the output.
+  const ids = [];
+  const a = ctx.agent;
+  const s = ctx.scenario;
+  if (a === 'apixaban' || a === 'rivaroxaban') {
+    if (s === 'ich_critical' || s === 'ich_only') ids.push('doac_ich');
+    else if (s === 'gi_bleed_major') ids.push('doac_gi');
+    else if (s === 'major_haemo' || s === 'major_non_ich' || s === 'major_any') ids.push('doac_ich');
+  } else if (a === 'edoxaban') {
+    if (s === 'ich_critical' || s === 'ich_only') ids.push('doac_ich');
+    else if (s === 'gi_bleed_major') ids.push('doac_gi');
+  } else if (a === 'dabigatran') {
+    if (s === 'ich_critical' || s === 'ich_only') ids.push('dabi_ich');
+    else ids.push('dabi_extracranial');
+  } else if (a === 'warfarin' || a === 'acenocoumarol' || a === 'phenindione') {
+    if (s === 'major_bleed') ids.push('warfarin_major');
+  } else if (a === 'ufh') {
+    ids.push('ufh_major');
+  } else if (a === 'enoxaparin' || a === 'dalteparin' || a === 'tinzaparin') {
+    ids.push('lmwh_major');
+  }
+  if (ctx.riskHigh) ids.push('thrombosis_overlay');
+  return ids;
+}
+
+function renderReasoningPanels(ids) {
+  if (!ids || !ids.length) return '';
+  let html = '';
+  ids.forEach(function(id) {
+    const p = REASONING_PANELS[id];
+    if (!p) return;
+    const overlayCls = p.isOverlay ? ' cr-overlay' : '';
+    const title = p.isOverlay ? 'Consultant reasoning &mdash; high thrombosis-risk overlay' : 'Consultant reasoning';
+    html += '<details class="consultant-reasoning' + overlayCls + '"><summary>' + title + '</summary><div class="cr-body">';
+    html += '<div class="cr-grid"><div class="cr-col"><h4>Factors favouring escalation</h4><ul>';
+    p.escalation.forEach(function(b) { html += '<li>' + b + '</li>'; });
+    html += '</ul></div><div class="cr-col"><h4>Factors favouring conservative strategy</h4><ul>';
+    p.conservative.forEach(function(b) { html += '<li>' + b + '</li>'; });
+    html += '</ul></div></div>';
+    if (p.commissioning) {
+      html += '<div class="cr-section"><h4>UK commissioning / access nuance</h4><p>' + p.commissioning + '</p></div>';
+    }
+    if (p.pitfalls && p.pitfalls.length) {
+      html += '<div class="cr-section"><h4>Pitfalls</h4><ul>';
+      p.pitfalls.forEach(function(b) { html += '<li>' + b + '</li>'; });
+      html += '</ul></div>';
+    }
+    if (p.documentation) {
+      html += '<div class="cr-section"><h4>Documentation phrase</h4><blockquote>' + p.documentation + '</blockquote></div>';
+    }
+    if (p.evidence) {
+      html += '<div class="cr-section"><h4>Evidence caution</h4><p>' + p.evidence + '</p></div>';
+    }
+    html += '</div></details>';
+  });
+  return html;
+}
+
+// =====================================================================
 // ANDEXANET ALFA SmPC LOGIC
 // =====================================================================
 // Verified against Ondexxya SmPC §4.2 Tables 2 and 3 on 2026-05-06
@@ -756,7 +1054,8 @@ function calcDoac(doac) {
     if (refs.indexOf('doh_ni_ta697') === -1) refs.push('doh_ni_ta697');
   }
 
-  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts };
+  const reasoningPanels = selectReasoningPanels({ agent: doac, scenario: bleed, riskHigh: risk });
+  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts, reasoningPanels: reasoningPanels };
 }
 
 // =====================================================================
@@ -891,7 +1190,8 @@ function calcWarfarin(agent) {
     refs = ['keeling', 'lester'];
   }
 
-  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts };
+  const reasoningPanels = selectReasoningPanels({ agent: agent, scenario: scenario, riskHigh: false });
+  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts, reasoningPanels: reasoningPanels };
 }
 
 // =====================================================================
@@ -970,10 +1270,12 @@ function calcUFH() {
     });
   }
 
+  const reasoningPanels = selectReasoningPanels({ agent: 'ufh', scenario: 'major', riskHigh: false });
   return {
     cell: cell, dose: dose, total: total, notes: notes,
     refs: ['protamine_smpc', 'bnf_proat', 'schulman'],
-    extraAlerts: extraAlerts
+    extraAlerts: extraAlerts,
+    reasoningPanels: reasoningPanels
   };
 }
 
@@ -998,7 +1300,8 @@ function calcLMWH(agent) {
       'Consider source control, mechanical haemostasis, and supportive transfusion.',
       'In life-threatening bleeding, off-label rFVIIa has been used but evidence is very limited.'
     ];
-    return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts };
+    const reasoningPanels = selectReasoningPanels({ agent: agent, scenario: 'major', riskHigh: false });
+    return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts, reasoningPanels: reasoningPanels };
   }
 
   let protamineDose1, protamineDose2 = null;
@@ -1051,7 +1354,8 @@ function calcLMWH(agent) {
     body: 'Protamine carries a marked risk of <strong>anaphylaxis, hypotension, and bradycardia</strong>. Risk factors include prior protamine exposure, fish allergy, NPH insulin use, and prior vasectomy. Resuscitation equipment must be at the bedside. Refer to the <a href="https://bnf.nice.org.uk/drugs/protamine-sulfate/" target="_blank">BNF protamine entry</a> and the <a href="https://www.medicines.org.uk/emc/search?q=protamine" target="_blank">protamine SmPC</a> for full prescribing details.'
   });
 
-  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts };
+  const reasoningPanels = selectReasoningPanels({ agent: agent, scenario: 'major', riskHigh: false });
+  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts, reasoningPanels: reasoningPanels };
 }
 
 // =====================================================================
@@ -1161,6 +1465,11 @@ function renderOutput(result) {
       html += '<div class="alert-body">' + a.body + '</div>';
       html += '</div>';
     });
+  }
+  // Consultant reasoning panels — supplementary, collapsed by default, visually subordinate
+  // to the primary recommendation per Rendering safety rule (PR γ Part 1 README).
+  if (result.reasoningPanels && result.reasoningPanels.length) {
+    html += renderReasoningPanels(result.reasoningPanels);
   }
   document.getElementById('output').innerHTML = html;
 
