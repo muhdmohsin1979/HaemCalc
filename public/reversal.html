@@ -189,6 +189,44 @@
     background: #fffbf0;
   }
   .consultant-reasoning.cr-overlay summary { color: #5c4a00; }
+  /* Evidence hierarchy badge — small inline pill, sits next to the recommendation
+     title (cell-name) or the alert title. Visually subordinate to the dose
+     recommendation per PR β Part 1 v0.4 Rendering safety rule. Two-tone palette
+     only: neutral slate for governance-neutral classes (Guideline-supported,
+     Consensus practice, NHS access dependent), muted amber for cautionary classes
+     (Off-label, Low-certainty evidence). No red, no green. Never animates.
+     Hidden from print by default (see @media print rule below). */
+  .evidence-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid;
+    background: transparent;
+    margin-left: 8px;
+    vertical-align: middle;
+    white-space: nowrap;
+    line-height: 1.4;
+  }
+  .evidence-badge--neutral {
+    color: #4a5566;
+    border-color: #b6c0cc;
+    background: #f5f7fa;
+  }
+  .evidence-badge--cautionary {
+    color: #8a6500;
+    border-color: #c69500;
+    background: #fffbeb;
+  }
+  @media (max-width: 600px) {
+    .evidence-badge {
+      margin-left: 0;
+      margin-top: 6px;
+    }
+  }
   .dose-table {
     width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px;
   }
@@ -249,6 +287,9 @@
     /* Hide consultant reasoning panel from print by default — clinicians who want it printed
        can expand it first. Per Rendering safety rule in PR γ Part 1 README. */
     .consultant-reasoning { display: none !important; }
+    /* Hide evidence hierarchy badges from print by default — the print copy must
+       focus on dose and documentation. Per PR β Part 1 v0.4 Rendering safety rule. */
+    .evidence-badge { display: none !important; }
     .dose-table tr.recommended td { background: #ddd !important; }
   }
   .signature-block { display: none; }
@@ -798,6 +839,101 @@ function renderReasoningPanels(ids) {
 }
 
 // =====================================================================
+// EVIDENCE HIERARCHY BADGES (PR β Part 1 v0.4)
+// =====================================================================
+//
+// TAXONOMY IMMUTABILITY RULE — MANDATORY CONTRIBUTOR CONSTRAINT
+//
+// New badges must NOT be added to this map without explicit consultant
+// clinical-governance review and taxonomy-level justification. Badge
+// proliferation weakens interpretability, increases visual noise, and risks
+// collapsing distinct governance concepts into overlapping labels.
+//
+// The five-badge taxonomy answers five non-overlapping governance questions,
+// by design:
+//
+//   guideline_supported    -> Is this the licensed / on-guideline action for
+//                             this scenario? (Backed by NICE TA, BSH guideline,
+//                             or SmPC for the licensed indication.)
+//   consensus_practice     -> Is this accepted UK specialist practice in the
+//                             absence of a licensed specific reversal strategy
+//                             or definitive comparative trial?
+//   nhs_access_dependent   -> Does jurisdiction materially alter whether this
+//                             recommendation exists? (Use ONLY when the
+//                             underlying recommendation is materially split by
+//                             UK nation; not for operational variation.)
+//   off_label              -> Does this action require explicit governance
+//                             justification and documentation in the patient
+//                             note? (Use outside the regulator-approved
+//                             indication.)
+//   low_certainty_evidence -> Is the evidentiary substrate intrinsically weak
+//                             or only partially supportive? (Observational or
+//                             case-series data, or partial-reversal agents.)
+//
+// PRECEDENCE HIERARCHY (when more than one badge could apply):
+//   1. off_label                 (highest-precedence governance signal)
+//   2. low_certainty_evidence
+//   3. nhs_access_dependent
+//   4. guideline_supported
+//   5. consensus_practice
+//
+// PREDICTABLE FUTURE REQUESTS THAT MUST BE DECLINED unless taxonomy-level
+// clinical-governance justification is offered:
+//
+//   "Strong evidence"  -> duplicates Guideline-supported and re-introduces the
+//                         recommendation-strength misreading the rendering
+//                         safety rule explicitly forbids. The taxonomy is not
+//                         a strength score.
+//   "Experimental"     -> collapses into Off-label + Low-certainty evidence;
+//                         adds nothing the existing two cautionary badges do
+//                         not already carry.
+//   "Preferred"        -> implies a ranking against the other badges, which
+//                         the taxonomy is designed not to imply.
+//   "Rare use"         -> a property of the evidence base or of clinical
+//                         frequency, not a governance status; belongs in the
+//                         consultant reasoning panel, not the badge layer.
+//   "Discouraged" /    -> a recommendation-direction signal, not a governance-
+//   "Avoid"               classification signal; belongs in the existing red
+//                         alert layer or in recommendation suppression logic
+//                         (as already done for TXA in GI bleeding).
+//
+// BADGES MUST NEVER BE INTERPRETED AS RECOMMENDATION STRENGTH SCORES. The
+// taxonomy is a governance / context framework, not an evidence-grading
+// framework. A "Guideline-supported" badge does not mean "more recommended
+// than" an "Off-label" badge — it means "this is the licensed and guideline-
+// aligned action for this scenario", whereas "Off-label" means "this is the
+// accepted action despite being outside the licensed indication". They are
+// different categories of clinical truth, not points on the same scale.
+//
+// Full rationale, per-recommendation mapping, and the NHS-access-dependent
+// qualification rule live in:
+//   outputs/haemcalc-cdss/content/02_evidence_hierarchy_badges.md
+//   (PR β Part 1 v0.4, content-frozen)
+//
+// Any change to this map requires a corresponding update to that document
+// and explicit consultant clinical-governance review.
+//
+const BADGES = {
+  guideline_supported:    { label: 'Guideline-supported',    tone: 'neutral'    },
+  consensus_practice:     { label: 'Consensus practice',     tone: 'neutral'    },
+  nhs_access_dependent:   { label: 'NHS access dependent',   tone: 'neutral'    },
+  off_label:              { label: 'Off-label',              tone: 'cautionary' },
+  low_certainty_evidence: { label: 'Low-certainty evidence', tone: 'cautionary' }
+};
+
+// renderBadge — returns the inline HTML for a single evidence badge, or '' if
+// no badge is supplied. One badge per recommendation block only. The badge sits
+// next to the recommendation title (cell-name) or the alert title; never above
+// the dose recommendation. Per PR β Part 1 v0.4 Rendering safety rule.
+function renderBadge(id) {
+  if (!id) return '';
+  const b = BADGES[id];
+  if (!b) return '';
+  const cls = 'evidence-badge evidence-badge--' + b.tone;
+  return ' <span class="' + cls + '" data-badge-id="' + id + '">' + b.label + '</span>';
+}
+
+// =====================================================================
 // ANDEXANET ALFA SmPC LOGIC
 // =====================================================================
 // Verified against Ondexxya SmPC §4.2 Tables 2 and 3 on 2026-05-06
@@ -1016,6 +1152,10 @@ function calcDoac(doac) {
     extraAlerts.push({
       type: 'blue',
       title: 'Andexanet alfa eligibility flag',
+      // Per v0.4 mapping: andexanet alfa for apixaban/rivaroxaban GI bleed is the
+      // licensed indication and is recommended in all four UK nations (NICE TA697
+      // for E/W/NI, SMC2273 for Scotland). Badge: Guideline-supported.
+      badge: 'guideline_supported',
       body: bodyText
         + smpcDose
         + '<div style="margin-top: 8px; padding: 8px; background: #fff8e1; border-left: 3px solid #ff8f00; font-size: 12px;"><strong>Safety signal:</strong> the Ondexxya SmPC and the BSH position statement (25 April 2026) note serious arterial and venous thromboembolic events have been reported following andexanet alfa, including early manifestation within 72 hours. The US FDA withdrew andexanet alfa from the US market on 22 December 2025 citing thromboembolic risk; the EMA CHMP confirmed a positive benefit–risk balance in April 2025 and recommended renewal of the conditional marketing authorisation for Ondexxya. Counsel the patient or family on this risk profile and document the discussion. Restart anticoagulation when bleeding is controlled.</div>'
@@ -1046,6 +1186,12 @@ function calcDoac(doac) {
     extraAlerts.push({
       type: 'amber',
       title: 'Note on andexanet alfa for ICH',
+      // Per v0.4 mapping: andexanet alfa for apixaban/rivaroxaban ICH is materially
+      // split by UK jurisdiction — NICE explicitly did not recommend in TA1029
+      // (terminated, E/W/NI) but SMC2273 supports it for the licensed indication
+      // in Scotland. The recommendation literally depends on jurisdiction.
+      // Badge: NHS access dependent.
+      badge: 'nhs_access_dependent',
       body: ichBody
     });
     if (refs.indexOf('nice1029') === -1) refs.push('nice1029');
@@ -1055,7 +1201,25 @@ function calcDoac(doac) {
   }
 
   const reasoningPanels = selectReasoningPanels({ agent: doac, scenario: bleed, riskHigh: risk });
-  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts, reasoningPanels: reasoningPanels };
+  // Evidence hierarchy badge for the primary recommendation block, per
+  // PR β Part 1 v0.4 per-recommendation mapping:
+  //   - dabigatran     -> idarucizumab is the licensed specific reversal agent
+  //                       (Praxbind SmPC §4.1) -> guideline_supported.
+  //   - Cell F         -> PCC not indicated; supportive care + source control is
+  //                       accepted UK practice -> consensus_practice.
+  //   - apixaban /     -> 4F-PCC is licensed for VKA reversal, not DOAC reversal;
+  //     rivaroxaban /     UK use for FXa-inhibitor-related bleeding is widely
+  //     edoxaban          accepted but remains off-label per the SmPC.
+  //                       -> off_label.
+  let badge;
+  if (doac === 'dabigatran') {
+    badge = 'guideline_supported';
+  } else if (cell.indexOf('Cell F') !== -1) {
+    badge = 'consensus_practice';
+  } else {
+    badge = 'off_label';
+  }
+  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts, reasoningPanels: reasoningPanels, badge: badge };
 }
 
 // =====================================================================
@@ -1191,7 +1355,13 @@ function calcWarfarin(agent) {
   }
 
   const reasoningPanels = selectReasoningPanels({ agent: agent, scenario: scenario, riskHigh: false });
-  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts, reasoningPanels: reasoningPanels };
+  // Per v0.4 mapping: 4F-PCC for warfarin/VKA major bleeding is the on-label use
+  // (Beriplex P/N 1000 IU SmPC §4.2 explicitly covers warfarin reversal in major
+  // bleeding with INR-banded weight-based dosing; BSH 2011 endorses the same
+  // bands). Vitamin K reversal is also licensed and BSH-endorsed across all the
+  // remaining warfarin scenarios. Badge: Guideline-supported for all warfarin /
+  // VKA scenarios.
+  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts, reasoningPanels: reasoningPanels, badge: 'guideline_supported' };
 }
 
 // =====================================================================
@@ -1271,11 +1441,15 @@ function calcUFH() {
   }
 
   const reasoningPanels = selectReasoningPanels({ agent: 'ufh', scenario: 'major', riskHigh: false });
+  // Per v0.4 mapping: protamine for UFH reversal is the on-label use (Prosulf
+  // SmPC §4.2 explicitly covers UFH reversal with time-banded dose ranges).
+  // Badge: Guideline-supported.
   return {
     cell: cell, dose: dose, total: total, notes: notes,
     refs: ['protamine_smpc', 'bnf_proat', 'schulman'],
     extraAlerts: extraAlerts,
-    reasoningPanels: reasoningPanels
+    reasoningPanels: reasoningPanels,
+    badge: 'guideline_supported'
   };
 }
 
@@ -1301,7 +1475,11 @@ function calcLMWH(agent) {
       'In life-threatening bleeding, off-label rFVIIa has been used but evidence is very limited.'
     ];
     const reasoningPanels = selectReasoningPanels({ agent: agent, scenario: 'major', riskHigh: false });
-    return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts, reasoningPanels: reasoningPanels };
+    // Per v0.4 mapping: protamine reverses only ~60% of LMWH anti-Xa activity;
+    // the clinically material issue is partial / uncertain reversal, not just
+    // licensure. Beyond 12 hours the agent has even less utility. Badge:
+    // Low-certainty evidence.
+    return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts, reasoningPanels: reasoningPanels, badge: 'low_certainty_evidence' };
   }
 
   let protamineDose1, protamineDose2 = null;
@@ -1355,7 +1533,11 @@ function calcLMWH(agent) {
   });
 
   const reasoningPanels = selectReasoningPanels({ agent: agent, scenario: 'major', riskHigh: false });
-  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts, reasoningPanels: reasoningPanels };
+  // Per v0.4 mapping: protamine for LMWH only partially reverses anti-Xa
+  // activity (~60% per Prosulf SmPC and consensus). The clinically material
+  // issue is partial / uncertain reversal, not just licensure. Badge:
+  // Low-certainty evidence.
+  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts, reasoningPanels: reasoningPanels, badge: 'low_certainty_evidence' };
 }
 
 // =====================================================================
@@ -1438,7 +1620,23 @@ function calcOther(agent) {
     refs = ['greinacher'];
   }
 
-  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts };
+  // Per v0.4 mapping:
+  //   - fondaparinux + minor    -> no antidote needed; supportive care +
+  //                                discontinuation is accepted UK practice
+  //                                -> consensus_practice.
+  //   - fondaparinux + major    -> off-label rFVIIa or 4F-PCC; no licensed
+  //                                reversal agent exists -> off_label.
+  //   - argatroban / bivalirudin -> no specific reversal agent licensed;
+  //                                supportive measures + reliance on short
+  //                                half-life are accepted UK practice
+  //                                -> consensus_practice.
+  let badge;
+  if (agent === 'fondaparinux') {
+    badge = (scenario === 'minor') ? 'consensus_practice' : 'off_label';
+  } else {
+    badge = 'consensus_practice';
+  }
+  return { cell: cell, dose: dose, total: total, notes: notes, refs: refs, extraAlerts: extraAlerts, badge: badge };
 }
 
 // =====================================================================
@@ -1447,7 +1645,10 @@ function calcOther(agent) {
 function renderOutput(result) {
   if (!result) return;
   let html = '<div class="label">Clinical scenario</div>';
-  html += '<div class="cell-name">' + result.cell + '</div>';
+  // Evidence hierarchy badge — one per primary recommendation block, sits inline
+  // immediately right of the cell-name (recommendation title), never above the
+  // dose recommendation. Per PR β Part 1 v0.4 Rendering safety rule.
+  html += '<div class="cell-name">' + result.cell + renderBadge(result.badge) + '</div>';
   html += '<div class="label">Recommended action</div>';
   html += '<div class="dose">' + result.dose + '</div>';
   html += '<div class="total">' + result.total + '</div>';
@@ -1461,7 +1662,10 @@ function renderOutput(result) {
     result.extraAlerts.forEach(function(a) {
       const cls = 'alert-' + a.type;
       html += '<div class="' + cls + '">';
-      html += '<div class="alert-title">' + a.title + '</div>';
+      // Alerts may carry their own badge (e.g. the andexanet GI eligibility flag
+      // is Guideline-supported; the andexanet ICH note is NHS access dependent).
+      // One badge per alert block only.
+      html += '<div class="alert-title">' + a.title + renderBadge(a.badge) + '</div>';
       html += '<div class="alert-body">' + a.body + '</div>';
       html += '</div>';
     });
