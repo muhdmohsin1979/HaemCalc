@@ -317,6 +317,75 @@
     color: #555;
     font-style: italic;
   }
+  /* MDT handover line — plain-text paragraph + Copy button + dual-line footer
+     reminder. Sits between alerts and consultant reasoning panel in the output
+     region. Visible on print (this is the part of the output that genuinely
+     belongs on the printed handover) but with the Copy button hidden on print.
+     Per PR δ Part 1 v0.3 proposed Part 2 rendering and mandatory clipboard
+     behaviour rules. */
+  .mdt-handover {
+    margin-top: 20px;
+    padding: 14px 16px;
+    border: 1px solid #b8c4d0;
+    border-radius: 4px;
+    background: #f5f8fb;
+  }
+  .mdt-handover h4 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #1a3a6c;
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+  .mdt-handover .mdt-text {
+    font-size: 13px;
+    line-height: 1.65;
+    color: #2c3540;
+    white-space: pre-wrap;
+    margin: 0 0 12px;
+    font-family: inherit;
+  }
+  .mdt-handover .mdt-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .mdt-handover .mdt-copy-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #1a3a6c;
+    background: #ffffff;
+    color: #1a3a6c;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .mdt-handover .mdt-copy-btn:hover {
+    background: #1a3a6c;
+    color: #ffffff;
+  }
+  .mdt-handover .mdt-copy-confirm {
+    font-size: 12px;
+    color: #1e6b35;
+    font-weight: 500;
+    display: none;
+  }
+  .mdt-handover .mdt-copy-confirm.visible {
+    display: inline;
+  }
+  .mdt-handover .mdt-footer {
+    font-size: 11px;
+    color: #555;
+    margin: 0;
+    line-height: 1.5;
+  }
+  .mdt-handover .mdt-footer-line {
+    display: block;
+    margin-bottom: 2px;
+  }
   .dose-table {
     width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px;
   }
@@ -384,6 +453,18 @@
        print copy stays focused on dose and documentation. Per PR α Part 1 v0.3
        proposed Part 2 rendering rule. */
     .clinical-debates { display: none !important; }
+    /* MDT handover line stays visible on print (this is the part that goes
+       onto the printed handover) but the Copy button and confirmation are
+       hidden. Per PR δ Part 1 v0.3 print behaviour rule. */
+    .mdt-handover {
+      background: #fff !important;
+      border: 1px solid #888 !important;
+      page-break-inside: avoid;
+    }
+    .mdt-handover .mdt-text { color: #000 !important; }
+    .mdt-handover .mdt-footer { color: #333 !important; }
+    .mdt-handover .mdt-copy-btn { display: none !important; }
+    .mdt-handover .mdt-copy-confirm { display: none !important; }
     .dose-table tr.recommended td { background: #ddd !important; }
   }
   .signature-block { display: none; }
@@ -1233,6 +1314,302 @@ function renderClinicalDebates() {
 }
 
 // =====================================================================
+// MDT COMMUNICATION HANDOVER LINE (PR δ Part 1 v0.3)
+// =====================================================================
+//
+// Builds a plain-text MDT handover paragraph from the calc result and the
+// form context. Returned text is ready to paste into the clinical record:
+// no markdown, no HTML, no visual badge artefacts, no emoji, no zero-width
+// characters. Governance wording embedded inline ("off-label use",
+// "licensed indication", "NHS access dependent", "low-certainty partial
+// reversal") IS preserved because it is part of the clinical-record
+// content. Per PR δ Part 1 v0.3 mandatory clipboard behaviour rule.
+//
+// Content source: outputs/haemcalc-cdss/content/04_mdt_communication_wording.md
+// (PR δ Part 1 v0.3, content-frozen and reviewer-approved).
+//
+// Dispatcher selects one of V1–V10 from the v0.3 per-scenario variations.
+// Each builder returns a single plain-text paragraph string.
+//
+function getMdtCtx() {
+  function v(id, def) { def = def || ''; const el = document.getElementById(id); return el ? el.value : def; }
+  function n(id, def) { def = def || 0; const el = document.getElementById(id); return el ? (parseFloat(el.value) || def) : def; }
+  return {
+    agent: v('anticoag'),
+    bleed: v('bleed'),
+    timing: v('timing'),
+    crcl: v('crcl'),
+    weight: Math.max(30, Math.min(200, Math.round(n('weight', 70)))),
+    risk: v('risk'),
+    last_dose_strength: v('last_dose_strength'),
+    region: v('region', 'any'),
+    w_scenario: v('w_scenario'),
+    w_inr: n('w_inr', 0),
+    w_inr_known: v('w_inr_known'),
+    w_target_inr: v('w_target_inr'),
+    w_weight: Math.max(30, Math.min(200, Math.round(n('w_weight', 70)))),
+    w_dose_method: v('w_dose_method'),
+    ufh_dose_total: n('ufh_dose_total', 0),
+    ufh_timing: v('ufh_timing'),
+    ufh_route: v('ufh_route'),
+    lmwh_dose: n('lmwh_dose', 0),
+    lmwh_timing: v('lmwh_timing'),
+    other_scenario: v('other_scenario'),
+    other_weight: Math.max(30, Math.min(200, Math.round(n('other_weight', 70)))),
+    other_crcl: v('other_crcl')
+  };
+}
+
+function selectMdtVariation(ctx) {
+  const a = ctx.agent;
+  const s = ctx.bleed;
+  const r = ctx.region;
+  if (a === 'dabigatran') return 'V5';
+  if (a === 'warfarin' || a === 'acenocoumarol' || a === 'phenindione') return 'V6';
+  if (a === 'ufh') return 'V7';
+  if (a === 'enoxaparin' || a === 'dalteparin' || a === 'tinzaparin') return 'V8';
+  if (a === 'fondaparinux') return 'V9';
+  if (a === 'argatroban' || a === 'bivalirudin') return 'V10';
+  if (a === 'apixaban' || a === 'rivaroxaban') {
+    if (s === 'gi_bleed_major') return 'V2';
+    if (s === 'ich_critical' || s === 'ich_only') {
+      if (r === 'scotland') return 'V3';
+      return 'V4';
+    }
+  }
+  return 'V1';
+}
+
+// Plain-text helpers — strip any HTML, return single-line clean text.
+function mdtStripHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+}
+function mdtCap(s) { return s ? (s.charAt(0).toUpperCase() + s.slice(1)) : ''; }
+function mdtFmtTiming(t) {
+  if (t === 'lt8') return 'less than 8';
+  if (t === '8to15') return '8 to 15';
+  if (t === '15to24') return '15 to 24';
+  if (t === 'gt24') return 'more than 24';
+  return '[hours]';
+}
+function mdtFmtCrcl(c) {
+  if (c === 'normal') return '≥30 mL/min';
+  if (c === 'low') return '<30 mL/min';
+  return '[mL/min]';
+}
+function mdtFmtBleedSite(b) {
+  if (b === 'ich_critical') return 'life-threatening intracranial / retroperitoneal / pericardial bleed';
+  if (b === 'ich_only') return 'intracranial haemorrhage';
+  if (b === 'major_haemo') return 'major haemodynamically compromising bleed';
+  if (b === 'gi_bleed_major') return 'major gastrointestinal bleed';
+  if (b === 'major_non_ich') return 'major non-intracranial bleed';
+  if (b === 'major_any') return 'major bleed';
+  return 'major bleed';
+}
+function mdtFmtSeverity(b) {
+  if (b === 'ich_critical') return 'Life-threatening';
+  if (b === 'ich_only') return 'Life-threatening';
+  return 'Major';
+}
+function mdtFmtUfhTiming(t) {
+  if (t === 'lt30') return 'less than 30 minutes';
+  if (t === '30to60') return '30 to 60 minutes';
+  if (t === '60to120') return '60 to 120 minutes';
+  if (t === 'gt120') return 'more than 2 hours';
+  return 'more than 4 hours';
+}
+
+// Variation builders. Each returns a plain-text paragraph (no markdown, no HTML).
+
+function mdtV1(result, ctx) {
+  // DOAC + 4F-PCC (off-label) — generic. Also covers Cell F (PCC not indicated)
+  // when result.badge === 'consensus_practice'.
+  const agent = mdtCap(ctx.agent);
+  const site = mdtFmtBleedSite(ctx.bleed);
+  const sev = mdtFmtSeverity(ctx.bleed);
+  const hrs = mdtFmtTiming(ctx.timing);
+  const crcl = mdtFmtCrcl(ctx.crcl);
+  const doseTxt = mdtStripHtml(result.dose);
+  const totalTxt = result.total ? ' (' + mdtStripHtml(result.total) + ')' : '';
+  const isCellF = (result.badge === 'consensus_practice');
+  const reversalClause = isCellF
+    ? 'No specific reversal indicated; supportive care and source control prioritised — accepted UK practice in this time window with normal renal function'
+    : doseTxt + totalTxt + ' — off-label use for FXa-inhibitor-related bleeding; consultant rationale recorded';
+  return sev + ' ' + site + ' on ' + agent + ' ' + (ctx.last_dose_strength === 'supra' ? 'supra-therapeutic ' : 'therapeutic ') + 'dose, last dose approximately ' + hrs + ' hours ago. Weight ' + ctx.weight + ' kg, CrCl ' + crcl + '. Reversal: ' + reversalClause + '. Tranexamic acid [given within 3 hours per CRASH-2 / CRASH-3 for trauma or TBI / avoided for GI bleed per HALT-IT / not applicable]. Discussed with the Consultant Haematologist on-call (name to be entered); rationale recorded in the patient note.';
+}
+
+function mdtV2(result, ctx) {
+  // Apixaban / rivaroxaban + GI bleed, andexanet eligible
+  const agent = mdtCap(ctx.agent);
+  const hrs = mdtFmtTiming(ctx.timing);
+  const crcl = mdtFmtCrcl(ctx.crcl);
+  const strength = ctx.last_dose_strength === 'supra' ? 'supra-therapeutic' : 'therapeutic';
+  return 'Major gastrointestinal bleed on ' + agent + ' ' + strength + ' dose, last dose approximately ' + hrs + ' hours ago. Weight ' + ctx.weight + ' kg, CrCl ' + crcl + '. Reversal: andexanet alfa per Ondexxya SmPC §4.2 dose-selection logic (see calculator output above) — licensed indication, NICE TA697 (E/W/NI) or SMC advice 2273 (Scotland) supported. Thrombotic risk: [considered / discussed with patient or family / not feasible to discuss at the time] (Ondexxya SmPC and BSH andexanet alfa position statement, 25 April 2026). Sequential or combined use with PCC, aPCC, recombinant factor VIIa, fresh frozen plasma, or whole blood was avoided unless clinically unavoidable because of limited safety data (Ondexxya SmPC §4.4). Tranexamic acid avoided for GI bleed per HALT-IT (Lancet 2020). Discussed with the Consultant Haematologist on-call (name to be entered); rationale recorded in the patient note.';
+}
+
+function mdtV3(result, ctx) {
+  // Apixaban / rivaroxaban + ICH, Scotland branch
+  const agent = mdtCap(ctx.agent);
+  const hrs = mdtFmtTiming(ctx.timing);
+  const crcl = mdtFmtCrcl(ctx.crcl);
+  const strength = ctx.last_dose_strength === 'supra' ? 'supra-therapeutic' : 'therapeutic';
+  return 'Life-threatening intracranial haemorrhage on ' + agent + ' ' + strength + ' dose, last dose approximately ' + hrs + ' hours ago. Weight ' + ctx.weight + ' kg, CrCl ' + crcl + '. Reversal: andexanet alfa per Ondexxya SmPC §4.2 dose-selection logic (see calculator output above) — NHS access dependent: SMC advice 2273 supports the full licensed indication in NHS Scotland on an interim basis (NICE TA1029 is a terminated appraisal in E/W/NI). Thrombotic risk: [considered / discussed with patient or family / not feasible to discuss at the time] (Ondexxya SmPC and BSH andexanet alfa position statement, 25 April 2026). Sequential or combined use with PCC, aPCC, recombinant factor VIIa, fresh frozen plasma, or whole blood was avoided unless clinically unavoidable because of limited safety data (Ondexxya SmPC §4.4). Tranexamic acid not indicated for ICH outside trauma. Discussed with the Consultant Haematologist on-call (name to be entered); rationale recorded in the patient note.';
+}
+
+function mdtV4(result, ctx) {
+  // Apixaban / rivaroxaban + ICH, E/W/NI branch (NICE TA1029 terminated)
+  const agent = mdtCap(ctx.agent);
+  const hrs = mdtFmtTiming(ctx.timing);
+  const crcl = mdtFmtCrcl(ctx.crcl);
+  const doseTxt = mdtStripHtml(result.dose);
+  const totalTxt = result.total ? ' (' + mdtStripHtml(result.total) + ')' : '';
+  const strength = ctx.last_dose_strength === 'supra' ? 'supra-therapeutic' : 'therapeutic';
+  return 'Life-threatening intracranial haemorrhage on ' + agent + ' ' + strength + ' dose, last dose approximately ' + hrs + ' hours ago. Weight ' + ctx.weight + ' kg, CrCl ' + crcl + '. Reversal: ' + doseTxt + totalTxt + ' — off-label use for FXa-inhibitor-related ICH; NICE was unable to make a recommendation for andexanet alfa in ICH because the company did not provide an evidence submission (NICE TA1029, terminated 15 January 2025). Tranexamic acid not indicated for ICH outside trauma. Discussed with the Consultant Haematologist on-call (name to be entered); rationale recorded in the patient note.';
+}
+
+function mdtV5(result, ctx) {
+  // Dabigatran + idarucizumab
+  const hrs = mdtFmtTiming(ctx.timing);
+  const crcl = mdtFmtCrcl(ctx.crcl);
+  const sev = mdtFmtSeverity(ctx.bleed);
+  const site = mdtFmtBleedSite(ctx.bleed);
+  return sev + ' ' + site + ' on dabigatran (typical dosing 110 mg or 150 mg BD), last dose approximately ' + hrs + ' hours ago. Weight ' + ctx.weight + ' kg, CrCl ' + crcl + '. Reversal: idarucizumab 5 g IV (two vials of 2.5 g / 50 mL) per Praxbind SmPC §4.2 — licensed indication for life-threatening or uncontrolled bleeding. Thrombin time on the local dabigatran-sensitive assay: [result if known, otherwise pending]. Tranexamic acid [given within 3 hours per CRASH-2 / CRASH-3 / avoided / not applicable]. Discussed with the Consultant Haematologist on-call (name to be entered); rationale recorded in the patient note.';
+}
+
+function mdtV6(result, ctx) {
+  // Warfarin / VKA major bleed
+  const agent = ctx.agent === 'acenocoumarol' ? 'acenocoumarol' : (ctx.agent === 'phenindione' ? 'phenindione' : 'warfarin');
+  const sevSite = (ctx.w_scenario === 'major_bleed') ? 'Major bleed' : (ctx.w_scenario === 'head_injury_normalct' ? 'Head injury with initially normal CT' : (ctx.w_scenario === 'elevated_inr_no_bleed' ? 'Supra-therapeutic INR without bleeding' : (ctx.w_scenario === 'elective_reversal' ? 'Elective surgical reversal' : 'Major bleed')));
+  const inrTxt = ctx.w_inr_known === 'yes' ? ('INR ' + ctx.w_inr.toFixed(1)) : 'INR pending';
+  const doseTxt = mdtStripHtml(result.dose);
+  const totalTxt = result.total ? ' (' + mdtStripHtml(result.total) + ')' : '';
+  return sevSite + ' on ' + agent + ', ' + inrTxt + ' at admission. Weight ' + ctx.w_weight + ' kg. Reversal: ' + doseTxt + totalTxt + ' — licensed indication per BSH 2011 (Keeling) and Beriplex P/N SmPC §4.2 (where PCC is given); Vitamin K given concurrently because of the short factor VII half-life (where PCC is given). Repeat INR booked for 30 minutes post-dose per Trust governance (where PCC is given). Tranexamic acid [given within 3 hours per CRASH-2 / CRASH-3 for trauma or TBI / avoided for GI bleed per HALT-IT / not applicable]. Discussed with the Consultant Haematologist on-call (name to be entered); rationale recorded in the patient note.';
+}
+
+function mdtV7(result, ctx) {
+  // UFH + protamine
+  const route = ctx.ufh_route === 'sc' ? 'subcutaneous' : 'intravenous';
+  const timing = mdtFmtUfhTiming(ctx.ufh_timing);
+  const totalUnits = ctx.ufh_dose_total ? ctx.ufh_dose_total + ' units' : '[units] units';
+  const doseTxt = mdtStripHtml(result.dose);
+  return 'Major bleed on ' + route + ' unfractionated heparin infusion (last UFH dose approximately ' + totalUnits + ', stopped ' + timing + ' ago). Reversal: ' + doseTxt + ' — licensed indication per Prosulf SmPC §4.2, time-banded dose. Resuscitation equipment was at the bedside before protamine because of the recognised risk of anaphylaxis, hypotension, and bradycardia. Repeat APTT booked 10 to 15 minutes post-dose. Tranexamic acid [given/avoided/not applicable] [rationale]. Discussed with the Consultant Haematologist on-call (name to be entered); rationale recorded in the patient note.';
+}
+
+function mdtV8(result, ctx) {
+  // LMWH + protamine (low-certainty partial reversal)
+  const agent = mdtCap(ctx.agent);
+  const doseUnits = ctx.agent === 'enoxaparin' ? 'mg' : 'IU';
+  const lastDose = ctx.lmwh_dose ? ctx.lmwh_dose + ' ' + doseUnits : '[dose] ' + doseUnits;
+  const hrs = ctx.lmwh_timing === 'lt8' ? 'less than 8' : (ctx.lmwh_timing === '8to12' ? '8 to 12' : 'more than 12');
+  const doseTxt = mdtStripHtml(result.dose);
+  return 'Major bleed on ' + agent + ' ' + lastDose + ' subcutaneously, last dose approximately ' + hrs + ' hours ago. Reversal: ' + doseTxt + ' — low-certainty partial reversal: protamine reverses approximately 60% of LMWH anti-Xa activity even within the optimal window (Prosulf SmPC). Drug-calibrated anti-Xa level for ' + agent + ' ordered (the preferred laboratory measure; APTT does not reflect LMWH activity). A second protamine dose may be given at 4 hours if bleeding continues. Resuscitation equipment was at the bedside. Tranexamic acid [given/avoided/not applicable] [rationale]. Discussed with the Consultant Haematologist on-call (name to be entered); rationale recorded in the patient note.';
+}
+
+function mdtV9(result, ctx) {
+  // Fondaparinux (no licensed antidote)
+  const sevSite = ctx.other_scenario === 'minor' ? 'Minor bleed' : 'Major bleed';
+  const crcl = ctx.other_crcl === 'normal' ? '≥30 mL/min' : (ctx.other_crcl === 'low' ? '<30 mL/min' : '[mL/min]');
+  return sevSite + ' on fondaparinux subcutaneously. Weight ' + ctx.other_weight + ' kg, CrCl ' + crcl + '. Reversal: no licensed antidote in the UK (Arixtra SmPC); andexanet alfa is not licensed for fondaparinux reversal and should not be presented as a reversal option. Off-label haemostatic support was considered only after consultant haematologist discussion and local policy review. Any off-label haemostatic agent carries thrombotic risk. Source control, mechanical haemostasis, transfusion support, and tranexamic acid [given where bleed site is appropriate / avoided] were prioritised. Discussed with the Consultant Haematologist on-call (name to be entered); rationale recorded in the patient note.';
+}
+
+function mdtV10(result, ctx) {
+  // Argatroban / bivalirudin
+  const agent = mdtCap(ctx.agent);
+  const halfLife = ctx.agent === 'argatroban'
+    ? 'approximately 45 minutes (up to 4 hours in hepatic impairment)'
+    : 'approximately 25 minutes (longer in renal impairment)';
+  const sevSite = ctx.other_scenario === 'minor' ? 'Minor bleed' : 'Major bleed';
+  return sevSite + ' on ' + agent + ' infusion (most often used in heparin-induced thrombocytopenia — confirm HIT context). Infusion discontinued. No licensed reversal agent. Short half-life: ' + halfLife + '. For life-threatening bleeding only, off-label haemostatic support was considered only after consultant haematologist discussion and local policy review. Re-anticoagulation choices considered the underlying HIT diagnosis where applicable; heparin re-exposure was avoided. Discussed with the Consultant Haematologist on-call (name to be entered); rationale recorded in the patient note.';
+}
+
+function buildMdtHandover(result, ctx) {
+  if (!result || !ctx) return '';
+  const v = selectMdtVariation(ctx);
+  switch (v) {
+    case 'V2': return mdtV2(result, ctx);
+    case 'V3': return mdtV3(result, ctx);
+    case 'V4': return mdtV4(result, ctx);
+    case 'V5': return mdtV5(result, ctx);
+    case 'V6': return mdtV6(result, ctx);
+    case 'V7': return mdtV7(result, ctx);
+    case 'V8': return mdtV8(result, ctx);
+    case 'V9': return mdtV9(result, ctx);
+    case 'V10': return mdtV10(result, ctx);
+    case 'V1':
+    default: return mdtV1(result, ctx);
+  }
+}
+
+// renderMdtBlock — emits the HTML for the MDT block. The paragraph itself
+// is the plain-text output of buildMdtHandover stashed on window.__mdtCurrent
+// so the Copy handler can read it without re-running the calc.
+function renderMdtBlock(mdtText) {
+  if (!mdtText) return '';
+  let html = '<div class="mdt-handover">';
+  html += '<h4>MDT handover line</h4>';
+  // The paragraph is plain text rendered inside a div with white-space: pre-wrap.
+  // We escape minimal HTML special characters so the text renders as-is.
+  const safe = mdtText
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  html += '<div class="mdt-text">' + safe + '</div>';
+  html += '<div class="mdt-actions no-print">';
+  html += '<button type="button" class="mdt-copy-btn" onclick="copyMdtHandover()">Copy to clipboard</button>';
+  html += '<span class="mdt-copy-confirm" id="mdt-copy-confirm">Copied to clipboard</span>';
+  html += '</div>';
+  html += '<div class="mdt-footer">';
+  html += '<span class="mdt-footer-line">Review and edit before filing; this draft does not replace the clinician’s contemporaneous note.</span>';
+  html += '<span class="mdt-footer-line">Replace the consultant name placeholder before filing in the clinical record.</span>';
+  html += '</div>';
+  html += '</div>';
+  return html;
+}
+
+// copyMdtHandover — clipboard handler. Copies the plain-text MDT paragraph
+// from window.__mdtCurrent. Per PR δ Part 1 v0.3 mandatory clipboard rule:
+// plain text only (no markdown, no HTML, no badge artefacts, no emoji,
+// no zero-width characters). Governance wording embedded in the prose
+// ("off-label use", "licensed indication", "NHS access dependent",
+// "low-certainty partial reversal") IS preserved because it is part of
+// the clinical-record content.
+function copyMdtHandover() {
+  const txt = (typeof window !== 'undefined' && window.__mdtCurrent) ? window.__mdtCurrent : '';
+  if (!txt) return;
+  const confirm = function() {
+    const el = document.getElementById('mdt-copy-confirm');
+    if (!el) return;
+    el.classList.add('visible');
+    setTimeout(function() { el.classList.remove('visible'); }, 2000);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(confirm).catch(function() {
+      // Fallback for older browsers
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = txt; ta.setAttribute('readonly', '');
+        ta.style.position = 'absolute'; ta.style.left = '-9999px';
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        confirm();
+      } catch (e) { /* silent fail */ }
+    });
+  } else {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = txt; ta.setAttribute('readonly', '');
+      ta.style.position = 'absolute'; ta.style.left = '-9999px';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      confirm();
+    } catch (e) { /* silent fail */ }
+  }
+}
+
+// =====================================================================
 // MAIN CALCULATION DISPATCHER
 // =====================================================================
 function calc() {
@@ -1923,6 +2300,17 @@ function renderOutput(result) {
       html += '</div>';
     });
   }
+  // MDT handover line — plain-text paragraph + Copy button + dual-line footer
+  // reminder. Sits between alerts and consultant reasoning panel. Per PR δ Part 1
+  // v0.3 architecture and mandatory clipboard behaviour rules.
+  try {
+    const mdtCtx = getMdtCtx();
+    const mdtText = buildMdtHandover(result, mdtCtx);
+    if (mdtText) {
+      window.__mdtCurrent = mdtText;
+      html += renderMdtBlock(mdtText);
+    }
+  } catch (e) { /* MDT block is non-critical for dose rendering; do not block */ }
   // Consultant reasoning panels — supplementary, collapsed by default, visually subordinate
   // to the primary recommendation per Rendering safety rule (PR γ Part 1 README).
   if (result.reasoningPanels && result.reasoningPanels.length) {
