@@ -179,7 +179,7 @@ async function runTests() {
     src.indexOf('andexanet alfa is not licensed for fondaparinux reversal and should not be presented as a reversal option') !== -1);
   record('V10 no rescue-agent menu (no "rFVIIa, or aPCC / FEIBA" in V10 body)', false,
     src.indexOf('(4F-PCC, rFVIIa, or aPCC / FEIBA)') !== -1,
-    src.indexOf('(4F-PCC, rFVIIa, or aPCC / FEIBA)') !== -1);
+    src.indexOf('(4F-PCC, rFVIIa, or aPCC / FEIBA)') === -1);
   record('V10 generic off-label support wording present', true,
     src.indexOf('off-label haemostatic support was considered only after consultant haematologist discussion and local policy review') !== -1,
     src.indexOf('off-label haemostatic support was considered only after consultant haematologist discussion and local policy review') !== -1);

@@ -1264,7 +1264,7 @@ const CLINICAL_DEBATES = [
     id: 'fondaparinux_reversal',
     title: '7. Fondaparinux reversal in major bleeding',
     summary: 'No licensed agent; conflicting off-label options',
-    settled: 'Fondaparinux has no licensed reversal agent in the UK (Arixtra SmPC; BNF entry). Half-life is 17 to 21 hours and rises substantially in renal impairment, up to approximately 72 hours with CrCl below 30 mL/min. Andexanet alfa does not bind fondaparinux effectively despite the shared factor Xa target and is not licensed for fondaparinux reversal.',
+    settled: 'Fondaparinux has no licensed reversal agent in the UK (Arixtra SmPC; BNF entry). Half-life is 17 to 21 hours and rises substantially in renal impairment, up to approximately 72 hours with CrCl below 30 mL/min. Andexanet alfa is not licensed for fondaparinux reversal and should not be presented as a reversal option.',
     contested: 'Whether 4F-PCC (50 IU/kg) or recombinant factor VIIa (90 mcg/kg) is preferable when off-label haemostatic support is needed. Evidence is limited and conflicting; both options carry thrombotic risk. Whether haemodialysis adds clinically meaningful benefit is also debated — fondaparinux is highly protein-bound and dialysis removal is limited.',
     approaches: [
       'Source control, mechanical haemostasis, transfusion support and (where appropriate to the bleed site) tranexamic acid are first-line.',
@@ -2199,7 +2199,7 @@ function calcOther(agent) {
       dose = 'Off-label reversal options';
       total = 'No licensed antidote; supportive care is the priority.';
       notes = [
-        'Fondaparinux has NO licensed reversal agent. Andexanet alfa is NOT licensed for fondaparinux despite mechanism similarity (it does not bind fondaparinux effectively).',
+        'Fondaparinux has no licensed reversal agent. Andexanet alfa is not licensed for fondaparinux reversal and should not be presented as a reversal option.',
         'Half-life 17 to 21 hours; renal clearance dominant.',
         'Off-label option 1: 4F-PCC 50 IU/kg (~' + pccDose + ' IU for ' + w + ' kg). Limited evidence; rationale based on global haemostatic support.',
         'Off-label option 2: Recombinant factor VIIa (NovoSeven) 90 mcg/kg (~' + rfviiaDose + ' mg for ' + w + ' kg). Carries thrombotic risk.',
@@ -2236,7 +2236,7 @@ function calcOther(agent) {
         agent === 'argatroban' 
           ? 'Half-life ~45 min normal hepatic, up to 4 h in hepatic impairment.'
           : 'Half-life ~25 min normal renal, longer in renal impairment.',
-        'For life-threatening bleeding: off-label 4F-PCC, rFVIIa, or aPCC (FEIBA) have been used in case reports.',
+        'For life-threatening bleeding: off-label haemostatic support has been used in case reports, only after consultant haematologist discussion and local policy review.',
         'Haemodialysis can remove ' + (agent === 'bivalirudin' ? 'bivalirudin partially' : 'argatroban poorly') + '.',
         'These agents are commonly used in HIT, where re-anticoagulation choices must consider the underlying diagnosis.',
         'Consultant Haematologist discussion mandatory.'
