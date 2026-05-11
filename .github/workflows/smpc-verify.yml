@@ -1,0 +1,97 @@
+name: smpc-verify
+
+# Scheduled re-verification of the source documents cited in
+# public/reversal.html. Runs weekly + on manual dispatch. Does NOT run on PRs
+# and does NOT block main.
+#
+# When any check fails, the job creates (or comments on) an issue tagged
+# `smpc-drift` so the clinical content owner can re-check the source by hand.
+#
+# Implementation note: the script in scripts/smpc_verify.py writes a markdown
+# report to outputs/_smpc_verify_log.md. The workflow uploads that report as
+# an artefact for a 90-day retention window.
+
+on:
+  schedule:
+    # Every Monday at 06:00 UTC. Picked as a working-week morning so the
+    # report sits in the maintainer's inbox at the start of the week.
+    - cron: "0 6 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run SmPC re-verification
+        id: verify
+        continue-on-error: true
+        run: |
+          mkdir -p outputs
+          python scripts/smpc_verify.py
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Upload verification log as artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: smpc-verify-log
+          path: outputs/_smpc_verify_log.md
+          retention-days: 90
+
+      - name: Open or update tracking issue on failure
+        if: steps.verify.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let log = '';
+            try { log = fs.readFileSync('outputs/_smpc_verify_log.md', 'utf8'); }
+            catch (e) { log = '(could not read verification log)'; }
+            const title = 'SmPC verification: source drift detected';
+            const body = [
+              'The scheduled SmPC verification job has reported one or more',
+              'failures. The clinical content owner should re-check the live',
+              'source against the wording captured in `public/reversal.html`',
+              'and update either the captured wording or the verification',
+              'landmarks in `scripts/smpc_verify.py` as appropriate.',
+              '',
+              'Latest report:',
+              '',
+              log
+            ].join('\n');
+            // Find an existing open issue with the same title to avoid spam.
+            const open = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'smpc-drift'
+            });
+            const existing = open.data.find(i => i.title === title);
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body: body
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['smpc-drift']
+              });
+            }
