@@ -227,6 +227,96 @@
       margin-top: 6px;
     }
   }
+  /* Clinical debate and uncertainty section — standing meta-level layer, always
+     visible (unlike the consultant reasoning panel which depends on the calc
+     output). Neutral palette consistent with the consultant reasoning panel.
+     Each debate is collapsed by default. Hidden from print by default.
+     Per PR α Part 1 v0.3 proposed Part 2 rendering. */
+  .clinical-debates {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #d8dde4;
+  }
+  .clinical-debates .cd-section-title {
+    font-size: 16px;
+    margin: 0 0 8px;
+    color: #1a3a6c;
+  }
+  .clinical-debates .cd-section-intro {
+    font-size: 13px;
+    color: #4a5566;
+    line-height: 1.6;
+    margin: 0 0 16px;
+  }
+  .clinical-debates .cd-item {
+    border: 1px solid #d8dde4;
+    border-radius: 4px;
+    background: #fafbfc;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .clinical-debates .cd-item summary {
+    padding: 10px 14px 10px 30px;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    position: relative;
+    color: #2c3540;
+    line-height: 1.5;
+  }
+  .clinical-debates .cd-item summary::-webkit-details-marker { display: none; }
+  .clinical-debates .cd-item summary::marker { display: none; }
+  .clinical-debates .cd-item summary::before {
+    content: '\25B8';
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    font-size: 10px;
+    color: #8a93a0;
+  }
+  .clinical-debates .cd-item[open] summary::before { content: '\25BE'; }
+  .clinical-debates .cd-title {
+    font-weight: 600;
+    color: #1a3a6c;
+    display: inline;
+  }
+  .clinical-debates .cd-summary-line {
+    color: #4a5566;
+    font-size: 12px;
+    margin-left: 6px;
+  }
+  .clinical-debates .cd-body {
+    padding: 4px 18px 16px 30px;
+    border-top: 1px solid #e5e9ed;
+    background: #ffffff;
+    color: #2c3540;
+    line-height: 1.6;
+  }
+  .clinical-debates .cd-body h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #4a5566;
+    font-weight: 600;
+    margin: 12px 0 4px;
+  }
+  .clinical-debates .cd-body p {
+    margin: 0 0 6px;
+    font-size: 13px;
+  }
+  .clinical-debates .cd-body ul {
+    margin: 0 0 6px;
+    padding-left: 18px;
+  }
+  .clinical-debates .cd-body li {
+    margin-bottom: 4px;
+    font-size: 13px;
+  }
+  .clinical-debates .cd-body .cd-sources {
+    font-size: 12px;
+    color: #555;
+    font-style: italic;
+  }
   .dose-table {
     width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px;
   }
@@ -290,6 +380,10 @@
     /* Hide evidence hierarchy badges from print by default — the print copy must
        focus on dose and documentation. Per PR β Part 1 v0.4 Rendering safety rule. */
     .evidence-badge { display: none !important; }
+    /* Hide clinical debate and uncertainty section from print by default — the
+       print copy stays focused on dose and documentation. Per PR α Part 1 v0.3
+       proposed Part 2 rendering rule. */
+    .clinical-debates { display: none !important; }
     .dose-table tr.recommended td { background: #ddd !important; }
   }
   .signature-block { display: none; }
@@ -546,6 +640,12 @@
     <textarea id="rationale" placeholder="e.g. enoxaparin 80 mg BD, last dose 4 h ago, retroperitoneal bleed on CT, weight 70 kg"></textarea>
   </div>
 </div>
+
+<!-- Clinical debate and uncertainty section — standing meta-level layer,
+     populated once on page init by renderClinicalDebates(). Always visible
+     (unlike consultant reasoning panels which depend on the calc output).
+     Hidden from print by default. Per PR α Part 1 v0.3. -->
+<div id="clinical-debates-section"></div>
 
 <div class="refs">
   <h3>Supporting references</h3>
@@ -976,6 +1076,159 @@ function buildAndexanetTable(rec) {
   html += '<tr' + (rec.dose === 'high' ? ' class="recommended"' : '') + '>';
   html += '<td><strong>High dose</strong></td><td>800 mg at ~30 mg/min over 30 min</td><td>8 mg/min IV for 120 min (960 mg)</td><td>1760 mg</td><td>9</td></tr>';
   html += '</tbody></table>';
+  return html;
+}
+
+// =====================================================================
+// CLINICAL DEBATE AND UNCERTAINTY (PR α Part 1 v0.3)
+// =====================================================================
+//
+// Standing meta-level section that names the live controversies and areas
+// of evidence wobble in anticoagulant reversal practice. Distinct from the
+// consultant reasoning panels (PR γ): the reasoning panels are scenario-
+// specific; this section is meta-level and always visible.
+//
+// Content source: outputs/haemcalc-cdss/content/03_clinical_debate_uncertainty.md
+// (PR α Part 1 v0.3, content-frozen and reviewer-approved).
+//
+// The section MUST remain visually subordinate to the dose recommendation,
+// badges, four-nation alerts, and consultant reasoning panels — those are
+// the operational guidance; this section is the layer that explains where
+// the operational guidance sits in a contested or evolving evidence base.
+//
+// Any change to the eight items below requires a corresponding update to
+// the v0.3 content document and explicit consultant clinical-governance
+// review.
+//
+const CLINICAL_DEBATES = [
+  {
+    id: 'andexanet_vs_pcc',
+    title: '1. Andexanet alfa vs 4F-PCC after ANNEXA-I',
+    summary: 'How to weigh haemostatic efficacy against the thrombotic signal',
+    settled: 'Andexanet alfa is a licensed factor Xa-binding reversal agent for life-threatening or uncontrolled bleeding on apixaban or rivaroxaban (Ondexxya SmPC, EMC, last updated 5 March 2026). NICE TA697 (E/W/NI, last updated 15 January 2025) restricts the recommendation to GI bleeding plus a commercial arrangement. For ICH, NICE TA1029 (15 January 2025) is a terminated appraisal — NICE was unable to make a recommendation because the company did not provide an evidence submission. SMC advice 2273 (Scotland, 7 September 2020) supports the full licensed indication on an interim basis. The ANNEXA-I trial (NEJM 2024) is the only randomised comparison of andexanet against usual care (mostly PCC) for ICH on FXa inhibitor.',
+    contested: 'ANNEXA-I reported higher haemostatic efficacy with andexanet but also higher thrombotic event rates with no demonstrated mortality benefit. The clinical interpretation depends on how the trial reader weighs improved haemostatic efficacy against the thrombotic signal. The place of andexanet in the reversal pathway is not settled. The BSH andexanet alfa position statement (25 April 2026) addresses the thromboembolic risk; readers should consult the BSH statement directly for its full wording. Some centres use andexanet first-line in ICH where it is funded, others reserve it. The relative efficacy of 4F-PCC for the same scenario is supported by ANNEXA-4 (registry, NEJM 2016) and several observational cohorts, but ANNEXA-4 lacks a comparator arm.',
+    approaches: [
+      'Where andexanet is funded for the scenario (GI bleed in any UK nation; ICH only in Scotland), discuss with the consultant haematologist on-call and counsel the patient on the thrombotic signal before committing.',
+      'Where andexanet is not funded for the scenario, 4F-PCC off-label is the standard UK route. Document the consultant rationale.'
+    ],
+    why_matters: 'The choice is consequential for individual patients and remains an active area of debate at international society level.',
+    sources: 'ANNEXA-I (Connolly, NEJM 2024); ANNEXA-4 (Connolly, NEJM 2016); Ondexxya SmPC; NICE TA697; SMC 2273; BSH andexanet position statement (April 2026).'
+  },
+  {
+    id: 'fda_vs_ema',
+    title: '2. FDA market withdrawal vs EMA conditional renewal of andexanet',
+    summary: 'Major regulators have diverged on andexanet alfa',
+    settled: 'The US FDA issued a safety communication in December 2025, and withdrawal of andexanet alfa from the US market took effect on 22 December 2025, citing thrombosis and thrombosis-related deaths. The EMA CHMP confirmed a positive benefit–risk balance in April 2025 and recommended renewal of the conditional marketing authorisation for Ondexxya. UK availability and licensing are determined by the MHRA; current UK practice continues to follow the Ondexxya SmPC live on emc, NICE TA697 and SMC advice 2273 (see references list for the current UK position).',
+    contested: 'Whether the two regulators are looking at the same evidence and reaching defensibly different conclusions, or whether one regulator is more aligned with current clinical reality. The regulatory divergence has practical consequences: US patients currently do not have access to a product that remains available in the UK and EU. Whether UK practice should be influenced by the FDA decision is itself contested. Some clinicians argue that the FDA action signals safety concern that should temper UK use; others note that the EMA review post-dates the FDA decision and continues to support the indication.',
+    approaches: [
+      'Note the regulatory divergence when counselling patients or families about thrombotic risk and the use of andexanet.',
+      'Continue to follow UK regulatory and society guidance (EMA, MHRA, NICE, SMC, BSH) for current practice.'
+    ],
+    why_matters: 'Regulatory divergence between major agencies is uncommon and should be transparent to clinicians and patients making the reversal decision.',
+    sources: 'US FDA market withdrawal announcement (22 December 2025); EMA CHMP renewal opinion (April 2025); Ondexxya SmPC; BSH andexanet position statement (April 2026).'
+  },
+  {
+    id: 'fixed_vs_weight_pcc',
+    title: '3. Fixed-dose vs weight-based 4F-PCC for warfarin major bleed',
+    summary: 'Non-inferiority cohort data vs SmPC weight-banded dosing',
+    settled: 'Beriplex P/N 1000 IU SmPC §4.2 specifies INR-banded weight-based dosing for warfarin reversal in major bleeding. BSH 2011 (Keeling, 4th edition) endorses the same weight-based bands. Repeat INR at 30 minutes post-dose is mandatory under most UK Trust protocols.',
+    contested: 'Whether fixed-dose 4F-PCC (typically 1500 IU for INR below 4, 2000 IU for INR 4 or above) is non-inferior to weight-based dosing. Several cohort studies (Endres, Khorsand and others) suggest non-inferiority for haemostatic efficacy with lower total IU exposure, but no large randomised trial has settled the question. Whether fixed-dose is preferable for patients above 100 kg, where weight-based dosing approaches the cap, is also unresolved.',
+    approaches: [
+      'Default to weight-based, INR-banded dosing per Beriplex SmPC and BSH 2011.',
+      'Fixed-dose is a defensible alternative for selected patients (high body weight near the dose cap, time-critical situations) with consultant haematologist agreement.'
+    ],
+    why_matters: 'The choice affects total IU exposure, dispense time, and Trust governance, and there is no settled answer at international guideline level.',
+    sources: 'Beriplex P/N SmPC §4.2; BSH 2011 (Keeling); Endres cohort; Khorsand cohort; PCCWar review.'
+  },
+  {
+    id: 'pcc_doac_anchoring',
+    title: '4. 4F-PCC dose anchoring for DOAC reversal: 25, 35, or 50 IU/kg',
+    summary: '25, 35 or 50 IU/kg within the published range — calculator strategy choice',
+    settled: 'All UK use of 4F-PCC for DOAC-related bleeding is off-label (Beriplex SmPC covers warfarin reversal, not DOAC reversal). ISTH and EHRA guidance recommend a range of 25 to 50 IU/kg for FXa inhibitor reversal. The lower end (25 IU/kg) is supported for stable non-ICH bleeding or when thrombosis risk is high; the upper end (50 IU/kg) is supported for life-threatening ICH within 8 hours.',
+    contested: 'The optimal dose within the 25 to 50 IU/kg range. Chiasakul 2023 meta-analysis reported a mean variable dose of 38 IU/kg in published series; Shaw 2024 supports the lower end for non-ICH bleeds; Berger 2019 and Cascone 2021 support 25 IU/kg or fixed 2000 IU as non-inferior for haemostatic efficacy. Whether thrombosis-risk modification justifies dropping below 25 IU/kg for very high-risk patients (mechanical valve, active VTE, antiphospholipid syndrome, prior HIT) is also debated. Higher PCC doses are not protective against thrombosis and may add risk. (Exact 30-day thrombotic event rates from ANNEXA-I are reserved to the evidence table to avoid mixing figures from different definitions and sources.)',
+    approaches: [
+      'This calculator uses a local strategy within the published 25 to 50 IU/kg range (higher end for life-threatening ICH within 8 hours, lower end for non-ICH bleeds at 15 to 24 hours or where thrombosis risk is high, mid-range as a defensible default for other major bleeds). This is the calculator&apos;s internal anchoring choice, not settled international consensus — other defensible local strategies exist.',
+      'For very high thrombosis risk, drop to the minimum effective dose and document the consultant decision.'
+    ],
+    why_matters: 'The choice affects total IU exposure, downstream thrombosis risk, and the clinician&apos;s ability to defend the decision in M&M review. The local anchoring choice should be transparent to anyone auditing the page.',
+    sources: 'ISTH SSC guidance; EHRA 2021; ANNEXA-I (Connolly, NEJM 2024); Chiasakul meta-analysis (2023); Shaw cohort (2024); Berger 2019; Cascone 2021.'
+  },
+  {
+    id: 'txa_gi_bleed',
+    title: '5. Tranexamic acid in gastrointestinal bleeding after HALT-IT',
+    summary: 'HALT-IT challenges legacy Major Haemorrhage Protocol practice',
+    settled: 'CRASH-2 (Lancet 2010) supports tranexamic acid for trauma haemorrhage within 3 hours of injury. CRASH-3 (Lancet 2019) supports tranexamic acid for traumatic brain injury within 3 hours. HALT-IT (Lancet 2020) showed no reduction in death from GI bleeding and an increased rate of venous thromboembolism with tranexamic acid.',
+    contested: 'Whether tranexamic acid has any defensible role in GI bleeding. Some centres continue local Major Haemorrhage Protocols that include it for selected GI scenarios despite HALT-IT. How to weigh local protocol guidance against the HALT-IT result for an individual patient is not settled and varies by Trust.',
+    approaches: [
+      'Default to no tranexamic acid for GI bleeding outside a clinical trial.',
+      'Where local Major Haemorrhage Protocol still includes tranexamic acid, document the rationale and the awareness of the HALT-IT VTE signal.'
+    ],
+    why_matters: 'Tranexamic acid is commonly given empirically in Major Haemorrhage Protocols. HALT-IT challenges that default for GI bleeding and the clinician needs to know the trial result rather than the protocol shortcut.',
+    sources: 'HALT-IT (Lancet 2020); CRASH-2 (Lancet 2010); CRASH-3 (Lancet 2019).'
+  },
+  {
+    id: 'lmwh_partial_reversal',
+    title: '6. Partial LMWH reversal with protamine beyond 12 hours',
+    summary: 'Approximately 60% reversal ceiling, limited utility beyond 12 hours',
+    settled: 'Protamine reverses approximately 60% of LMWH anti-Xa activity even within the optimal window (Prosulf SmPC; consensus). Beyond 12 hours from the last LMWH dose, residual anticoagulant effect is usually limited and protamine has reduced utility. Drug-calibrated anti-Xa level (specific to the LMWH being reversed) is the preferred laboratory measure of residual effect; APTT does not reflect LMWH activity.',
+    contested: 'Whether off-label recombinant factor VIIa adds clinically meaningful haemostasis when protamine has failed or is beyond its useful window. Evidence is limited to case reports and small series. Whether to give a second dose of protamine at 4 hours when bleeding continues is also debated; practice varies between centres.',
+    approaches: [
+      'Default to protamine within the dose-banded window per Prosulf SmPC. A second dose may be given at 4 hours if bleeding continues.',
+      'Beyond 12 hours, prioritise source control, mechanical haemostasis, transfusion support and consultant haematologist discussion rather than additional protamine.'
+    ],
+    why_matters: 'Clinicians frequently overestimate what protamine achieves for LMWH. Setting realistic expectations is part of the consent and resuscitation conversation.',
+    sources: 'Prosulf (protamine) SmPC; BSH guideline on management of bleeding in patients on antithrombotic agents (Makris et al, 2012; addendum 2 June 2019); Schulman review.'
+  },
+  {
+    id: 'fondaparinux_reversal',
+    title: '7. Fondaparinux reversal in major bleeding',
+    summary: 'No licensed agent; conflicting off-label options',
+    settled: 'Fondaparinux has no licensed reversal agent in the UK (Arixtra SmPC; BNF entry). Half-life is 17 to 21 hours and rises substantially in renal impairment, up to approximately 72 hours with CrCl below 30 mL/min. Andexanet alfa does not bind fondaparinux effectively despite the shared factor Xa target and is not licensed for fondaparinux reversal.',
+    contested: 'Whether 4F-PCC (50 IU/kg) or recombinant factor VIIa (90 mcg/kg) is preferable when off-label haemostatic support is needed. Evidence is limited and conflicting; both options carry thrombotic risk. Whether haemodialysis adds clinically meaningful benefit is also debated — fondaparinux is highly protein-bound and dialysis removal is limited.',
+    approaches: [
+      'Source control, mechanical haemostasis, transfusion support and (where appropriate to the bleed site) tranexamic acid are first-line.',
+      'Off-label 4F-PCC or rFVIIa may be considered after consultant haematologist discussion and with explicit documentation of the rationale.'
+    ],
+    why_matters: 'There is no defensible default. The decision sits entirely with the consultant on call and the rationale must be in the patient record.',
+    sources: 'Arixtra (fondaparinux) SmPC; BNF fondaparinux entry; Garcia review; BSH 2012 guideline (Makris, with addendum).'
+  },
+  {
+    id: 'dabigatran_pcc_fallback',
+    title: '8. Dabigatran reversal: PCC as a fallback to idarucizumab',
+    summary: 'PCC fallback when idarucizumab is unavailable',
+    settled: 'Idarucizumab (Praxbind) is the licensed specific reversal agent for dabigatran in life-threatening or uncontrolled bleeding and for emergency surgery or urgent procedures (Praxbind SmPC §4.1, EMC, last updated 17 January 2025). A normal thrombin time generally argues against clinically meaningful dabigatran activity when the local assay is validated as dabigatran-sensitive. Haemodialysis is an option where idarucizumab is unavailable or has not produced adequate clinical response, especially with concurrent acute kidney injury (approximately 80% of dabigatran is renally cleared).',
+    contested: 'The role of 4F-PCC (typically 50 IU/kg) as a fallback when idarucizumab is unavailable. Evidence is limited and is largely from case reports and small series. PCC for dabigatran is off-label and is less effective than idarucizumab. Whether to give a second 5 g dose of idarucizumab routinely when clotting times recover but bleeding continues is also debated; the SmPC permits a repeat dose in selected situations but the evidence base is limited.',
+    approaches: [
+      'Idarucizumab 5 g IV as the licensed first-line.',
+      '4F-PCC 50 IU/kg as a fallback only when idarucizumab is unavailable, after consultant haematologist discussion.',
+      'A repeat 5 g dose of idarucizumab may be considered per Praxbind SmPC §4.2 if clinically warranted (recurrence of clinically relevant bleeding with prolonged clotting times, life-threatening rebleed risk, or a second emergency procedure).'
+    ],
+    why_matters: 'Idarucizumab is the preferred agent, but real-world supply gaps occur and the consultant on call may need to defend a PCC decision in M&M review.',
+    sources: 'Praxbind SmPC §4.1 and §4.2; RE-VERSE AD (Pollack, NEJM 2017); ISTH guidance; EHRA 2021.'
+  }
+];
+
+// renderClinicalDebates — returns the HTML for the entire standing section.
+// Called once on page init; the section is always visible, not conditional on
+// the calc output. Per PR α Part 1 v0.3 proposed Part 2 rendering.
+function renderClinicalDebates() {
+  let html = '<div class="clinical-debates">';
+  html += '<h2 class="cd-section-title">Areas of clinical debate and uncertainty</h2>';
+  html += '<p class="cd-section-intro">Where the underlying evidence base is wobbly or where reasonable consultants disagree, across the calculator. The presence of a debate item does not imply the recommendation itself is unsafe or unsupported; it means reasonable disagreement or evidentiary uncertainty persists around some aspect of implementation, interpretation, or prioritisation. The dose recommendation, the badges, the four-nation commissioning alerts and the consultant reasoning panels all remain the operational guidance — this section is the layer that explains where the operational guidance sits in a contested or evolving evidence base.</p>';
+  CLINICAL_DEBATES.forEach(function(d) {
+    html += '<details class="cd-item" data-cd-id="' + d.id + '">';
+    html += '<summary><span class="cd-title">' + d.title + '</span><span class="cd-summary-line"> — ' + d.summary + '</span></summary>';
+    html += '<div class="cd-body">';
+    html += '<h4>What&apos;s settled</h4><p>' + d.settled + '</p>';
+    html += '<h4>What&apos;s contested</h4><p>' + d.contested + '</p>';
+    html += '<h4>Reasonable approaches</h4><ul>';
+    d.approaches.forEach(function(a) { html += '<li>' + a + '</li>'; });
+    html += '</ul>';
+    html += '<h4>Why this matters</h4><p>' + d.why_matters + '</p>';
+    html += '<h4>Sources</h4><p class="cd-sources">' + d.sources + '</p>';
+    html += '</div></details>';
+  });
+  html += '</div>';
   return html;
 }
 
@@ -1767,6 +2020,13 @@ allInputs.forEach(function(id) {
     el.addEventListener('input', calc);
   }
 });
+
+// Populate the standing Clinical debate and uncertainty section once on init.
+// Always visible — not conditional on the calc output. Per PR α Part 1 v0.3.
+(function initClinicalDebates() {
+  const host = document.getElementById('clinical-debates-section');
+  if (host) host.innerHTML = renderClinicalDebates();
+})();
 
 calc();
 </script>
