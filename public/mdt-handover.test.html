@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HaemCalc Reversal — PR δ MDT handover tests</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         max-width: 980px; margin: 24px auto; padding: 0 16px; color: #1a1a1a; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .meta { color: #555; font-size: 13px; margin-bottom: 20px; }
+  .summary { padding: 12px 14px; border-radius: 6px; font-weight: 600; margin-bottom: 16px; }
+  .summary.pass { background: #e6f4ea; color: #1e6b35; border: 1px solid #b6dcc1; }
+  .summary.fail { background: #fde8e8; color: #8a1f1f; border: 1px solid #f5b8b8; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { border: 1px solid #d0d6dd; padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: #f0f3f6; }
+  tr.pass td.status { color: #1e6b35; font-weight: 600; }
+  tr.fail td.status { color: #8a1f1f; font-weight: 700; }
+  code { background: #f5f7fa; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+  .note { font-size: 12px; color: #555; margin-top: 18px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<h1>PR δ Part 2 — MDT handover line tests</h1>
+<div class="meta">Self-contained test page exercising the <code>buildMdtHandover()</code> function and
+the Copy primitive defined in <code>public/reversal.html</code> for PR δ Part 2. Mirrors the v0.3
+content-frozen specification in
+<code>outputs/haemcalc-cdss/content/04_mdt_communication_wording.md</code>.</div>
+<div id="summary" class="summary">Running…</div>
+<table id="results">
+  <thead>
+    <tr><th>#</th><th>Test</th><th>Expected</th><th>Actual</th><th class="status">Status</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+<div class="note">
+  Tests fetch the live <code>/reversal</code> source and grep for structural and wording
+  invariants. If a test fails, the source-of-truth fix is in <code>public/reversal.html</code>;
+  the test row tells you which assertion was violated.
+</div>
+
+<script>
+async function runTests() {
+  const tbody = document.querySelector('#results tbody');
+  const summary = document.getElementById('summary');
+  let passes = 0, fails = 0;
+  const rows = [];
+
+  function record(name, expected, actual, ok) {
+    rows.push({ name, expected, actual, ok });
+    if (ok) passes++; else fails++;
+  }
+
+  let src = '';
+  try {
+    const resp = await fetch('/reversal?cb=' + Date.now(), { cache: 'no-store' });
+    src = await resp.text();
+  } catch (err) {
+    record('fetch /reversal', 'OK', err.message, false);
+    renderSummary();
+    return;
+  }
+
+  // (1) Module presence checks
+  record('buildMdtHandover() defined', true,
+    src.indexOf('function buildMdtHandover(') !== -1,
+    src.indexOf('function buildMdtHandover(') !== -1);
+  record('selectMdtVariation() defined', true,
+    src.indexOf('function selectMdtVariation(') !== -1,
+    src.indexOf('function selectMdtVariation(') !== -1);
+  record('getMdtCtx() defined', true,
+    src.indexOf('function getMdtCtx()') !== -1,
+    src.indexOf('function getMdtCtx()') !== -1);
+  record('renderMdtBlock() defined', true,
+    src.indexOf('function renderMdtBlock(') !== -1,
+    src.indexOf('function renderMdtBlock(') !== -1);
+  record('copyMdtHandover() defined', true,
+    src.indexOf('function copyMdtHandover(') !== -1,
+    src.indexOf('function copyMdtHandover(') !== -1);
+
+  // (2) All ten variation builders defined
+  ['mdtV1','mdtV2','mdtV3','mdtV4','mdtV5','mdtV6','mdtV7','mdtV8','mdtV9','mdtV10'].forEach(function(fn) {
+    record('Variation builder defined: ' + fn, true,
+      src.indexOf('function ' + fn + '(') !== -1,
+      src.indexOf('function ' + fn + '(') !== -1);
+  });
+
+  // (3) renderOutput injects the MDT block between alerts and reasoning panels
+  const renderOutputBlock = src.slice(src.indexOf('function renderOutput('));
+  record('renderOutput calls buildMdtHandover', true,
+    renderOutputBlock.indexOf('buildMdtHandover(result, mdtCtx)') !== -1,
+    renderOutputBlock.indexOf('buildMdtHandover(result, mdtCtx)') !== -1);
+  record('renderOutput stashes mdt text on window.__mdtCurrent', true,
+    renderOutputBlock.indexOf('window.__mdtCurrent = mdtText') !== -1,
+    renderOutputBlock.indexOf('window.__mdtCurrent = mdtText') !== -1);
+  record('renderOutput appends renderMdtBlock output', true,
+    renderOutputBlock.indexOf('renderMdtBlock(mdtText)') !== -1,
+    renderOutputBlock.indexOf('renderMdtBlock(mdtText)') !== -1);
+
+  // Position check: MDT block must be inserted AFTER extraAlerts.forEach and BEFORE reasoningPanels rendering
+  const alertsIdx = renderOutputBlock.indexOf('result.extraAlerts.forEach');
+  const mdtIdx = renderOutputBlock.indexOf('buildMdtHandover(result, mdtCtx)');
+  const reasoningIdx = renderOutputBlock.indexOf('renderReasoningPanels(result.reasoningPanels)');
+  record('MDT block sits after alerts and before reasoning panel', true,
+    (alertsIdx !== -1 && mdtIdx !== -1 && reasoningIdx !== -1 && alertsIdx < mdtIdx && mdtIdx < reasoningIdx),
+    (alertsIdx < mdtIdx && mdtIdx < reasoningIdx));
+
+  // (4) CSS rules present
+  record('.mdt-handover CSS block present', true,
+    src.indexOf('.mdt-handover {') !== -1,
+    src.indexOf('.mdt-handover {') !== -1);
+  record('.mdt-handover .mdt-copy-btn CSS present', true,
+    src.indexOf('.mdt-handover .mdt-copy-btn {') !== -1,
+    src.indexOf('.mdt-handover .mdt-copy-btn {') !== -1);
+  record('print rule hides Copy button', true,
+    src.indexOf('.mdt-handover .mdt-copy-btn { display: none !important; }') !== -1,
+    src.indexOf('.mdt-handover .mdt-copy-btn { display: none !important; }') !== -1);
+  record('print rule keeps MDT block visible (no display:none on .mdt-handover root in print)', true,
+    src.indexOf('.mdt-handover { display: none') === -1,
+    src.indexOf('.mdt-handover { display: none') === -1);
+
+  // (5) Footer reminder wording (v0.3) is correct and visible-on-print
+  record('Footer line 1 present (v0.3 wording)', true,
+    src.indexOf('Review and edit before filing; this draft does not replace the clinician') !== -1,
+    src.indexOf('Review and edit before filing; this draft does not replace the clinician') !== -1);
+  record('Footer line 2 present (v0.3 wording)', true,
+    src.indexOf('Replace the consultant name placeholder before filing in the clinical record') !== -1,
+    src.indexOf('Replace the consultant name placeholder before filing in the clinical record') !== -1);
+  record('Old v0.2 footer wording absent', false,
+    src.indexOf('Edit before pasting; this is a draft based on the inputs above') !== -1,
+    src.indexOf('Edit before pasting; this is a draft based on the inputs above') === -1);
+
+  // (6) Clipboard-output cleanliness — buildMdtHandover output should never contain
+  // markdown bolding marks, HTML tags, or zero-width characters. The variation builders
+  // are pure plain-text returns, so we check by inspecting the function bodies.
+  ['mdtV1','mdtV2','mdtV3','mdtV4','mdtV5','mdtV6','mdtV7','mdtV8','mdtV9','mdtV10'].forEach(function(fn) {
+    const startMarker = 'function ' + fn + '(';
+    const startIdx = src.indexOf(startMarker);
+    const endIdx = src.indexOf('\nfunction ', startIdx + startMarker.length);
+    const body = src.slice(startIdx, endIdx === -1 ? src.length : endIdx);
+    // The function body itself is JS; we don't search the function code for ** or <.
+    // We instead check that the function returns a string that doesn't bake in HTML or
+    // markdown bold via a simple structural rule: the function body shouldn't contain
+    // any literal '<strong>', '</strong>', or '**' inside string literals it returns.
+    // (The function definition may contain '<[^>]+>' as part of mdtStripHtml regex — exclude that.)
+    const containsStrongTag = body.indexOf("'<strong>") !== -1 || body.indexOf('"<strong>') !== -1;
+    const containsBoldMarkdown = body.indexOf("**'") !== -1 || body.indexOf("'**") !== -1;
+    record(fn + ' body contains no <strong> in return strings', false, containsStrongTag, !containsStrongTag);
+    record(fn + ' body contains no ** bold markers in return strings', false, containsBoldMarkdown, !containsBoldMarkdown);
+  });
+
+  // (7) Governance phrases that MUST be preserved (inline in some variations)
+  record('"off-label use" preserved in source (V1/V4)', true,
+    src.indexOf('off-label use for FXa-inhibitor-related') !== -1,
+    src.indexOf('off-label use for FXa-inhibitor-related') !== -1);
+  record('"licensed indication" preserved in source (V2)', true,
+    src.indexOf('licensed indication, NICE TA697') !== -1,
+    src.indexOf('licensed indication, NICE TA697') !== -1);
+  record('"NHS access dependent" preserved in source (V3)', true,
+    src.indexOf('NHS access dependent: SMC advice 2273') !== -1,
+    src.indexOf('NHS access dependent: SMC advice 2273') !== -1);
+  record('"low-certainty partial reversal" preserved in source (V8)', true,
+    src.indexOf('low-certainty partial reversal: protamine reverses') !== -1,
+    src.indexOf('low-certainty partial reversal: protamine reverses') !== -1);
+
+  // (8) v0.3 wording invariants — phrases that must appear in their variation builders
+  record('V3/V4 NICE TA1029 wording from v0.3 PR α present', true,
+    src.indexOf('NICE was unable to make a recommendation for andexanet alfa in ICH because the company did not provide an evidence submission') !== -1,
+    src.indexOf('NICE was unable to make a recommendation for andexanet alfa in ICH because the company did not provide an evidence submission') !== -1);
+  record('V2/V3 thrombotic risk v0.3 bracketed wording present', true,
+    src.indexOf('Thrombotic risk: [considered / discussed with patient or family / not feasible to discuss at the time]') !== -1,
+    src.indexOf('Thrombotic risk: [considered / discussed with patient or family / not feasible to discuss at the time]') !== -1);
+  record('V2/V3 SmPC §4.4 combination wording present', true,
+    src.indexOf('Sequential or combined use with PCC, aPCC, recombinant factor VIIa, fresh frozen plasma, or whole blood was avoided unless clinically unavoidable') !== -1,
+    src.indexOf('Sequential or combined use with PCC, aPCC, recombinant factor VIIa, fresh frozen plasma, or whole blood was avoided unless clinically unavoidable') !== -1);
+  record('V9 fondaparinux licensing-only wording present', true,
+    src.indexOf('andexanet alfa is not licensed for fondaparinux reversal and should not be presented as a reversal option') !== -1,
+    src.indexOf('andexanet alfa is not licensed for fondaparinux reversal and should not be presented as a reversal option') !== -1);
+  record('V10 no rescue-agent menu (no "rFVIIa, or aPCC / FEIBA" in V10 body)', false,
+    src.indexOf('(4F-PCC, rFVIIa, or aPCC / FEIBA)') !== -1,
+    src.indexOf('(4F-PCC, rFVIIa, or aPCC / FEIBA)') === -1);
+  record('V10 generic off-label support wording present', true,
+    src.indexOf('off-label haemostatic support was considered only after consultant haematologist discussion and local policy review') !== -1,
+    src.indexOf('off-label haemostatic support was considered only after consultant haematologist discussion and local policy review') !== -1);
+
+  // (9) Old wording absent — phrases the v0.3 reviewer specifically removed
+  record('Old "Counselled patient or family" wording absent', false,
+    src.indexOf('Counselled patient or family on the thrombotic event signal') !== -1,
+    src.indexOf('Counselled patient or family on the thrombotic event signal') === -1);
+  record('Old definitive "Thrombotic risk was considered and, where feasible" absent in code', false,
+    src.indexOf("Thrombotic risk was considered and, where feasible") !== -1,
+    src.indexOf("Thrombotic risk was considered and, where feasible") === -1);
+  record('Old "PCC was not given within 7 days of andexanet" wording absent', false,
+    src.indexOf('PCC was not given within 7 days of andexanet alfa') !== -1,
+    src.indexOf('PCC was not given within 7 days of andexanet alfa') === -1);
+  record('Old "not NICE-funded" wording absent', false,
+    src.indexOf('not NICE-funded for ICH') !== -1,
+    src.indexOf('not NICE-funded for ICH') === -1);
+  record('Old "does not bind fondaparinux effectively" wording absent', false,
+    src.indexOf('does not bind fondaparinux effectively') !== -1,
+    src.indexOf('does not bind fondaparinux effectively') === -1);
+  record('Old "reliably excludes a clinically meaningful dabigatran level" wording absent (from PR α fix)', false,
+    src.indexOf('reliably excludes a clinically meaningful dabigatran level') !== -1,
+    src.indexOf('reliably excludes a clinically meaningful dabigatran level') === -1);
+
+  // (10) Closing consultant attribution clause present in every variation builder
+  ['mdtV1','mdtV2','mdtV3','mdtV4','mdtV5','mdtV6','mdtV7','mdtV8','mdtV9','mdtV10'].forEach(function(fn) {
+    const startMarker = 'function ' + fn + '(';
+    const startIdx = src.indexOf(startMarker);
+    const endIdx = src.indexOf('\nfunction ', startIdx + startMarker.length);
+    const body = src.slice(startIdx, endIdx === -1 ? src.length : endIdx);
+    const hasConsultantClose = body.indexOf("Discussed with the Consultant Haematologist on-call (name to be entered); rationale recorded in the patient note") !== -1;
+    record(fn + ' carries closing consultant attribution clause', true, hasConsultantClose, hasConsultantClose);
+  });
+
+  // (11) V9 has only ONE "rationale recorded in the patient note" occurrence (v0.3 duplicate-removal fix)
+  const v9StartIdx = src.indexOf('function mdtV9(');
+  const v9EndIdx = src.indexOf('\nfunction ', v9StartIdx + 1);
+  const v9Body = src.slice(v9StartIdx, v9EndIdx === -1 ? src.length : v9EndIdx);
+  const v9RationaleCount = (v9Body.match(/rationale recorded in the patient note/g) || []).length;
+  record('V9 contains exactly one "rationale recorded in the patient note" (v0.3 duplicate fix)', 1, v9RationaleCount, v9RationaleCount === 1);
+
+  // (12) Render
+  rows.forEach(function(r, i) {
+    const tr = document.createElement('tr');
+    tr.className = r.ok ? 'pass' : 'fail';
+    tr.innerHTML =
+      '<td>' + (i + 1) + '</td>' +
+      '<td>' + r.name + '</td>' +
+      '<td><code>' + JSON.stringify(r.expected) + '</code></td>' +
+      '<td><code>' + JSON.stringify(r.actual) + '</code></td>' +
+      '<td class="status">' + (r.ok ? 'PASS' : 'FAIL') + '</td>';
+    tbody.appendChild(tr);
+  });
+  summary.className = 'summary ' + (fails === 0 ? 'pass' : 'fail');
+  const total = passes + fails;
+  summary.textContent = (fails === 0 ? 'PASS' : 'FAIL') +
+    ' — ' + passes + ' / ' + total + ' tests passing.' +
+    (fails === 0 ? '' : ' ' + fails + ' failing.');
+}
+
+function renderSummary() {
+  const summary = document.getElementById('summary');
+  summary.className = 'summary fail';
+  summary.textContent = 'FAIL — could not fetch /reversal';
+}
+
+runTests();
+</script>
+</body>
+</html>
