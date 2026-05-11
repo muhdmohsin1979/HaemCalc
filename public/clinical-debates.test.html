@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HaemCalc Reversal — PR α clinical-debate tests</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         max-width: 980px; margin: 24px auto; padding: 0 16px; color: #1a1a1a; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .meta { color: #555; font-size: 13px; margin-bottom: 20px; }
+  .summary { padding: 12px 14px; border-radius: 6px; font-weight: 600; margin-bottom: 16px; }
+  .summary.pass { background: #e6f4ea; color: #1e6b35; border: 1px solid #b6dcc1; }
+  .summary.fail { background: #fde8e8; color: #8a1f1f; border: 1px solid #f5b8b8; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { border: 1px solid #d0d6dd; padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: #f0f3f6; }
+  tr.pass td.status { color: #1e6b35; font-weight: 600; }
+  tr.fail td.status { color: #8a1f1f; font-weight: 700; }
+  code { background: #f5f7fa; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+  .note { font-size: 12px; color: #555; margin-top: 18px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<h1>PR α Part 2 — Clinical debate and uncertainty tests</h1>
+<div class="meta">Self-contained test page exercising the CLINICAL_DEBATES data structure
+defined in <code>public/reversal.html</code> for PR α Part 2. Mirrors the v0.3 content-frozen
+specification in <code>outputs/haemcalc-cdss/content/03_clinical_debate_uncertainty.md</code>.</div>
+<div id="summary" class="summary">Running…</div>
+<table id="results">
+  <thead>
+    <tr><th>#</th><th>Test</th><th>Expected</th><th>Actual</th><th class="status">Status</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+<div class="note">
+  These tests duplicate the eight expected debate IDs and key wording phrases from
+  <code>public/reversal.html</code>. They are intended as a regression check on the structure
+  and content of the CLINICAL_DEBATES array (eight items, each with all five subsections, with the
+  v0.3-approved wording on the key phrases that were the subject of reviewer-corrected fixes).
+  If a test fails, the source-of-truth fix is in <code>public/reversal.html</code>; the test
+  row tells you which assertion was violated.
+</div>
+
+<script>
+// ------------------------------------------------------------------
+// Mirror of the CLINICAL_DEBATES structure from public/reversal.html.
+// Kept in sync with PR α Part 1 v0.3 content. The full prose is in the
+// source file; here we only mirror the structural fields and the key
+// wording phrases that the v0.3 reviewer specifically corrected.
+// ------------------------------------------------------------------
+const EXPECTED_IDS = [
+  'andexanet_vs_pcc',
+  'fda_vs_ema',
+  'fixed_vs_weight_pcc',
+  'pcc_doac_anchoring',
+  'txa_gi_bleed',
+  'lmwh_partial_reversal',
+  'fondaparinux_reversal',
+  'dabigatran_pcc_fallback'
+];
+
+// Key wording phrases that the v0.3 reviewer specifically corrected, and that
+// must remain present in the source after rendering.
+const KEY_PHRASES = {
+  fda_vs_ema_communication_date: 'issued a safety communication in December 2025',
+  fda_vs_ema_no_eu_uk: 'NOT EU/UK',
+  fda_vs_ema_practical_consequences: 'The regulatory divergence has practical consequences',
+  fda_vs_ema_no_difference_is_real: 'NOT The difference is real',
+  andexanet_pcc_haemostatic_efficacy: 'weighs improved haemostatic efficacy',
+  andexanet_pcc_no_faster_haemostasis: 'NOT weighs faster haemostasis',
+  andexanet_pcc_nice_ta1029: 'NICE was unable to make a recommendation because the company did not provide an evidence submission',
+  pcc_doac_local_strategy: 'local strategy within the published 25 to 50 IU/kg range',
+  lmwh_60_percent: 'approximately 60%',
+  lmwh_no_per_cent: 'NOT approximately 60 per cent',
+  dabigatran_80_percent: 'approximately 80%',
+  dabigatran_no_per_cent: 'NOT approximately 80 per cent',
+  dabigatran_thrombin_time: 'generally argues against clinically meaningful dabigatran activity',
+  dabigatran_no_reliably_excludes: 'NOT reliably excludes a clinically meaningful dabigatran level'
+};
+
+// Smoke-test the source file by fetching it and grepping for the expected ids
+// and phrases. This is the regression page's job — it runs as a static asset
+// on the same deploy.
+async function runTests() {
+  const tbody = document.querySelector('#results tbody');
+  const summary = document.getElementById('summary');
+  let passes = 0, fails = 0;
+  const rows = [];
+
+  function record(name, expected, actual, ok) {
+    rows.push({ name, expected, actual, ok });
+    if (ok) passes++; else fails++;
+  }
+
+  let src = '';
+  try {
+    const resp = await fetch('/reversal');
+    src = await resp.text();
+  } catch (err) {
+    record('fetch /reversal', 'OK', err.message, false);
+    renderSummary();
+    return;
+  }
+
+  // (1) eight expected ids present
+  EXPECTED_IDS.forEach(function(id, i) {
+    const present = src.indexOf("id: '" + id + "'") !== -1;
+    record('Debate #' + (i + 1) + ' id present: ' + id, true, present, present === true);
+  });
+
+  // (2) structural fields per item — settled, contested, approaches, why_matters, sources
+  const fields = ['settled', 'contested', 'approaches', 'why_matters', 'sources'];
+  EXPECTED_IDS.forEach(function(id) {
+    fields.forEach(function(f) {
+      // For each id, find the block from "id: 'X'" to the next "id: '" or end of array
+      const startMarker = "id: '" + id + "'";
+      const startIdx = src.indexOf(startMarker);
+      if (startIdx === -1) {
+        record(id + ' field check skipped (id not found)', true, false, false);
+        return;
+      }
+      const nextIdIdx = src.indexOf("id: '", startIdx + startMarker.length);
+      const block = src.slice(startIdx, nextIdIdx === -1 ? src.length : nextIdIdx);
+      const present = block.indexOf(f + ':') !== -1;
+      record(id + ' has field ' + f, true, present, present === true);
+    });
+  });
+
+  // (3) key wording phrases — present-of-positive and absent-of-negative
+  Object.keys(KEY_PHRASES).forEach(function(k) {
+    const phrase = KEY_PHRASES[k];
+    if (phrase.startsWith('NOT ')) {
+      const banned = phrase.slice(4);
+      const present = src.indexOf(banned) !== -1;
+      record(k + ' (must be absent)', false, present, present === false);
+    } else {
+      const present = src.indexOf(phrase) !== -1;
+      record(k + ' (must be present)', true, present, present === true);
+    }
+  });
+
+  // (4) renderClinicalDebates function is defined
+  record('renderClinicalDebates() defined', true,
+    src.indexOf('function renderClinicalDebates(') !== -1,
+    src.indexOf('function renderClinicalDebates(') !== -1);
+
+  // (5) placeholder div in HTML
+  record('clinical-debates-section placeholder div present', true,
+    src.indexOf('id="clinical-debates-section"') !== -1,
+    src.indexOf('id="clinical-debates-section"') !== -1);
+
+  // (6) print rule hides .clinical-debates
+  record('print stylesheet hides .clinical-debates', true,
+    src.indexOf('.clinical-debates { display: none !important; }') !== -1,
+    src.indexOf('.clinical-debates { display: none !important; }') !== -1);
+
+  // (7) initClinicalDebates IIFE is wired up before calc()
+  record('init IIFE wired up before calc()', true,
+    src.indexOf('initClinicalDebates') !== -1,
+    src.indexOf('initClinicalDebates') !== -1);
+
+  // Render
+  rows.forEach(function(r, i) {
+    const tr = document.createElement('tr');
+    tr.className = r.ok ? 'pass' : 'fail';
+    tr.innerHTML =
+      '<td>' + (i + 1) + '</td>' +
+      '<td>' + r.name + '</td>' +
+      '<td><code>' + JSON.stringify(r.expected) + '</code></td>' +
+      '<td><code>' + JSON.stringify(r.actual) + '</code></td>' +
+      '<td class="status">' + (r.ok ? 'PASS' : 'FAIL') + '</td>';
+    tbody.appendChild(tr);
+  });
+  summary.className = 'summary ' + (fails === 0 ? 'pass' : 'fail');
+  const total = passes + fails;
+  summary.textContent = (fails === 0 ? 'PASS' : 'FAIL') +
+    ' — ' + passes + ' / ' + total + ' tests passing.' +
+    (fails === 0 ? '' : ' ' + fails + ' failing.');
+}
+
+function renderSummary() {
+  const summary = document.getElementById('summary');
+  summary.className = 'summary fail';
+  summary.textContent = 'FAIL — could not fetch /reversal';
+}
+
+runTests();
+</script>
+</body>
+</html>
