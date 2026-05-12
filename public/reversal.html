@@ -88,8 +88,11 @@
   }
   .output-box ul { margin: 8px 0 0; padding-left: 20px; font-size: 13px; }
   .output-box li { margin-bottom: 4px; }
+  /* PR ε visual cleanup: consistent 20 px layer-break gap above each clinical
+     layer inside the output region. Per outputs/haemcalc-cdss/content/
+     05_visual_layer_cleanup.md (v0.2 frozen). */
   .alert-blue {
-    margin-top: 14px; padding: 12px 14px;
+    margin-top: 20px; padding: 12px 14px;
     background: #e8f1fb; border-left: 3px solid #0066cc;
     border-radius: 4px;
   }
@@ -98,7 +101,7 @@
     text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
   }
   .alert-amber {
-    margin-top: 14px; padding: 12px 14px;
+    margin-top: 20px; padding: 12px 14px;
     background: #fef3c7; border-left: 3px solid #c69500;
     border-radius: 4px;
   }
@@ -107,7 +110,7 @@
     text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
   }
   .alert-red {
-    margin-top: 14px; padding: 12px 14px;
+    margin-top: 20px; padding: 12px 14px;
     background: #fee2e2; border-left: 3px solid #b91c1c;
     border-radius: 4px;
   }
@@ -119,9 +122,12 @@
   .alert-body a { color: #0066cc; text-decoration: none; }
   .alert-body a:hover { text-decoration: underline; }
   /* Consultant reasoning panel — supplementary, visually subordinate to primary recommendation.
-     Collapsed by default. Neutral palette. Mobile-stacked. Print-hidden. */
+     Collapsed by default. Neutral palette. Mobile-stacked. Print-hidden.
+     PR ε visual cleanup: margin-top raised from 16 px to 20 px for consistent
+     layer-break rhythm. Per outputs/haemcalc-cdss/content/
+     05_visual_layer_cleanup.md (v0.2 frozen). */
   .consultant-reasoning {
-    margin-top: 16px;
+    margin-top: 20px;
     border: 1px solid #d8dde4;
     border-radius: 4px;
     background: #fafbfc;
