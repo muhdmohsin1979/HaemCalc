@@ -2571,9 +2571,21 @@ allInputs.forEach(function(id) {
 // Populate the governance footer once on init. Always visible — including on
 // print, since the printed copy is what a Trust governance reviewer or M&M
 // panel reads. Per PR ζ Part 2 (Governance Metadata Schema v1.0).
+//
+// The governance-footer DOM container sits AFTER this </script> tag, so
+// document.getElementById('governance-footer') returns null at script-eval
+// time. Defer to DOMContentLoaded (or run immediately if the DOM is already
+// parsed, e.g. on cached navigation).
 (function initGovernanceFooter() {
-  const host = document.getElementById('governance-footer');
-  if (host) host.innerHTML = renderGovernanceFooter();
+  function go() {
+    const host = document.getElementById('governance-footer');
+    if (host) host.innerHTML = renderGovernanceFooter();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', go);
+  } else {
+    go();
+  }
 })();
 
 calc();
