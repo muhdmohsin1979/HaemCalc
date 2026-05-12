@@ -472,6 +472,19 @@
     .mdt-handover .mdt-copy-btn { display: none !important; }
     .mdt-handover .mdt-copy-confirm { display: none !important; }
     .dose-table tr.recommended td { background: #ddd !important; }
+    /* Governance footer (PR ζ Part 2, Governance Metadata Schema v1.0) prints by
+       default — it is the part of the page a Trust governance reviewer or M&M
+       panel needs on a printed copy. Plain border, no fill, page-break-inside
+       avoid so the block does not split across pages. */
+    .governance-footer {
+      background: #fff !important;
+      border: 1px solid #888 !important;
+      page-break-inside: avoid;
+      margin-top: 24px;
+    }
+    .governance-footer .gf-label { color: #333 !important; }
+    .governance-footer .gf-value { color: #000 !important; }
+    .governance-footer .gf-disclaimer { color: #333 !important; border-top-color: #888 !important; }
   }
   .signature-block { display: none; }
   .signature-grid {
@@ -480,6 +493,53 @@
   }
   .sig-line { border-bottom: 1px solid #000; height: 32px; margin-bottom: 4px; }
   .sig-label { font-size: 11px; color: #555; }
+
+  /* =====================================================================
+     PR ζ Part 2 — Governance footer (Governance Metadata Schema v1.0)
+     ===================================================================== */
+  .governance-footer {
+    margin-top: 24px;
+    padding: 16px 18px;
+    background: #f6f8fb;
+    border: 1px solid #d8dde4;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #2c3540;
+    line-height: 1.5;
+  }
+  .governance-footer .gf-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #4a5566;
+    margin-bottom: 12px;
+  }
+  .governance-footer .gf-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 24px;
+  }
+  .governance-footer .gf-field { display: flex; flex-direction: column; }
+  .governance-footer .gf-field-wide { grid-column: 1 / -1; }
+  .governance-footer .gf-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #4a5566;
+    margin-bottom: 2px;
+  }
+  .governance-footer .gf-value { font-size: 12px; color: #2c3540; }
+  .governance-footer .gf-disclaimer {
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px solid #d8dde4;
+    font-size: 11px;
+    color: #4a5566;
+    line-height: 1.5;
+  }
+  @media (max-width: 640px) {
+    .governance-footer .gf-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -1315,6 +1375,92 @@ function renderClinicalDebates() {
     html += '<h4>Sources</h4><p class="cd-sources">' + d.sources + '</p>';
     html += '</div></details>';
   });
+  html += '</div>';
+  return html;
+}
+
+// =====================================================================
+// GOVERNANCE METADATA SCHEMA v1.0 (PR ζ Part 1 v0.2; rendering Part 2)
+// =====================================================================
+//
+// Source: outputs/haemcalc-cdss/content/06_governance_footer_schema.md
+//
+// SCHEMA v1.0 — IMMUTABILITY RULE
+// -------------------------------
+// The eight fields below are the schema. Adding, removing, or renaming a
+// field requires consultant clinical-governance review and a version bump
+// (v1.0 → v1.1). This mirrors the BADGES taxonomy immutability rule (PR β).
+//
+// FIELDS (canonical order)
+// ------------------------
+//   1. lastClinicallyReviewed     ISO 8601 date
+//   2. nextScheduledReview        ISO 8601 date; default review cadence 6 months
+//                                 unless otherwise declared for the specific module
+//   3. primaryReviewer            string (name + role)
+//   4. secondaryReviewer          string or null — when null, render as
+//                                 "not currently assigned" (do not hide)
+//   5. sourceSetVersion           semver string, tied to the governance document of record
+//   6. currentGuidelineAlignment  concise governance statement (free text)
+//   7. knownActiveDebatesCount    integer; auto-derived from CLINICAL_DEBATES.length
+//   8. intendedUse                concise scope statement
+//
+// REVIEW TRIGGERS
+// ---------------
+//   1. Scheduled cadence (default 6-monthly).
+//   2. Source-document trigger — SmPC, NICE TA, BSH guideline, or major trial
+//      republished. The SmPC re-verification cron (PR #39) is the engine.
+//   3. Active-debate change — CLINICAL_DEBATES structure modified.
+//   4. Major incident or external feedback — M&M, Datix, formulary committee,
+//      external reviewer comment requiring a clinical-content change.
+//
+// The reversal page is the first implementation of this schema. Other HaemCalc
+// modules may adopt the same field set without redesign; adoption requires all
+// eight fields to be populated honestly (no "Last reviewed: never" stamps).
+//
+const GOVERNANCE_METADATA = {
+  lastClinicallyReviewed: '2026-05-11',
+  nextScheduledReview: '2026-11-11',
+  primaryReviewer: 'Dr Muhammad Mohsin, Consultant Haematologist',
+  secondaryReviewer: null,
+  sourceSetVersion: '0.3.2-addendum',
+  currentGuidelineAlignment: 'BSH 2011 (Keeling); BSH andexanet position statement (2026); NICE TA697; SMC2273; relevant SmPCs current to May 2026',
+  // knownActiveDebatesCount is auto-derived from CLINICAL_DEBATES.length below.
+  intendedUse: 'Adult haematology clinical decision support; not validated for paediatrics, pregnancy, ECMO, severe obesity with altered pharmacokinetics, advanced liver failure, cardiac-surgery anticoagulation pathways, or veterinary use'
+};
+
+// formatGovernanceDate — ISO 8601 (YYYY-MM-DD) → "11 May 2026" form.
+function formatGovernanceDate(iso) {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const parts = String(iso || '').split('-');
+  if (parts.length !== 3) return String(iso || '');
+  const y = parts[0];
+  const m = parseInt(parts[1], 10);
+  const d = parseInt(parts[2], 10);
+  if (!y || isNaN(m) || isNaN(d) || m < 1 || m > 12) return String(iso || '');
+  return d + ' ' + months[m - 1] + ' ' + y;
+}
+
+// renderGovernanceFooter — returns the HTML for the governance footer block.
+// Eight-field grid (two-column desktop, single-column mobile via CSS), followed
+// by the standing disclaimer. knownActiveDebatesCount auto-derives from
+// CLINICAL_DEBATES.length so the count cannot drift from the data structure.
+function renderGovernanceFooter() {
+  const gm = GOVERNANCE_METADATA;
+  const debatesCount = (typeof CLINICAL_DEBATES !== 'undefined' && Array.isArray(CLINICAL_DEBATES)) ? CLINICAL_DEBATES.length : 0;
+  const secondary = gm.secondaryReviewer || 'not currently assigned';
+  let html = '<div class="governance-footer">';
+  html += '<div class="gf-title">Governance metadata</div>';
+  html += '<div class="gf-grid">';
+  html +=   '<div class="gf-field"><div class="gf-label">Last clinically reviewed</div><div class="gf-value">' + formatGovernanceDate(gm.lastClinicallyReviewed) + '</div></div>';
+  html +=   '<div class="gf-field"><div class="gf-label">Next scheduled review</div><div class="gf-value">' + formatGovernanceDate(gm.nextScheduledReview) + '</div></div>';
+  html +=   '<div class="gf-field"><div class="gf-label">Primary reviewer</div><div class="gf-value">' + gm.primaryReviewer + '</div></div>';
+  html +=   '<div class="gf-field"><div class="gf-label">Secondary reviewer</div><div class="gf-value">' + secondary + '</div></div>';
+  html +=   '<div class="gf-field"><div class="gf-label">Source set version</div><div class="gf-value">' + gm.sourceSetVersion + '</div></div>';
+  html +=   '<div class="gf-field"><div class="gf-label">Known active debates</div><div class="gf-value">' + debatesCount + '</div></div>';
+  html +=   '<div class="gf-field gf-field-wide"><div class="gf-label">Current guideline alignment</div><div class="gf-value">' + gm.currentGuidelineAlignment + '</div></div>';
+  html +=   '<div class="gf-field gf-field-wide"><div class="gf-label">Intended use</div><div class="gf-value">' + gm.intendedUse + '</div></div>';
+  html += '</div>';
+  html += '<div class="gf-disclaimer">This footer records governance metadata only. It does not constitute clinical validation, regulatory approval, or institutional endorsement. The governance footer describes review state and intended scope; it does not replace clinician judgement or local policy. Use remains subject to local Trust governance and the DRAFT &mdash; PENDING TRUST RATIFICATION notice above.</div>';
   html += '</div>';
   return html;
 }
@@ -2422,8 +2568,20 @@ allInputs.forEach(function(id) {
   if (host) host.innerHTML = renderClinicalDebates();
 })();
 
+// Populate the governance footer once on init. Always visible — including on
+// print, since the printed copy is what a Trust governance reviewer or M&M
+// panel reads. Per PR ζ Part 2 (Governance Metadata Schema v1.0).
+(function initGovernanceFooter() {
+  const host = document.getElementById('governance-footer');
+  if (host) host.innerHTML = renderGovernanceFooter();
+})();
+
 calc();
 </script>
+
+<!-- Governance footer (PR ζ Part 2). Container is populated once on page init
+     by initGovernanceFooter() above. Visible on screen and on print. -->
+<div id="governance-footer"></div>
 
 <div class="page-credit no-print" style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e9ed; font-size: 11px; color: #888; text-align: center; line-height: 1.6;">
   &copy; 2026 Dr Muhammad Mohsin. All rights reserved. Authored and developed by Dr Muhammad Mohsin, Consultant Haematologist.<br>
