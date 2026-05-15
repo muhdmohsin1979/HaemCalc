@@ -669,6 +669,23 @@
         <option value="yes">Yes (mechanical valve, recent PCI, recent VTE, APS)</option>
       </select>
     </div>
+    <!-- PR η — activated-charcoal advisory context. Two opt-in fields, DOAC-only.
+         The advisory only fires when (a) the clinician identifies the case as an
+         overdose / accidental extra dose / very recent ingestion (NOT a routine
+         therapeutic-dose bleed), and (b) the exact hours since last dose is
+         provided AND falls inside the per-drug window (apixaban 6h; rivaroxaban,
+         dabigatran, edoxaban 2h). Per PR η Part 1 v0.4 frozen decision rule. -->
+    <div class="form-grid-full">
+      <label for="charcoal_context">Charcoal advisory context (optional)</label>
+      <select id="charcoal_context">
+        <option value="not_specified">Routine therapeutic dose, or not specified (advisory does not fire)</option>
+        <option value="overdose">Acute overdose, accidental extra dose, deliberate ingestion, or very recent ingestion</option>
+      </select>
+    </div>
+    <div>
+      <label for="charcoal_hours">Hours since last DOAC dose (exact, for charcoal advisory)</label>
+      <input type="number" id="charcoal_hours" min="0" max="24" step="0.25" placeholder="e.g. 1.5">
+    </div>
   </div>
 </div>
 
@@ -869,7 +886,20 @@ const REFS = {
   bnf_fonda: { id: 'BNF: fondaparinux', url: 'https://bnf.nice.org.uk/drugs/fondaparinux-sodium/', label: 'BNF (NICE)' },
   arixtra_smpc: { id: 'Arixtra (fondaparinux) SmPC, EMC', url: 'https://www.medicines.org.uk/emc/product/3335/smpc', label: 'medicines.org.uk SmPC' },
   garcia: { id: 'Garcia 2018 (Fondaparinux reversal options)', url: 'https://pubmed.ncbi.nlm.nih.gov/29574429/', label: 'Hematology Am Soc Hematol Educ Program 2018' },
-  greinacher: { id: 'Greinacher 2017 (HIT management, BSH)', url: 'https://pubmed.ncbi.nlm.nih.gov/29240222/', label: 'Br J Haematol 2017' }
+  greinacher: { id: 'Greinacher 2017 (HIT management, BSH)', url: 'https://pubmed.ncbi.nlm.nih.gov/29240222/', label: 'Br J Haematol 2017' },
+  // PR η — activated-charcoal advisory references. Per PR η Part 1 v0.4 frozen content.
+  // Eliquis is the strongest SmPC anchor (only DOAC SmPC with explicit pharmacokinetic
+  // data on charcoal at defined time intervals). Pradaxa SmPC is deliberately NOT in
+  // this charcoal-supporting list because it does not specifically mention charcoal in
+  // §4.9; the Praxbind SmPC remains in REFS above for idarucizumab.
+  eliquis_smpc:  { id: 'Eliquis (apixaban) SmPC, EMC', url: 'https://www.medicines.org.uk/emc/product/2878/smpc', label: 'medicines.org.uk SmPC §4.9 (Overdose)' },
+  xarelto_smpc:  { id: 'Xarelto (rivaroxaban) SmPC, EMC', url: 'https://www.medicines.org.uk/emc/product/2793/smpc', label: 'medicines.org.uk SmPC §4.9 (Overdose)' },
+  lixiana_smpc:  { id: 'Lixiana (edoxaban) SmPC, EMC', url: 'https://www.medicines.org.uk/emc/product/6905/smpc', label: 'medicines.org.uk SmPC §4.9 (Overdose)' },
+  // Ollier 2017 supports the rivaroxaban extended-window discussion sentence ONLY.
+  // It MUST NOT be used to extend the automatic trigger window beyond 2 hours.
+  // UK governance anchoring (UK SmPC, BSH, NICE, SMC) for the trigger window is
+  // unchanged. Per PR η Part 1 v0.4 freeze rules and frozen content.
+  ollier2017:    { id: 'Ollier 2017 (rivaroxaban + activated charcoal PK)', url: 'https://pubmed.ncbi.nlm.nih.gov/27910037/', label: 'Clin Pharmacokinet 2017 (NCT02657512). Discussion-sentence support only; does not alter trigger logic.' }
 };
 
 // =====================================================================
@@ -1389,6 +1419,223 @@ function renderClinicalDebates() {
   html += '</div>';
   return html;
 }
+
+// =====================================================================
+// ACTIVATED-CHARCOAL ADVISORY (PR η Part 1 v0.4; rendering Part 2)
+// =====================================================================
+//
+// Source: outputs/haemcalc-cdss/content/07_activated_charcoal_advisory.md (frozen v0.4)
+//
+// Per-drug context-gated informational advisory block. Renders as an
+// alert-blue informational alert inside the primary recommendation cluster,
+// after existing extraAlerts and before the MDT handover line. Visually
+// subordinate to the primary reversal recommendation per the PR γ Rendering
+// safety rule.
+//
+// FROZEN GOVERNANCE RULES (do not modify without re-running the v0.4 review):
+//
+// 1. Trigger windows are drug-specific:
+//      apixaban    less than 6 hours
+//      rivaroxaban less than 2 hours
+//      dabigatran  less than 2 hours
+//      edoxaban    less than 2 hours
+//
+// 2. The rivaroxaban automatic trigger window MUST remain less than 2 hours.
+//    The Ollier 2017 reference is included in REFS to support the
+//    discussion sentence in the rivaroxaban advisory text only and MUST NOT
+//    be used to extend the firing window. Regression assertions below
+//    enforce this.
+//
+// 3. The Pradaxa SmPC does not specifically mention activated charcoal. The
+//    dabigatran badge tier is therefore Low-certainty evidence (PR β v0.4),
+//    NOT Guideline-supported. The badge text rendered to clinicians states
+//    explicitly "not specifically Pradaxa-SmPC-supported".
+//
+// 4. The advisory does NOT fire for warfarin, UFH, LMWH, fondaparinux,
+//    argatroban, bivalirudin, or any other parenteral anticoagulant.
+//
+// 5. The advisory does NOT fire when ingestion context is "routine
+//    therapeutic dose, or not specified" — this is the default UI value
+//    so the advisory is opt-in.
+//
+// 6. The advisory does NOT fire when hours-since-last-dose is unknown.
+//
+const CHARCOAL_ADVISORY = {
+  apixaban: {
+    triggerWindowHours: 6,
+    badgeTier: 'guideline_supported',
+    sourceRefs: ['ondexxya_smpc', 'eliquis_smpc'],
+    body: 'Consider adjunctive activated charcoal 50 g PO or via NG tube if last dose within 6 hours and the airway is protected (alert and cooperative, or intubated). The Eliquis (apixaban) SmPC §4.9 documents reduction in apixaban AUC of approximately 50% when charcoal was given 2 hours after a 20 mg dose, and approximately 27% at 6 hours; the longer window is therefore supported, but the benefit at 6 hours is meaningfully smaller than at 2 hours. Earlier administration is preferred where possible. Charcoal is <strong>adjunctive</strong> to andexanet alfa or 4F-PCC, not a substitute. Discuss with the on-call Consultant Haematologist; do not delay reversal while waiting for charcoal.'
+  },
+  rivaroxaban: {
+    triggerWindowHours: 2,
+    badgeTier: 'guideline_supported',
+    sourceRefs: ['xarelto_smpc'],
+    // Per PR η Part 1 v0.4: the discussion sentence about extended-window use is
+    // informational only; the trigger logic remains less than 2 hours. Regression
+    // assertions below enforce this.
+    body: 'Consider adjunctive activated charcoal 50 g PO or via NG tube if last dose within 2 hours and the airway is protected. The Xarelto (rivaroxaban) SmPC §4.9 supports activated charcoal to reduce absorption in rivaroxaban overdose, but does not specify a time cut-off. The 2-hour window is a <strong>conservative local operational window</strong> based on standard absorption pharmacology for orally administered drugs. Some pharmacokinetic studies suggest charcoal may still reduce rivaroxaban exposure beyond 2 hours after ingestion, but evidence is limited and operational practice varies. Discuss extended-window use with toxicology or consultant haematology input. Charcoal is <strong>adjunctive</strong> to andexanet alfa or 4F-PCC, not a substitute. Do not delay reversal while waiting for charcoal.'
+  },
+  dabigatran: {
+    triggerWindowHours: 2,
+    badgeTier: 'low_certainty_evidence',
+    // The Pradaxa SmPC is intentionally NOT in sourceRefs because it does not
+    // support charcoal in §4.9. Praxbind remains in REFS for idarucizumab.
+    sourceRefs: ['praxbind_smpc'],
+    body: 'Activated charcoal may be considered for acute early dabigatran over-ingestion on the basis of local poisons-service or toxicology-service guidance, but this is <strong>not</strong> specifically supported by the current UK Pradaxa SmPC §4.9. If used, give 50 g PO or via NG tube within 2 hours of ingestion and only when the airway is protected. Idarucizumab remains the specific reversal agent where indicated. Do not delay idarucizumab while waiting for charcoal. Haemodialysis remains an option where that is the agreed strategy.',
+    // Per-drug badge text override: the dabigatran badge carries explicit "not
+    // specifically Pradaxa-SmPC-supported" framing. Em-dash clean per PR η v0.4.
+    badgeTextOverride: 'Low-certainty evidence: general toxicology / local poisons guidance; not specifically Pradaxa-SmPC-supported'
+  },
+  edoxaban: {
+    triggerWindowHours: 2,
+    badgeTier: 'guideline_supported',
+    sourceRefs: ['lixiana_smpc'],
+    body: 'Consider adjunctive activated charcoal 50 g PO or via NG tube if last dose within 2 hours and the airway is protected. The Lixiana (edoxaban) SmPC §4.9 says early activated charcoal may be considered in edoxaban overdose, but the underlying basis is standard overdose-treatment principles and similar-compound data, not edoxaban-specific clinical programme data. The 2-hour window is a <strong>conservative local operational window</strong>. There is no licensed specific reversal agent for edoxaban in the UK; off-label 4F-PCC after consultant haematology discussion is the usual approach. Charcoal is <strong>adjunctive</strong> to that strategy, not a substitute. Do not delay reversal discussion while waiting for charcoal.'
+  }
+};
+
+// Frozen v0.4 contraindications-and-cautions line, attached to every advisory.
+// Em-dash clean (per PR η v0.4 reviewer instruction). Aspiration risk explicit.
+const CHARCOAL_CONTRAINDICATIONS_LINE = 'Contraindications / cautions: unprotected airway or reduced GCS without intubation, high aspiration risk, ileus or bowel obstruction, suspected gut perforation. Activated charcoal reduces ongoing gastrointestinal absorption only; it does not reverse drug already in the bloodstream. Do not use as a substitute for specific reversal or PCC.';
+
+// getCharcoalCtx — reads UI fields. Returns { drug, hoursSinceLastDose, context }.
+// hoursSinceLastDose is null if not provided. context is 'overdose' or 'not_specified'.
+function getCharcoalCtx() {
+  function v(id, def) { def = def || ''; const el = document.getElementById(id); return el ? el.value : def; }
+  function nOrNull(id) {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    const raw = el.value;
+    if (raw === '' || raw === null || raw === undefined) return null;
+    const parsed = parseFloat(raw);
+    if (isNaN(parsed)) return null;
+    if (parsed < 0) return null;
+    return parsed;
+  }
+  return {
+    drug: v('anticoag'),
+    hoursSinceLastDose: nOrNull('charcoal_hours'),
+    context: v('charcoal_context', 'not_specified')
+  };
+}
+
+// selectCharcoalAdvisory — returns advisory entry or null per the frozen v0.4
+// trigger rule. Five conditions all required:
+//   1. drug is one of {apixaban, rivaroxaban, dabigatran, edoxaban}
+//   2. hoursSinceLastDose explicitly provided (not null)
+//   3. hoursSinceLastDose < drug-specific window
+//   4. ingestion context = 'overdose' (not the default 'not_specified')
+//   5. (no contraindication context — no UI for this; clinician judges from
+//      the contraindications line attached to the rendered advisory)
+function selectCharcoalAdvisory(ctx) {
+  if (!ctx) return null;
+  const entry = CHARCOAL_ADVISORY[ctx.drug];
+  if (!entry) return null;
+  if (ctx.hoursSinceLastDose === null || ctx.hoursSinceLastDose === undefined) return null;
+  if (ctx.hoursSinceLastDose >= entry.triggerWindowHours) return null;
+  if (ctx.context !== 'overdose') return null;
+  return Object.assign({ drug: ctx.drug, hoursProvided: ctx.hoursSinceLastDose }, entry);
+}
+
+// renderCharcoalAdvisory — returns the HTML alert block for the selected
+// advisory entry. Reuses the alert-blue palette so it slots cleanly into the
+// existing extraAlerts visual family and inherits the existing print rule.
+function renderCharcoalAdvisory(advisory) {
+  if (!advisory) return '';
+  const drugLabel = advisory.drug.charAt(0).toUpperCase() + advisory.drug.slice(1);
+  const badge = renderBadge(advisory.badgeTier);
+  // For dabigatran the badge carries an explicit "not Pradaxa-SmPC-supported"
+  // override so the clinician sees the framing inline. Other drugs use the
+  // default Guideline-supported badge label.
+  let badgeOverride = '';
+  if (advisory.badgeTextOverride) {
+    badgeOverride = '<div class="alert-body" style="font-size:11px;color:#5a4a00;font-style:italic;margin-bottom:6px;">' + advisory.badgeTextOverride + '</div>';
+  }
+  let html = '<div class="alert-blue">';
+  html +=   '<div class="alert-title">Adjunctive activated charcoal: ' + drugLabel + ' (' + advisory.hoursProvided + ' h since last dose)' + badge + '</div>';
+  html +=   badgeOverride;
+  html +=   '<div class="alert-body">' + advisory.body + '</div>';
+  html +=   '<div class="alert-body" style="margin-top:6px;font-size:11px;color:#5a4a00;">' + CHARCOAL_CONTRAINDICATIONS_LINE + '</div>';
+  html += '</div>';
+  return html;
+}
+
+// =====================================================================
+// PR η REGRESSION ASSERTIONS (run once on script init, console.warn on failure)
+// =====================================================================
+// Per PR η Part 2 brief: rivaroxaban trigger MUST remain less than 2 hours.
+// Ollier 2017 reference must not extend the trigger window. Regression
+// assertions below run at script-eval time and warn to the browser console
+// if any rule is violated. They do not block rendering — they exist to catch
+// future drift if a contributor changes the trigger logic without re-running
+// the PR η review.
+(function pretRegression() {
+  function assert(name, cond) {
+    if (!cond) {
+      try { console.warn('[PR η regression] FAIL: ' + name); } catch (e) {}
+    }
+  }
+  // 1. Rivaroxaban trigger fires at 1.99 h (less than 2 h)
+  assert('rivaroxaban fires at 1.99 h',
+    selectCharcoalAdvisory({ drug: 'rivaroxaban', hoursSinceLastDose: 1.99, context: 'overdose' }) !== null);
+  // 2. Rivaroxaban trigger does NOT fire at 2.01 h (greater than or equal to 2 h)
+  assert('rivaroxaban does not fire at 2.01 h',
+    selectCharcoalAdvisory({ drug: 'rivaroxaban', hoursSinceLastDose: 2.01, context: 'overdose' }) === null);
+  // 3. Apixaban fires at 5.99 h, does not fire at 6.01 h
+  assert('apixaban fires at 5.99 h',
+    selectCharcoalAdvisory({ drug: 'apixaban', hoursSinceLastDose: 5.99, context: 'overdose' }) !== null);
+  assert('apixaban does not fire at 6.01 h',
+    selectCharcoalAdvisory({ drug: 'apixaban', hoursSinceLastDose: 6.01, context: 'overdose' }) === null);
+  // 4. Dabigatran fires at 1.99 h, does not fire at 2.01 h
+  assert('dabigatran fires at 1.99 h',
+    selectCharcoalAdvisory({ drug: 'dabigatran', hoursSinceLastDose: 1.99, context: 'overdose' }) !== null);
+  assert('dabigatran does not fire at 2.01 h',
+    selectCharcoalAdvisory({ drug: 'dabigatran', hoursSinceLastDose: 2.01, context: 'overdose' }) === null);
+  // 5. Edoxaban fires at 1.99 h, does not fire at 2.01 h
+  assert('edoxaban fires at 1.99 h',
+    selectCharcoalAdvisory({ drug: 'edoxaban', hoursSinceLastDose: 1.99, context: 'overdose' }) !== null);
+  assert('edoxaban does not fire at 2.01 h',
+    selectCharcoalAdvisory({ drug: 'edoxaban', hoursSinceLastDose: 2.01, context: 'overdose' }) === null);
+  // 6. Routine therapeutic-dose context suppresses the advisory even within window
+  assert('routine therapeutic context suppresses advisory',
+    selectCharcoalAdvisory({ drug: 'rivaroxaban', hoursSinceLastDose: 1.0, context: 'not_specified' }) === null);
+  // 7. Unknown hours suppresses the advisory
+  assert('unknown hours suppresses advisory',
+    selectCharcoalAdvisory({ drug: 'rivaroxaban', hoursSinceLastDose: null, context: 'overdose' }) === null);
+  // 8. Parenteral agents do not fire the advisory (warfarin, UFH, LMWH, fondaparinux, argatroban, bivalirudin)
+  ['warfarin', 'ufh', 'enoxaparin', 'dalteparin', 'tinzaparin', 'fondaparinux', 'argatroban', 'bivalirudin'].forEach(function(drug) {
+    assert(drug + ' does not fire advisory',
+      selectCharcoalAdvisory({ drug: drug, hoursSinceLastDose: 1.0, context: 'overdose' }) === null);
+  });
+  // 9. Dabigatran badge text override does not imply Pradaxa SmPC support
+  const dabigatranEntry = CHARCOAL_ADVISORY.dabigatran;
+  assert('dabigatran badge text says not Pradaxa-SmPC-supported',
+    dabigatranEntry.badgeTextOverride.indexOf('not specifically Pradaxa-SmPC-supported') !== -1);
+  // 10. Dabigatran sourceRefs does not list Pradaxa SmPC as a charcoal-supporting source
+  assert('dabigatran sourceRefs excludes Pradaxa SmPC',
+    dabigatranEntry.sourceRefs.indexOf('pradaxa_smpc') === -1);
+  // 11. Ollier 2017 is in REFS but not used as a primary trigger source for any drug
+  ['apixaban', 'rivaroxaban', 'dabigatran', 'edoxaban'].forEach(function(drug) {
+    const entry = CHARCOAL_ADVISORY[drug];
+    assert(drug + ' sourceRefs does not include ollier2017',
+      entry.sourceRefs.indexOf('ollier2017') === -1);
+  });
+  // 12. Exact-boundary regression assertions (per PR η Part 2 reviewer pre-merge note).
+  //     The trigger uses strict less-than: hoursSinceLastDose < triggerWindowHours.
+  //     These four assertions explicitly confirm the boundary is non-firing at the
+  //     exact window edge for every drug. This guards against future drift if a
+  //     contributor changes the comparator from '<' to '<=' without re-running the
+  //     PR η review.
+  assert('apixaban exactly 6.00 h does NOT fire',
+    selectCharcoalAdvisory({ drug: 'apixaban', hoursSinceLastDose: 6.00, context: 'overdose' }) === null);
+  assert('rivaroxaban exactly 2.00 h does NOT fire',
+    selectCharcoalAdvisory({ drug: 'rivaroxaban', hoursSinceLastDose: 2.00, context: 'overdose' }) === null);
+  assert('dabigatran exactly 2.00 h does NOT fire',
+    selectCharcoalAdvisory({ drug: 'dabigatran', hoursSinceLastDose: 2.00, context: 'overdose' }) === null);
+  assert('edoxaban exactly 2.00 h does NOT fire',
+    selectCharcoalAdvisory({ drug: 'edoxaban', hoursSinceLastDose: 2.00, context: 'overdose' }) === null);
+})();
 
 // =====================================================================
 // GOVERNANCE METADATA SCHEMA v1.0 (PR ζ Part 1 v0.2; rendering Part 2)
@@ -2463,6 +2710,20 @@ function renderOutput(result) {
       html += '</div>';
     });
   }
+  // Activated-charcoal advisory (PR η Part 2). Context-gated informational
+  // alert. Renders ONLY when (a) drug is one of the four DOACs, (b) clinician
+  // has marked the case as overdose / accidental / very recent ingestion,
+  // (c) exact hours since last dose is provided AND inside the per-drug
+  // window (apixaban 6h; others 2h). Sits after existing alerts and before
+  // the MDT handover line. Visually subordinate to the primary recommendation
+  // per the PR γ Rendering safety rule. Print-visible by default (alert-blue
+  // is in the existing print stylesheet rule). Per PR η Part 1 v0.4 frozen
+  // governance content; see CHARCOAL_ADVISORY data structure for per-drug
+  // wording and badge tier.
+  try {
+    const charcoalAdvisory = selectCharcoalAdvisory(getCharcoalCtx());
+    if (charcoalAdvisory) html += renderCharcoalAdvisory(charcoalAdvisory);
+  } catch (e) { /* advisory is non-critical for dose rendering; do not block */ }
   // MDT handover line — plain-text paragraph + Copy button + dual-line footer
   // reminder. Sits between alerts and consultant reasoning panel. Per PR δ Part 1
   // v0.3 architecture and mandatory clipboard behaviour rules.
