@@ -37,12 +37,17 @@ This rule applies to every change, including ones that "look right" or that are 
 A scanner at `scripts/tone_guard.py` checks new prose against a banned-words list maintained in the script itself. The list is the project owner's preference and includes words that read as filler in clinical writing. Run the scanner locally before opening a PR:
 
 ```bash
-python scripts/tone_guard.py public/reversal.html outputs/haemcalc-cdss/
+python scripts/tone_guard.py \
+  --repo-root . \
+  --waivers .github/tone-guard-waivers.json \
+  public/ CONTRIBUTING.md README.md
 ```
 
-Exit code 0 means clean. Non-zero means at least one hit; the scanner prints file, line, and match. CI runs the same scanner on every PR via `.github/workflows/tone-guard.yml`.
+Exit code 0 means clean or covered by an exact active waiver. Non-zero means at least one blocking hit or an invalid, expired, unused or overused waiver. The scanner prints every blocking and waived occurrence with its file, line and waiver identity. CI runs the same scanner on every PR via `.github/workflows/tone-guard.yml`.
 
-When a banned word appears in a quotation from a primary source (e.g. an SmPC paragraph quoted verbatim), the quotation is wrapped in `<blockquote>` or rephrased with the source cited. The scanner does not currently distinguish quotations; manual review applies.
+Waivers are stored in `.github/tone-guard-waivers.json`. Each waiver is limited to one Work Package, repository-relative file, restricted term, exact containing text, named owner, expiry date and maximum occurrence count. Closed waivers remain in the manifest for audit but suppress nothing. A waiver cannot suppress the HTML inline-block-balance check.
+
+When a restricted term is necessary in controlled clinical or quoted primary-source text, do not alter accurate wording merely to satisfy the scanner. Add a narrowly scoped manifest entry and obtain the independent review and Programme Owner approval described in section 8.
 
 ## 5. Clinical-safety checklist
 
@@ -59,7 +64,7 @@ A material change is anything that could change which intervention a clinician s
 
 ## 7. What is automated
 
-A GitHub Actions workflow at `.github/workflows/tone-guard.yml` runs the tone-guard scanner on every PR. A PR with a non-zero scanner exit cannot be merged unless an explicit waiver is recorded in the PR description and approved by the project owner.
+A GitHub Actions workflow at `.github/workflows/tone-guard.yml` tests and runs the tone-guard scanner on every PR. A non-zero scanner exit remains blocking. The workflow has read-only repository permission, does not retain checkout credentials and does not claim to authenticate Programme Owner approval from PR-controlled code.
 
 The Cloudflare Workers build is automatic on every push and PR. The build itself does not perform clinical validation; it only confirms the project compiles and renders.
 
@@ -68,6 +73,7 @@ The Cloudflare Workers build is automatic on every push and PR. The build itself
 - **Primary-source verification** — performed manually by the PR author and confirmed by the reviewer.
 - **Mobile and print rendering** — visual inspection by the reviewer on the Cloudflare preview URL.
 - **Validation of any new clinical pathway** against retrospective case data — performed per `outputs/haemcalc-cdss/05_validation_framework.md` Phase 1, before live deploy.
+- **Tone-guard waiver authorisation** — every manifest change requires independent technical review and a Programme Owner decision recorded against the exact candidate tree or commit SHA and exact manifest SHA-256. The approval record states the Work Package, decision and approving owner. CI output proves scanner behaviour but does not self-authorise the waiver. Branch protection must not be changed to process an exception.
 
 ## 9. Roles
 

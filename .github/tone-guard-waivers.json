@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "waivers": [
+    {
+      "id": "HC-WP2-CELLF-2026-001-TG-001",
+      "work_package": "HC-WP2-CELLF-2026-001",
+      "path": "public/reversal.html",
+      "term": "significant",
+      "exact_text": "clinically significant factor Xa inhibitor activity remains",
+      "reason": "Programme Owner-approved controlled clinical wording recorded in PR #50",
+      "approved_by": "muhdmohsin1979",
+      "status": "active",
+      "expires_on": "2026-10-26",
+      "max_occurrences": 1
+    }
+  ]
+}
