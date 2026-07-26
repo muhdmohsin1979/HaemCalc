@@ -2084,12 +2084,14 @@ function calcDoac(doac) {
     ];
     refs = ['reverse', 'praxbind_smpc', 'isth', 'ehra'];
   } else if (timing === 'gt24' && crcl === 'normal') {
-    cell  = 'Cell F: PCC not indicated';
-    dose  = 'PCC reversal not indicated';
-    total = 'Supportive care, source control';
+    cell  = 'Cell F: urgent clinical assessment required';
+    dose  = 'Urgent clinical assessment required';
+    total = 'Follow the current local protocol and seek urgent specialist advice';
     notes = [
-      'More than 24 hours since last dose with normal renal function: residual drug level likely below the 30 to 50 ng/mL threshold below which reversal is unlikely to provide clinical benefit.',
-      'Treat with supportive measures, mechanical haemostasis, and source control. Consider drug-calibrated anti-Xa if rapidly available before deciding.'
+      'This calculator cannot determine from elapsed time and renal-function category alone whether clinically significant factor Xa inhibitor activity remains.',
+      'For life-threatening or uncontrolled bleeding, urgently follow the current local major-haemorrhage or anticoagulant-reversal protocol and seek specialist haematology or thrombosis advice.',
+      'Obtain a drug-specific anti-Xa level where available if this will not delay urgent management.',
+      'Do not use this calculator output alone as a basis for withholding reversal or haemostatic treatment.'
     ];
     refs = ['isth', 'mith'];
   } else if (crcl === 'low') {
@@ -2245,8 +2247,9 @@ function calcDoac(doac) {
   // PR β Part 1 v0.4 per-recommendation mapping:
   //   - dabigatran     -> idarucizumab is the licensed specific reversal agent
   //                       (Praxbind SmPC §4.1) -> guideline_supported.
-  //   - Cell F         -> PCC not indicated; supportive care + source control is
-  //                       accepted UK practice -> consensus_practice.
+  //   - Cell F         -> owner-approved interim safety escalation; the disputed
+  //                       consensus-practice classification is suspended with
+  //                       the definitive recommendation -> no badge.
   //   - apixaban /     -> 4F-PCC is licensed for VKA reversal, not DOAC reversal;
   //     rivaroxaban /     UK use for FXa-inhibitor-related bleeding is widely
   //     edoxaban          accepted but remains off-label per the SmPC.
@@ -2255,7 +2258,7 @@ function calcDoac(doac) {
   if (doac === 'dabigatran') {
     badge = 'guideline_supported';
   } else if (cell.indexOf('Cell F') !== -1) {
-    badge = 'consensus_practice';
+    badge = null;
   } else {
     badge = 'off_label';
   }
