@@ -35,8 +35,9 @@
 
 ## Tone guard
 
-- [ ] `python scripts/tone_guard.py` exits with status 0 against the changed files (or run by CI on this PR — see Actions).
-- [ ] No banned word from the project tone-guard list has been introduced.
+- [ ] `python scripts/tone_guard.py --repo-root . --waivers .github/tone-guard-waivers.json` exits with status 0 against the changed files (or is run by CI on this PR).
+- [ ] No restricted term has been introduced unless an exact active manifest waiver covers it.
+- [ ] If the waiver manifest changed, independent technical review is recorded and the Programme Owner decision identifies the Work Package, exact candidate tree or commit SHA, exact manifest SHA-256 and approving owner.
 
 ## Build, mobile, and print
 
